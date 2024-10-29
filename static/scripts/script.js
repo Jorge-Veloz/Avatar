@@ -74,24 +74,42 @@ document.addEventListener("DOMContentLoaded", () => {
     /* ========================== Fin Seteo Reproduccion de Voz ========================== */
 
     /* ========================== Seteo Charts ========================== */
-    var chConsumoAct = crearChart(document.querySelector("#grafica_cons_act"));
-    var chConsumoActT = crearChart(document.querySelector("#grafica_cons_act_total"));
-    var chConsumoFut = crearChart(document.querySelector("#grafica_cons_fut"));
-    var chConsumoFutT = crearChart(document.querySelector("#grafica_cons_fut_total"));
+    setearCharts();
     /* ========================== Fin Seteo Charts ========================== */
 });
 
-function crearChart(elemento){
+function setearCharts(){
+    let dataConsAct = [
+        {
+            name: 'Consumo Actual',
+            data: [30,40,35,50,49,60,70,91,125]
+        },{
+            name: 'Consumo Total',
+            data: [40,45,60,22,32,14,18,78,150]
+        }
+    ];
+    var chConsumoAct = crearChart(document.querySelector("#grafica_cons_act"), 'line', dataConsAct);
+    
+    let dataConsFut = [
+        {
+            name: 'Consumo Futuro',
+            data: [30,40,35,50,49,60,70,91,125]
+        },{
+            name: 'Consumo Total',
+            data: [40,45,60,22,32,14,18,78,150]
+        }
+    ];
+    var chConsumoFut = crearChart(document.querySelector("#grafica_cons_fut"), 'line', dataConsFut);
+}
+
+function crearChart(elemento, tipo, data){
     let options = {
         chart: {
-            type: 'line',
+            type: tipo,
             height: '100%',
             width: '100%'
         },
-        series: [{
-            name: 'sales',
-            data: [30,40,35,50,49,60,70,91,125]
-        }],
+        series: data,
         xaxis: {
             categories: [1991,1992,1993,1994,1995,1996,1997, 1998,1999]
         }
