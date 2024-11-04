@@ -91,13 +91,13 @@
                             <div id="detalle_cons_act" style="width: 30%;border:2px solid #e1e1e1;border-radius: 5px;background-color: #e1e1e1;display: flex;justify-content: space-evenly;align-items: center;flex-direction: column;">
                                 <div class="container_cons container_cons_act_p">
                                     <p class="txt_cons">
-                                        Consumo actual <br>
+                                        Consumo actual del Ambiente <br>
                                         <span class="val_cons">200w</span>
                                     </p>
                                 </div>
                                 <div class="container_cons container_cons_act_t">
                                     <p class="txt_cons">
-                                        Consumo total <br>
+                                        Consumo total del Edificio <br>
                                         <span class="val_cons">500w</span>
                                     </p>
                                 </div>
@@ -111,13 +111,13 @@
                             <div id="detalle_cons_fut" style="width: 30%;border:2px solid #e1e1e1;border-radius: 5px;background-color: #e1e1e1;display: flex;justify-content: space-evenly;align-items: center;flex-direction: column;">
                                 <div class="container_cons container_cons_fut_p">
                                     <p id="txt_cons_fut" class="txt_cons">
-                                        Consumo futuro <br>
+                                        Consumo futuro del Ambiente <br>
                                         <span class="val_cons">400w</span>
                                     </p>
                                 </div>
                                 <div class="container_cons container_cons_fut_t">
                                     <p id="txt_cons_fut" class="txt_cons">
-                                        Consumo total <br>
+                                        Consumo total del Edificio <br>
                                         <span class="val_cons">900w</span>
                                     </p>
                                 </div>
@@ -130,180 +130,14 @@
                             <textarea class="form-control" placeholder="Aqui se mostraran las recomendaciones..." id="txtarea_recomendaciones" style="height: 80%"></textarea>
                             <label for="txtarea_recomendaciones">Recomendaciones</label>
                         </div>
-                        <!--<div class="row mb-3">
-                            <div class="form-group col-4">
-                                <input type="hidden" id="idPaciente" value=".">
-                                <label for="cedula">Cédula</label>
-                                <div class="row">
-                                    <div class="col-8">
-                                        <input type="text" class="form-control col-auto" id="cedula" placeholder="Ingrese numero de cédula">
-                                    </div>
-                                    <div class="col-4">
-                                        <button class="btn btn-primary" id="btn-buscar" onclick="buscarPaciente()">Buscar</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group col-4">
-                                <label for="nombre">Nombres y Apellidos</label>
-                                <input type="text" class="form-control" id="nombres" disabled onchange="comprobarCampos(2)">
-                                <input type="hidden" class="form-control" id="genero" disabled>
-                            </div>
-                            <div class="form-group col-2">
-                                <label for="fechaNacimiento">Fecha de Nacimiento</label>
-                                <input type="date" class="form-control" id="fechaNacimiento" disabled onchange="comprobarCampos(2)">
-                            </div>
-                            <div class="form-group col-2">
-                                <label for="edad">Edad</label>
-                                <input type="number" class="form-control" id="edad" disabled onchange="comprobarCampos(2)">
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="form-group col-6">
-                                <label for="telefono">Número de Teléfono</label>
-                                <input type="tel" class="form-control" id="telefono" disabled onchange="comprobarCampos(2)">
-                            </div>
-                            <div class="form-group col-6">
-                                <label for="correo">Correo Personal</label>
-                                <input type="email" class="form-control" id="correo" disabled onchange="comprobarCampos(2)">
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="form-group col-6">
-                                <label for="ciudad">Ciudad</label>
-                                <input type="text" class="form-control" id="ciudad" disabled onchange="comprobarCampos(2)">
-                            </div>
-                            <div class="form-group col-6">
-                                <label for="direccion">Dirección</label>
-                                <input type="text" class="form-control" id="direccion" disabled onchange="comprobarCampos(2)">
-                            </div>
-                        </div>
-                        <h3>Datos de Consulta Médica</h3>
-                        <div class="row mb-3 mt-2">
-                            <div class="form-group col-6">
-                                <label for="peso">Peso</label>
-                                <input type="text" class="form-control" id="peso" placeholder="Ingrese peso" disabled>
-                            </div>
-                            <div class="form-group col-6">
-                                <label for="talla">Estatura</label>
-                                <input type="text" class="form-control" id="talla" placeholder="Ingrese talla" disabled>
-                            </div>
-                        </div>
-                        <label for="">Presión</label>
-                        <div class="row mb-3">
-                            <div class="form-group row col-4">
-                                <div class="col-auto">
-                                    <input type="text" class="form-control" id="p-sistolica" placeholder="Ingrese presión sistólica" disabled>
-                                </div>
-                            </div>
-                            <div class="form-group row col-4">
-                                <div class="col-auto">
-                                    <input type="text" class="form-control" id="p-distolica" placeholder="Ingrese presión distólica" disabled>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="form-group col-6">
-                                <label for="frecuencia-card">Frecuencia Cardiaca</label>
-                                <input type="text" class="form-control" id="frecuencia-card" placeholder="Ingrese frecuencia cardiaca" disabled>
-                            </div>
-                            <div class="form-group col-6">
-                                <label for="temperatura">Temperatura</label>
-                                <input type="text" class="form-control" id="temperatura" placeholder="Ingrese temperatura" disabled>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col" style="display: none;">
-                                <h3>Sintomatología</h3>
-                                <textarea class="form-control mt-2" id="sintomatologia" style="height:150px;" disabled>
-        
-                                </textarea>
-                            </div>
-                            <div class="col" style="display: none;">
-                                <h3>Diagnóstico</h3>
-                                <textarea class="form-control mt-2" id="diagnostico" style="height:150px;" disabled>
-        
-                                </textarea>
-                            </div>
-                            <div class="col" style="display: none;">
-                                <h3>Tratamiento</h3>
-                                <textarea class="form-control mt-2" id="tratamiento" style="height:150px;" disabled>
-        
-                                </textarea>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-4 col-offset-4">
-                                <button style="border:none;text-decoration:underline;color:cadetblue;" onclick="abrirModalHistorialSintomas()"">Historial Sintomas</button>
-                            </div>
-                        </div>
-                        <div class="row" style="justify-content:center;margin-bottom:10px">
-                            <div class="col-3">
-                                <button class="btn btn-primary col-12" id="btnGuardarForm" style="padding: 10px 0;" onclick="pedirGuardarForm()" disabled>Guardar</button>
-                            </div>
-                        </div>-->
                     </div>
                 </div>
             </div>
         </div>
-        <!--<div class="sidebar_preferencias" >-->
         <div id="fondo_popups" style="display:none;position: absolute;width: 100vw; height: 100vh;background-color: rgba(0, 0, 0, 0.118); z-index: 499;">
 
         </div>
-        <!--<div class="collapse collapse-horizontal" id="sidebar_preferencias" style="position: absolute; top:0; right: 0; height: 100vh; width: 300px; z-index:500;">
-            <div class="card card-body" style="width: 300px;margin: 20px 0;">
-                <h3>Preferencias</h3>
-                <p>Elige las preferencias del asistente:</p>
-                <div class="form-check">
-                    <input class="form-check-input opc_preferencias" type="checkbox" value="1" id="pref_sintomatologia" name="opc_preferencias">
-                    <label class="form-check-label" for="pref_sintomatologia">
-                        Obtener sintomatologia
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input opc_preferencias" type="checkbox" value="2" id="pref_diagnostico" name="opc_preferencias">
-                    <label class="form-check-label" for="pref_diagnostico">
-                        Obtener diagnostico
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input opc_preferencias" type="checkbox" value="3" id="pref_tratamiento" name="opc_preferencias">
-                    <label class="form-check-label" for="pref_tratamiento">
-                        Obtener tratamiento
-                    </label>
-                </div>
-                <div class="d-flex justify-content-center"><button class="btn btn-primary" onclick="aceptarPreferenciasA()">Aceptar</button></div>
-            </div>
-        </div>-->
-        <!--</div>-->
     </div>
-
-    <!--<div class="modal fade" id="modalHistorialSintomas" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Historial de Sintomas</h4>
-                </div>
-                <div class="modal-body" style="overflow-y:auto;max-height:400px">
-                    <table class="table table-hover" id="tblHistorialSintomas">
-                        <thead>
-                            <tr>
-                                <th><b>#</b></th>
-                                <th>Fecha</th>
-                                <th>Cedula</th>
-                                <th>Sintomas</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            
-                        </tbody>
-                    </table>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-        </div>
-    </div>-->
     
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
