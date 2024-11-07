@@ -8,6 +8,8 @@ from funciones.asistente import getMensajeSistema
 import json
 import os
 from dotenv import load_dotenv
+import random
+import string
 
 load_dotenv(os.path.join(os.getcwd(), '.env'))
 
@@ -41,10 +43,13 @@ def modeloAvatar():
 @app.get('/inicializar')
 def getPaciente():
     global compMsgs
-    #session['user'] = "0001"
+    compMsgs = []
+    usuarioAct = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+    session['user'] = usuarioAct
     tmpMensaje = getMensajeSistema()
     session['mensajes'] = tmpMensaje
-    return jsonify({'res': 1})
+    compMsgs = list(filter(lambda x: x['usuario'] != usuarioAct, compMsgs))
+    return jsonify({'res': 1, 'user': usuarioAct})
 
 @app.post('/conversar')
 def getRespuesta():
@@ -60,10 +65,10 @@ def getRespuesta():
     
     mTmpAsis = list(mensTemp)
     controlador = AsistenteControlador()
-    respuesta = controlador.getRespuesta(mTmpAsis, compMsgs)
+    respuesta = controlador.getRespuesta(session.get('user'), mTmpAsis, compMsgs)
     almacenar_msg = respuesta['almacenar_msg']
     if respuesta['mensaje']:
-        nuevoCM = {"lastId": len(almacenar_msg), "data": respuesta['mensaje']}
+        nuevoCM = {"usuario": session.get('user'), "lastId": len(almacenar_msg), "data": respuesta['mensaje']}
         compMsgs.append(nuevoCM)
         almacenar_msg.append(str(respuesta['mensaje']))
     else:
