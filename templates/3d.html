@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../../static/css/style.css">
     <link rel="stylesheet" href="../../static/css/loading.css">
     <link rel="stylesheet" href="../../static/resources/avatar/TemplateData/style.css"> <!--Revisar-->
+    <script src="https://kit.fontawesome.com/ba52fcc0fa.js" crossorigin="anonymous"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -20,9 +21,13 @@
         <div class="asistente" style="padding-top: 0;">
             <!--<div id="unity-container" class="unity-desktop" >-->
             <div class="controles" id="controles" style="z-index:500;position: absolute;top:140px"><!--bottom: 88px;-->
-                <div class="container-icon" id="asistente-btn" onclick="toggleEscucha()">
-                    <div class="outer-circle" id="outer-circle">
-                        <div class="inner-wave" id="inner-wave"></div>
+                <div class="container-icon" id="asistente-btn" onclick="toggleEscucha()" disabled>
+                    <div id="outer-circle">
+                        <div class="inner-wave inicializar-asistente" id="inner-wave">
+                            <span id="icon_control" class="icon_control" title="Iniciar Asistente">
+                                <i class="fa-solid fa-play"></i>
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <p id="info-adicional"></p>
@@ -61,7 +66,7 @@
                             <div class="form-group col-4 row mb-3">
                                 <b>Edificio:</b>
                                 <div class="col-12">
-                                    <select class="form-select" name="" id="">
+                                    <select class="form-select" name="combo_edificio" id="combo_edificio" onchange="getAmbiente()">
                                         <option value="" selected disabled>Seleccione el edificio</option>
                                     </select>
                                     <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
@@ -70,16 +75,22 @@
                             <div class="form-group col-4 row mb-3">
                                 <b>Ambiente:</b>
                                 <div class="col-12">
-                                    <select class="form-select" name="" id="">
+                                    <select class="form-select" name="combo_ambientes" id="combo_ambientes">
                                         <option value="" selected disabled>Seleccione el ambiente</option>
                                     </select>
                                     <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
                                 </div>
                             </div>
-                            <div class="form-group col-4 row mb-3">
+                            <div class="form-group col-3 row mb-3">
                                 <b>Fecha:</b>
                                 <div class="col-12">
-                                    <input type="date" class="form-control" id="fecha_atencion">
+                                    <input type="date" class="form-control" id="fecha_busqueda">
+                                </div>
+                            </div>
+                            <div class="form-group col-1 row mb-3 d-flex justify-content-center align-items-end">
+                                <!--<b>Fecha:</b>-->
+                                <div class="col-12">
+                                    <button class="btn btn-primary" id="btn_consultar_energia" title="Consultar Informacion" onclick="consultarDatosEnergeticos()"><i class="fa-solid fa-magnifying-glass"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -92,13 +103,13 @@
                                 <div class="container_cons container_cons_act_p">
                                     <p class="txt_cons">
                                         Consumo actual del Ambiente <br>
-                                        <span class="val_cons">200w</span>
+                                        <span class="val_cons" id="val_consact_amb">0w</span>
                                     </p>
                                 </div>
                                 <div class="container_cons container_cons_act_t">
                                     <p class="txt_cons">
                                         Consumo total del Edificio <br>
-                                        <span class="val_cons">500w</span>
+                                        <span class="val_cons" id="val_consact_edi">0w</span>
                                     </p>
                                 </div>
                             </div>
@@ -112,13 +123,13 @@
                                 <div class="container_cons container_cons_fut_p">
                                     <p id="txt_cons_fut" class="txt_cons">
                                         Consumo futuro del Ambiente <br>
-                                        <span class="val_cons">400w</span>
+                                        <span class="val_cons" id="val_consfut_amb">0w</span>
                                     </p>
                                 </div>
                                 <div class="container_cons container_cons_fut_t">
                                     <p id="txt_cons_fut" class="txt_cons">
                                         Consumo total del Edificio <br>
-                                        <span class="val_cons">900w</span>
+                                        <span class="val_cons" id="val_consfut_edi">0w</span>
                                     </p>
                                 </div>
                             </div>

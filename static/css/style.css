@@ -51,24 +51,105 @@
     background-color: #b5b5b5;
 }
 
-.iniciar-conversacion,
-.detener-conversacion
+.hablar-asistente,
+.detener-asistente,
+.inicializar-asistente,
+.cargando-asistente,
+.reproduciendo-asistente
 {
     height: 112px;
     width: 112px;
     border-radius: 50%;
     border: none;
-    color: white;
-    font-size: 25pt;
+    color: #fff;
     cursor: pointer;
-    transition: background-color .3s;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 16pt;
+    font-weight: 500;
+    transition: transform .3s, filter .5s;
 }
 
-.iniciar-conversacion{
-    background-color: #4def9d;
+.inicializar-asistente{
+    background: linear-gradient(162deg, rgb(97 195 255) 0%, rgb(37 77 169) 100%);
+    filter: brightness(1);
 }
-.detener-conversacion{
-    background-color: red;
+
+.inicializar-asistente .icon_control{
+    margin-left: 8px;
+}
+
+.inicializar-asistente:hover{
+    transform: scale(1.1);
+    filter: brightness(1.1);
+}
+
+.cargando-asistente{
+    background: linear-gradient(162deg, rgb(201 201 201) 0%, rgb(61 61 61) 100%);
+    cursor: not-allowed;
+}
+
+.cargando-asistente .icon_control{
+    animation: cargando 1.2s ease-out 0s infinite;
+}
+
+@keyframes cargando{
+    0% {
+        transform: rotate(0);
+    }
+    100%{
+        transform: rotate(360deg);
+    }
+}
+
+.hablar-asistente{
+    background: linear-gradient(162deg, rgb(99 227 175) 0%, rgb(57 137 31) 100%);
+    filter: brightness(1);
+}
+
+.hablar-asistente:hover{
+    transform: scale(1.1);
+    filter: brightness(1.1);
+}
+
+.detener-asistente{
+    background: linear-gradient(162deg, rgb(255 79 79) 0%, rgb(145 17 17) 100%);
+    filter: brightness(1);
+}
+
+.detener-asistente:hover{
+    transform: scale(1.1);
+    filter: brightness(1.1);
+}
+
+.reproduciendo-asistente{
+    background: linear-gradient(162deg, rgb(164 79 255) 0%, rgb(31 17 145) 100%);
+    cursor: not-allowed;
+    animation: reproduciendo 1s ease-in-out 0s infinite;
+}
+
+@keyframes reproduciendo{
+    0% {
+        transform: scale(1);
+    }
+    50%{
+        transform: scale(1.05);
+    }
+    100%{
+        transform: scale(1);
+    }
+}
+
+.icon_control{
+    font-size: 38pt;
+    line-height: 1;
+    /*font-size: 18pt;*/
+}
+
+.text_control_adicional{
+    font-size: 12pt;
 }
 
 .contenedor-typing{
@@ -156,7 +237,7 @@
 
 .container_cons{
     width: 80%;
-    height: 35%;
+    /*height: 35%;*/
     background-color: #fff;
     border-radius: 15px;
     box-shadow: 0px 0px 5px 0px #47474729;
