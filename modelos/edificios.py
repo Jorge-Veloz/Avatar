@@ -12,3 +12,12 @@ class EdificiosModelo:
             return datos
         else:
             return None
+        
+    def validarEdificio(self, edificio):
+        sql = f"SELECT ID FROM edificio WHERE LOWER(Nombre) = '{edificio}'"
+        dato = self.db.consultarDato(sql)
+
+        if dato:
+            return dato
+        else:
+            return None

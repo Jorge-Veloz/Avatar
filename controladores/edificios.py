@@ -11,3 +11,6 @@ class EdificiosControlador:
             return {'res': 1, 'datos': datos}
         else:
             return {'res': 0}
+        
+    def validarEdificio(self, edificio):
+        return self.modelo.validarEdificio(edificio)

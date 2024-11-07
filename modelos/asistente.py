@@ -17,11 +17,10 @@ class AsistenteModelo():
         ]
         self.funciones = getFuncionesAsistente()
 
-    def getRespuesta(self, paciente, mensajes, compMsgs):
+    def getRespuesta(self, mensajes, compMsgs):
         tMensajes = mensajes
         for cm in compMsgs:
-            if cm and cm['paciente'] == paciente: 
-                tMensajes.insert(cm['lastId'], cm['data']);
+            tMensajes.insert(cm['lastId'], cm['data']);
         response = self.client.chat.completions.create(
             model="gpt-4o", #3.5-turbo
             messages=tMensajes,

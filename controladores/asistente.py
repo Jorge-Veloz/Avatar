@@ -5,8 +5,8 @@ class AsistenteControlador():
     def __init__(self):
         self.modelo = AsistenteModelo()
        
-    def getRespuesta(self, paciente, mensajes, compMsgs):
-        respuesta = self.modelo.getRespuesta(paciente, mensajes, compMsgs)
+    def getRespuesta(self, mensajes, compMsgs):
+        respuesta = self.modelo.getRespuesta(mensajes, compMsgs)
         respuesta_msg = respuesta['respuesta_msg']
         funciones = respuesta['asis_funciones']
 

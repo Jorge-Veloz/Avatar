@@ -44,7 +44,6 @@ def getPaciente():
     #session['user'] = "0001"
     tmpMensaje = getMensajeSistema()
     session['mensajes'] = tmpMensaje
-    session['user'] = "desconocido"
     return jsonify({'res': 1})
 
 @app.post('/conversar')
@@ -61,10 +60,10 @@ def getRespuesta():
     
     mTmpAsis = list(mensTemp)
     controlador = AsistenteControlador()
-    respuesta = controlador.getRespuesta(session.get('user'), mTmpAsis, compMsgs)
+    respuesta = controlador.getRespuesta(mTmpAsis, compMsgs)
     almacenar_msg = respuesta['almacenar_msg']
     if respuesta['mensaje']:
-        nuevoCM = {"usuario": session.get('user'), "lastId": len(almacenar_msg), "data": respuesta['mensaje']}
+        nuevoCM = {"lastId": len(almacenar_msg), "data": respuesta['mensaje']}
         compMsgs.append(nuevoCM)
         almacenar_msg.append(str(respuesta['mensaje']))
     else:
@@ -72,6 +71,11 @@ def getRespuesta():
     
     session['mensajes'] = mensTemp
     return jsonify({"respuesta_msg": respuesta['respuesta_msg'], "asis_funciones": respuesta['asis_funciones']})
+
+@app.get('/api/info_edificios_ambientes')
+def getEdificiosAmbientes():
+    controlador = AmbientesControlador()
+    return jsonify(controlador.getAmbientesCompleta())
 
 @app.get('/api/edificios')
 def getEdificios():
@@ -98,6 +102,24 @@ def getDatosConsumo():
         return jsonify({'data_actual': consumoActual, 'data_futuro': consumoFuturo})
     else:
         return jsonify({'data_actual': consumoActual})
+    
+@app.post('/api/validar_parametros')
+def validarParametros():
+    edificio = request.form['edificio']
+    ambiente = request.form['ambiente']
+    #fecha = request.form['fecha']
+
+    controlEdificio = EdificiosControlador()
+    controlAmbiente = AmbientesControlador()
+    
+    res = 0
+    d_edificio = controlEdificio.validarEdificio(edificio)
+    d_ambiente = None
+    if d_edificio:
+        res = 1
+        d_ambiente = controlAmbiente.validarAmbiente(d_edificio['ID'], ambiente)
+    
+    return jsonify({'res': res, 'edificio': d_edificio['ID'], 'ambiente': d_ambiente['Codigo']})
 
 if __name__ == '__main__':
     app.run(port=3000, debug=True)

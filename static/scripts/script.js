@@ -101,8 +101,53 @@ document.addEventListener("DOMContentLoaded", () => {
     //$('#fecha_busqueda').val(new Date().toISOString().split('T')[0]);
     $('#asistente-btn').removeAttr('disabled');
     getEdificios();
-
+    llenarModalInfoEdificios();
 });
+
+function llenarModalInfoEdificios(){
+    fetch('/api/info_edificios_ambientes', {
+        method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data['res'] == 1){
+            let datos = data['datos'];
+            const groupedData = datos.reduce((acc, item) => {
+                const { Nombre, Codigo } = item;
+                if (!acc[Nombre]) {
+                    acc[Nombre] = { Nombre, Codigos: [] };
+                }
+                acc[Nombre].Codigos.push(Codigo);
+                return acc;
+            }, {});
+            
+            const result = Object.values(groupedData);
+            
+            let htmlAcordion = "";
+            for(let r of result){
+                htmlAcordion += `<div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                    data-bs-target="#flush-collapse${r['Nombre'].substr(0,3)}" aria-expanded="false" aria-controls="flush-collapse${r['Nombre'].substr(0,3)}">
+                                    Edificio ${r['Nombre']}
+                                </button>
+                            </h2>
+                            <div id="flush-collapse${r['Nombre'].substr(0,3)}" class="accordion-collapse collapse" data-bs-parent="#accordionFlushExample">
+                                <div class="accordion-body">
+                                    <ul>`;
+                for(let a of r['Codigos']){
+                    htmlAcordion += `<li>Ambiente ${a}</li>`;
+                }
+                                        
+                                    htmlAcordion += `</ul>
+                                </div>
+                            </div>
+                        </div>`;
+            }
+            $('#accordionFlushExample').html(htmlAcordion);
+        }
+    })
+}
 
 function getEdificios(){
     fetch('/api/edificios', {
@@ -154,6 +199,10 @@ function consultarDatosEnergeticos(){
         return;
     }
 
+    informacionConsumo(edificio, ambiente, fecha);
+}
+
+function informacionConsumo(edificio, ambiente, fecha){
     let formData = new FormData();
     formData.append('edificio', edificio);
     formData.append('ambiente', ambiente);
@@ -484,8 +533,8 @@ function conversarAsistente(){
         }
         conversacion = [];
         if(respuesta['asis_funciones']){
-            //ejecutarFuncion(respuesta['asis_funciones']);
-            console.log(respuesta);
+            ejecutarFuncion(respuesta['asis_funciones']);
+            //console.log(respuesta);
 
         }else if(respuesta['respuesta_msg']){
             let textType = document.getElementById('typeContenido');
@@ -505,6 +554,122 @@ function conversarAsistente(){
             conversacion.push({"role": "assistant", "content": rMensaje});
         }
     });
+}
+
+async function ejecutarFuncion(asisFunciones){
+    console.log(asisFunciones);
+    let handleAFunciones = {
+        'get_usuario': getDatosUsuario,
+        'get_ambiente_edificio': getAmbienteEdificio,
+        'get_edificios': mostrarInfoEdificios,
+        /*'sfromgenero': getSintomasxGenero,
+        'get_diagnostico': getDiagnostico,
+        'get_tratamiento': getTratamiento,
+        'finalizar': finalizarAsistente,
+        'guardar_form': guardarxAsistente*/
+    }
+
+    for(let afuncion of asisFunciones){
+        //afuncion['funcion']
+        //afuncion['funcion_args'] = JSON.parse(afuncion['funcion_args']);
+        //console.log(afuncion);
+        const activarFuncion = handleAFunciones[afuncion['funcion_name']];
+
+        let rcontent = await activarFuncion(afuncion);
+        let respuestaF = {
+            "tool_call_id": afuncion['funcion_id'],
+            "role": "tool",
+            "name": afuncion['funcion_name'],
+            "content": rcontent,
+        };
+        conversacion.push(respuestaF);
+    }
+    conversarAsistente();
+}
+
+async function getDatosUsuario(respuesta){
+    let fArgumentos = respuesta['funcion_args'];
+
+    if(fArgumentos['cargo'] && fArgumentos['nombres']){
+        return JSON.stringify({success: true}); 
+    }else if(fArgumentos['cargo']){
+        return "Pidele al usuario que te indique su nombre"
+    }else if(fArgumentos['nombres']){
+        return "Preguntale al usuario si es estudiante o docente"
+    }else{
+        return "Vuelve a preguntarle al usuario su nombre y si es estudiante o docente"
+    }
+}
+
+async function getAmbienteEdificio(respuesta){
+    /*let fArgumentos = respuesta['funcion_args'];
+
+    if(fArgumentos['edificio'] && fArgumentos['ambiente']){
+        console.log(fArgumentos);
+        //fetch('/api/')
+        let formData = new FormData();
+        formData.append('edificio', fArgumentos['edificio']);
+        formData.append('ambiente', fArgumentos['ambiente']);
+
+        fetch('/api/validar_parametros', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data)
+            if(data['res'] == 1){
+            }
+            return "Informale al usuario que se mostrara la informacion del consumo energetico en pantalla a continuacion."; 
+        })
+    }else{
+        return "Vuelve a preguntarle al usuario sobre el edificio y el ambiente que desea consultar."
+    }*/
+
+    let fArgumentos = respuesta['funcion_args'];
+
+    if (fArgumentos['edificio'] && fArgumentos['ambiente']) {
+        console.log(fArgumentos);
+        let formData = new FormData();
+        formData.append('edificio', fArgumentos['edificio']);
+        formData.append('ambiente', fArgumentos['ambiente']);
+
+        try {
+            // Espera a que fetch se resuelva
+            let response = await fetch('/api/validar_parametros', {
+                method: 'POST',
+                body: formData
+            });
+            let data = await response.json();
+            console.log(data);
+
+            // Verifica el resultado de la respuesta
+            if (data['res'] == 1) {
+                if(data['ambiente']){
+                    informacionConsumo(data['edificio'], data['ambiente'], '2024-01-10');
+                    return "Informale al usuario que se mostrará la información del consumo energético en pantalla a continuación. Además dale unas recomendaciones para optimizar el consumo energetico del edificio y ambientes."; 
+                }else{
+                    return "Informale al usuario que ese ambiente no se encuentra registrado como parte del edificio."; 
+                }
+            } else {
+                return "Informale al usuario que no se encontro el edificio solicitado. Recuerdale al usuario que te puede pedir mostrar los edificios registrados.";
+            }
+        } catch (error) {
+            console.error("Error en la solicitud:", error);
+            return "Ocurrió un error al consultar los datos. Inténtalo de nuevo.";
+        }
+    }else{
+        return "Vuelve a preguntarle al usuario sobre el edificio y el ambiente que desea consultar."
+    }
+}
+
+async function mostrarInfoEdificios(respuesta){
+    let fArgumentos = respuesta['funcion_args'];
+
+    $('#modalInfoEdificios').modal('show');
+    /*if(fArgumentos['mostrar']){
+    }*/
+    return "Informale al usuario que se esta mostrando la informacion de los edificios y sus ambientes";
 }
 
 function setearCharts(){
