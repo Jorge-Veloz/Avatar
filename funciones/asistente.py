@@ -43,6 +43,7 @@ def getFuncionesAsistente():
         }
     }
 
+    """
     mostrarEdificios = {
         "type": "function",
         "function":{
@@ -57,6 +58,24 @@ def getFuncionesAsistente():
                     }
                 },
                 "required": ["mostrar"]
+            }
+        }
+    }
+    """
+    getRecomendaciones = {
+        "type": "function",
+        "function":{
+            "name": "get_recomendaciones",
+            "description": "Devuelve las recomendaciones que darias al usuario para optimizar el consumo energético.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "recomendaciones": {
+                        "type": "string",
+                        "description": "Recomendaciones de optimizacion de consumo energetico."
+                    }
+                },
+                "required": ["recomendaciones"]
             }
         }
     }
@@ -133,7 +152,7 @@ def getFuncionesAsistente():
         }
     }
     
-    funciones = [datosUsuario, infoConsulta, mostrarEdificios, finalizar, guardado]
+    funciones = [datosUsuario, infoConsulta, getRecomendaciones, guardado]
     #funciones.append(nombreUsuario)
     #funciones.append(cargoUsuario)
     #funciones += [finalizar, guardado]

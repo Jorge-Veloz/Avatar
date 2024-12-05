@@ -16,7 +16,10 @@ if(window.webkitSpeechRecognition == undefined){
     });
     $('#cod-form').attr('disabled', 'true');
     $('#fecha_atencion').attr('disabled', 'true');
+}else{
+    comprobarPermisos('microfono');
 }
+
 if(window.SpeechSynthesisUtterance == undefined){
     Swal.fire({
         title:"Error",
@@ -42,9 +45,17 @@ if(window.SpeechSynthesis == undefined){
     $('#fecha_atencion').attr('disabled', 'true');
 }
 
+/*if(!(localStorage.getItem('voz_asistente'))){
+    if(!(/Android|iPhone|iPad/i.test(navigator.userAgent))) $('#modal_voces').modal('show');
+}*/
+
+//var vAsistente;
 var estadoAsistente;
 var asistenteFinalizo = false;
 var conversacion = [];
+
+let resolverPromAutor;
+let rechazarPromAutor;
 
 var recognition;
 var utterance;
@@ -55,9 +66,31 @@ const TIEMPO_CORTE = 2;
 
 var chConsumoAct;
 var chConsumoFut;
+var dataConsumoAct;
+var dataConsumoFut;
+var permiteGraficaClic = false;
 
 //Inicializacion de los servicios
 document.addEventListener("DOMContentLoaded", () => {
+    if(localStorage.getItem('autorizacion') == 1){
+        inicializarDOM();
+    }else{
+        $('#modal_autorizacion').modal('show');
+        verificarAutorizacion()
+        .then((res)=>{
+            $('#modal_autorizacion').modal('hide');
+            localStorage.setItem('autorizacion', 1);
+            inicializarDOM();
+        })
+        .catch((err) =>{
+            localStorage.setItem('autorizacion', 0);
+            location.href = "https://www.google.com/";
+        });
+    }
+});
+
+function inicializarDOM(){
+    cambiaAnimacionAsistente('deshabilitado-asistente');
     /* ========================== Seteo Reconocimiento de Voz ========================== */
     recognition = new webkitSpeechRecognition();
     recognition.lang = 'es-ES';
@@ -68,10 +101,11 @@ document.addEventListener("DOMContentLoaded", () => {
         estadoAsistente = "escuchando";
     }
     recognition.onaudioend = (event) => {
-        cambiaAnimacionAsistente('hablar-asistente')
+        cambiaAnimacionAsistente('cargando-asistente')
         estadoAsistente = "detenido";
     }
     recognition.onresult = (event) => {
+        //cambiaAnimacionAsistente('cargando-asistente');
         const transcript = event.results[0][0].transcript;
     
         conversacion.push({"role": "user", "content": transcript});
@@ -90,19 +124,141 @@ document.addEventListener("DOMContentLoaded", () => {
 
     gestionarErrorVoz();
 
-    utterance.lang = 'es-ES' || 'es-MX' || 'es-US' || 'en-US';
+    if(/Android|iPhone|iPad/i.test(navigator.userAgent)){
+        cambiaAnimacionAsistente('inicializar-asistente');
+        utterance.lang = 'es-ES' || 'es-MX' || 'es-US' || 'en-US';
+    }else if(/Macintosh/i.test(navigator.userAgent)){
+        //toggleLoading('mostrar', 'Buscando voces...');
+
+        synth.addEventListener("voiceschanged", setearVoces());
+    }else{
+        //toggleLoading('mostrar', 'Buscando voces...');
+
+        synth.onvoiceschanged = setearVoces;
+    }
+
+    //utterance.lang = 'es-ES' || 'es-MX' || 'es-US' || 'en-US';
     /* ========================== Fin Seteo Reproduccion de Voz ========================== */
 
     /* ========================== Seteo Charts ========================== */
     //setearCharts();
-    chConsumoAct = crearChart(document.querySelector("#grafica_cons_act"), 'line');
-    chConsumoFut = crearChart(document.querySelector("#grafica_cons_fut"), 'line');
+    chConsumoAct = crearChart(document.querySelector("#grafica_cons_act"), 'line', 'grafica_actual');
+    chConsumoFut = crearChart(document.querySelector("#grafica_cons_fut"), 'line', 'grafica_futuro');
     /* ========================== Fin Seteo Charts ========================== */
     //$('#fecha_busqueda').val(new Date().toISOString().split('T')[0]);
     $('#asistente-btn').removeAttr('disabled');
     getEdificios();
     llenarModalInfoEdificios();
-});
+}
+
+function verificarAutorizacion(){
+    return new Promise((resolve, reject) => {
+        resolverPromAutor = resolve;
+        rechazarPromAutor = reject;
+    })
+}
+
+function clickAutorizacion(accion){
+    if(accion == 'A' && resolverPromAutor){
+        resolverPromAutor('Autorizacion aceptada');
+        resolverPromAutor = null;
+        rechazarPromAutor = null;
+    }else if(accion == 'R' && rechazarPromAutor){
+        rechazarPromAutor('Autorizacion rechazada');
+        resolverPromAutor = null;
+        rechazarPromAutor = null;
+    }else{
+        Swal.fire('Ocurrio un error al procesar la accion.')
+        .then(r => {
+            location.href='https://www.google.com/';
+        });
+    }
+}
+
+function setearVoces(){
+    //toggleLoading('ocultar');
+
+    voces = window.speechSynthesis.getVoices();
+    if(!localStorage.getItem('voz_asistente')){
+        let vAsistente = voces.find(voz => voz.name === "Google español");
+
+        if(vAsistente){
+            cambiaAnimacionAsistente('inicializar-asistente');
+            localStorage.setItem('voz_asistente', vAsistente.voiceURI);
+            utterance.voice = voces.find(voz => voz.voiceURI === localStorage.getItem('voz_asistente'));
+        }else{
+            selectorVoces();
+        }
+    }else{
+        cambiaAnimacionAsistente('inicializar-asistente');
+        //vAsistente = voces.find(voz => voz.voiceURI === localStorage.getItem('voz_masculino'));
+        utterance.voice = voces.find(voz => voz.voiceURI === localStorage.getItem('voz_asistente'));
+    }
+    //utterance.lang = 'es-ES' || 'es-MX' || 'es-US' || 'en-US';
+    //console.log(localStorage.getItem(`voz_${generoAsistente}`));
+}
+
+function verificarVoz(){
+    let vAsis = $('#select_voz').val();
+    //console.log(vMasc + vFem);
+    if(vAsis){
+        $('#guardar_voz').attr('disabled', false);
+    }else{
+        $('#guardar_voz').attr('disabled', true);
+    }
+}
+
+function selectorVoces(){
+    let vES = voces.filter(v => v.lang == 'es-MX' || v.lang == 'es-ES' || v.lang == 'es-US');
+    let opcHTML = "<option value='' selected disabled>Seleccione voz...</option>";
+
+    for(let v of vES){
+        opcHTML += `<option value="${v.voiceURI}">${v.name}</option>`;
+    }
+
+    console.log(opcHTML);
+
+    $('#select_voz').html(opcHTML);
+    $('#modal_voces').modal('show');
+}
+
+function reproducir(){
+    gestionarErrorVoz();
+
+    let selectVoz;
+    
+    let texto = "Hola, soy el asistente de consumo energetico";
+
+    let vozURI = $('#select_voz').val();
+    if(!vozURI){
+        return;
+    }
+    selectVoz = voces.find(voz => voz.voiceURI === $('#select_voz').val());
+
+    utterance.text = texto;
+    utterance.voice = selectVoz;
+    synth.speak(utterance);
+    $('#play_voz').attr('disabled', true);
+
+    utterance.onend = () => {
+        $('#play_voz').removeAttr('disabled');
+    }
+}
+
+function guardarVocesDefault(){
+    //toggleLoading('mostrar', 'Guardando voces...')
+    let vAsistente = $('#select_voz').val();
+
+    localStorage.setItem('voz_asistente', vAsistente);
+    utterance.voice = voces.find(voz => voz.voiceURI === localStorage.getItem('voz_asistente'));
+
+    //toggleLoading('ocultar')
+    $('#modal_voces').modal('hide');
+
+    Swal.fire('Se ha guadado la voz correctamente.', '', 'success').then(r => {
+        cambiaAnimacionAsistente('inicializar-asistente');
+    });
+}
 
 function llenarModalInfoEdificios(){
     fetch('/api/info_edificios_ambientes', {
@@ -203,6 +359,8 @@ function consultarDatosEnergeticos(){
 }
 
 function informacionConsumo(edificio, ambiente, fecha){
+    dataConsumoAct = undefined;
+    dataConsumoFut = undefined;
     let formData = new FormData();
     formData.append('edificio', edificio);
     formData.append('ambiente', ambiente);
@@ -235,6 +393,7 @@ function informacionConsumo(edificio, ambiente, fecha){
                 data: consumo_actual_total
             }];
             console.log(dataConsumo)
+            dataConsumoAct = dataConsumo;
             
             chConsumoAct.updateSeries(dataConsumo);
 
@@ -263,7 +422,8 @@ function informacionConsumo(edificio, ambiente, fecha){
                     name: "Consumo Total",
                     data: consumo_futuro_total
                 }];
-                console.log(dataConsumo)
+                console.log(dataConsumo);
+                dataConsumoFut = dataConsumo;
                 
                 chConsumoFut.updateSeries(dataConsumo);
 
@@ -311,6 +471,7 @@ function inicializarAsistente(){
 
 function cambiaAnimacionAsistente(animacion){
     let clasesAnim = [
+        "deshabilitado-asistente",
         "inicializar-asistente",
         "cargando-asistente",
         "hablar-asistente",
@@ -327,6 +488,14 @@ function cambiaAnimacionAsistente(animacion){
     $('#inner-wave').removeAttr('disabled');
 
     switch(animacion){
+        case 'deshabilitado-asistente':
+        {
+            $('#inner-wave').addClass(animacion);
+            $('#icon_control').html('<i class="fa-solid fa-play"></i>');
+            $('#icon_control').attr('title', 'Esperando...');
+            $('#inner-wave').attr('disabled', true);
+        }
+        break;
         case 'inicializar-asistente':
         {
             $('#inner-wave').addClass(animacion);
@@ -394,6 +563,9 @@ async function hablar(texto) {
     utterance.onstart = function(){
         clearTimeout(intervalo);
         if(indice == 1){
+            if(dataConsumoAct && dataConsumoFut){
+                permiteGraficaClic = false;
+            }
             cambiaAnimacionAsistente("reproduciendo-asistente");
             estadoAsistente = "detenido"
         }
@@ -414,6 +586,12 @@ async function hablar(texto) {
             cambiaAnimacionAsistente("hablar-asistente");
             estadoAsistente = "esperando";
             
+            if(dataConsumoAct && dataConsumoFut){
+                permiteGraficaClic = true;
+            }else{
+                permiteGraficaClic = false;
+            }
+
             if(asistenteFinalizo){
                 $('#inner-wave').removeClass('iw-enabled');
                 guardarFormulario();
@@ -538,7 +716,7 @@ function conversarAsistente(){
 
         }else if(respuesta['respuesta_msg']){
             let textType = document.getElementById('typeContenido');
-            let rMensaje = respuesta['respuesta_msg']
+            let rMensaje = limpiarMensaje(respuesta['respuesta_msg'])
             let iTextChar = 0;
 
             textType.textContent = "";
@@ -556,17 +734,20 @@ function conversarAsistente(){
     });
 }
 
+//Aqui se iran agregando otros tipos de formateo para darle mas naturalidad al hablar el asistente
+function limpiarMensaje(mensaje){
+    let sinasteriscos = mensaje.replaceAll('*', ''); //Quita los doble asterisco del texto
+    let sinsaltos = sinasteriscos.replaceAll('\n', ''); //Quita los saltos de linea \n del texto
+    return sinsaltos; //retorna el texto limpio
+}
+
 async function ejecutarFuncion(asisFunciones){
     console.log(asisFunciones);
     let handleAFunciones = {
         'get_usuario': getDatosUsuario,
         'get_ambiente_edificio': getAmbienteEdificio,
-        'get_edificios': mostrarInfoEdificios,
-        /*'sfromgenero': getSintomasxGenero,
-        'get_diagnostico': getDiagnostico,
-        'get_tratamiento': getTratamiento,
-        'finalizar': finalizarAsistente,
-        'guardar_form': guardarxAsistente*/
+        //'get_edificios': mostrarInfoEdificios,
+        'get_recomendaciones': getRecomendaciones,
     }
 
     for(let afuncion of asisFunciones){
@@ -602,30 +783,6 @@ async function getDatosUsuario(respuesta){
 }
 
 async function getAmbienteEdificio(respuesta){
-    /*let fArgumentos = respuesta['funcion_args'];
-
-    if(fArgumentos['edificio'] && fArgumentos['ambiente']){
-        console.log(fArgumentos);
-        //fetch('/api/')
-        let formData = new FormData();
-        formData.append('edificio', fArgumentos['edificio']);
-        formData.append('ambiente', fArgumentos['ambiente']);
-
-        fetch('/api/validar_parametros', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data)
-            if(data['res'] == 1){
-            }
-            return "Informale al usuario que se mostrara la informacion del consumo energetico en pantalla a continuacion."; 
-        })
-    }else{
-        return "Vuelve a preguntarle al usuario sobre el edificio y el ambiente que desea consultar."
-    }*/
-
     let fArgumentos = respuesta['funcion_args'];
 
     if (fArgumentos['edificio'] && fArgumentos['ambiente']) {
@@ -646,6 +803,11 @@ async function getAmbienteEdificio(respuesta){
             // Verifica el resultado de la respuesta
             if (data['res'] == 1) {
                 if(data['ambiente']){
+                    $('#select_param_click').hide();
+                    $('#select_param_voz').show();
+                    $('#combo_edificio_v').val(fArgumentos['edificio']);
+                    $('#combo_ambientes_v').val(fArgumentos['ambiente']);
+                    $('#fecha_busqueda_v').val('2024-01-10');
                     informacionConsumo(data['edificio'], data['ambiente'], '2024-01-10');
                     return "Informale al usuario que se mostrará la información del consumo energético en pantalla a continuación. Además dale unas recomendaciones para optimizar el consumo energetico del edificio y ambientes."; 
                 }else{
@@ -663,14 +825,20 @@ async function getAmbienteEdificio(respuesta){
     }
 }
 
-async function mostrarInfoEdificios(respuesta){
+async function getRecomendaciones(respuesta){
+    let fArgumentos = respuesta['funcion_args'];
+    $('#txtarea_recomendaciones').val(fArgumentos['recomendaciones']);
+    document.querySelector("#txtarea_recomendaciones").scrollIntoView({ behavior: 'smooth' });
+    return "Informale al usuario que se ha porporcionado la informacion sobre las recomendaciones";
+}
+
+/*async function mostrarInfoEdificios(respuesta){
     let fArgumentos = respuesta['funcion_args'];
 
     $('#modalInfoEdificios').modal('show');
-    /*if(fArgumentos['mostrar']){
-    }*/
+    
     return "Informale al usuario que se esta mostrando la informacion de los edificios y sus ambientes";
-}
+}*/
 
 function setearCharts(){
     let dataConsAct = [
@@ -696,12 +864,42 @@ function setearCharts(){
     var chConsumoFut = crearChart(document.querySelector("#grafica_cons_fut"), 'line', dataConsFut);
 }
 
-function crearChart(elemento, tipo){
+function crearChart(elemento, tipo, nombre){
     let options = {
         chart: {
             type: tipo,
             height: '100%',
-            width: '100%'
+            width: '100%',
+            events: {
+                markerClick: function(event, chartContext, {seriesIndex, dataPointIndex, w}){
+                    let indiceSerie = dataPointIndex;
+                    if(permiteGraficaClic){
+                        if(dataConsumoAct && nombre == 'grafica_actual'){
+                            let lblConsActAmb = dataConsumoAct[0].data[indiceSerie].y;
+                            let lblConsActEdi = dataConsumoAct[1].data[indiceSerie].y;
+                            $('#val_consact_amb').text(lblConsActAmb+"kWh");
+                            $('#val_consact_edi').text(lblConsActEdi+"kWh");
+                            conversacion.push({'role': 'user', 'content': 'Mencionale al usuario que el valor actual de consumo de energia del ambiente es  de '+lblConsActAmb+'kWh, y el valor actual del consumo energetico del edificio es de '+lblConsActEdi+'kWh.'});
+                            cambiaAnimacionAsistente("cargando-asistente");
+                            conversarAsistente();
+                        }else if(dataConsumoFut && nombre == 'grafica_futuro'){
+                            let lblConsFutAmb = dataConsumoFut[0].data[indiceSerie].y;
+                            let lblConsFutEdi = dataConsumoFut[1].data[indiceSerie].y;
+                            $('#val_consfut_amb').text(lblConsFutAmb+"kWh");
+                            $('#val_consfut_edi').text(lblConsFutEdi+"kWh");
+                            conversacion.push({'role': 'user', 'content': 'Mencionale al usuario que el valor futuro de consumo de energia del ambiente es  de '+lblConsFutAmb+'kWh, y el valor futuro del consumo energetico del edificio es de '+lblConsFutEdi+'kWh.'});
+                            cambiaAnimacionAsistente("cargando-asistente");
+                            conversarAsistente();
+                        }else{
+                            $('#val_consact_amb').text("0kWh");
+                            $('#val_consact_edi').text("0kWh");
+                            $('#val_consfut_amb').text("0kWh");
+                            $('#val_consfut_edi').text("0kWh");
+                            Swal.fire('No existe informacion', '', 'error');
+                        }
+                    }
+                }
+            }
         },
         series: [{
             name: "Series default",

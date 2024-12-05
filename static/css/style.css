@@ -51,6 +51,7 @@
     background-color: #b5b5b5;
 }
 
+.deshabilitado-asistente,
 .hablar-asistente,
 .detener-asistente,
 .inicializar-asistente,
@@ -72,12 +73,18 @@
     transition: transform .3s, filter .5s;
 }
 
+.deshabilitado-asistente{
+    background: linear-gradient(162deg, rgb(136, 136, 136) 0%, rgb(53, 53, 53) 100%);
+    filter: brightness(1);
+    cursor: not-allowed;
+}
+
 .inicializar-asistente{
     background: linear-gradient(162deg, rgb(97 195 255) 0%, rgb(37 77 169) 100%);
     filter: brightness(1);
 }
 
-.inicializar-asistente .icon_control{
+.inicializar-asistente .icon_control, .deshabilitado-asistente .icon_control{
     margin-left: 8px;
 }
 
