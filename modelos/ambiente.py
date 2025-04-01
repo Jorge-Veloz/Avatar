@@ -1,8 +1,10 @@
 from db.db import db
+import requests
 
 class AmbientesModelo:
     def __init__(self):
         self.db = db()
+        self.rutaAPI = "http://192.168.0.114:3000/v1/asistente-virtual"
 
     def getAmbientes(self, edificio):
         sql = f"SELECT * FROM ambiente WHERE ID_Edificio='{edificio}' ORDER BY Codigo";
@@ -23,6 +25,13 @@ class AmbientesModelo:
             return None
         
     def getAmbientesCompleta(self):
+        try:
+            response = requests.get(self.rutaAPI+'/edificios')
+            data = response.json()  # Si la respuesta es JSON
+            return data
+        except Exception as e:
+            return str(e), 500
+        
         sql = f"SELECT Nombre, Codigo FROM ambiente AS a INNER JOIN edificio AS e ON a.ID_Edificio = e.ID;"
         datos = self.db.consultarDatos(sql)
 

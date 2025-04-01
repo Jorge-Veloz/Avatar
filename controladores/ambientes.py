@@ -18,7 +18,4 @@ class AmbientesControlador:
     def getAmbientesCompleta(self):
         datos = self.modelo.getAmbientesCompleta()
 
-        if datos:
-            return {'res': 1, 'datos': datos}
-        else:
-            return {'res': 0}
+        return datos

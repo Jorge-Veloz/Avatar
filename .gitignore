@@ -1,2 +1,3 @@
 .env
 /db/asistente_energia_db.sql
+/db/backup/

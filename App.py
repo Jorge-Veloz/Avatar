@@ -8,6 +8,7 @@ from funciones.asistente import getMensajeSistema
 import json
 import os
 from dotenv import load_dotenv
+import requests
 import random
 import string
 
@@ -35,6 +36,16 @@ def serve_file(filename):
 @app.get('/')
 def Index():
     return render_template('3d.html')
+
+@app.get('/pruebaAPI')
+def pruebaAPI():
+    try:
+        response = requests.get('https://pokeapi.co/api/v2/berry-firmness/2/')
+        data = response.json()  # Si la respuesta es JSON
+        return jsonify(data)
+    except Exception as e:
+        return str(e), 500
+
 
 @app.get('/avatar')
 def modeloAvatar():

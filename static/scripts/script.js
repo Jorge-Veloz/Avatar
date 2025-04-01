@@ -63,6 +63,7 @@ var synth;
 var voces;
 var intervalo;
 const TIEMPO_CORTE = 2;
+const rutaAPI = "http://192.168.0.114:3000/v1/asistente-virtual";
 
 var chConsumoAct;
 var chConsumoFut;
@@ -72,6 +73,7 @@ var permiteGraficaClic = false;
 
 //Inicializacion de los servicios
 document.addEventListener("DOMContentLoaded", () => {
+    probarAPI();
     if(localStorage.getItem('autorizacion') == 1){
         inicializarDOM();
     }else{
@@ -88,6 +90,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+
+function probarAPI(){
+    fetch('/pruebaAPI', {
+        method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+    })
+}
 
 function inicializarDOM(){
     cambiaAnimacionAsistente('deshabilitado-asistente');
@@ -148,7 +160,7 @@ function inicializarDOM(){
     //$('#fecha_busqueda').val(new Date().toISOString().split('T')[0]);
     $('#asistente-btn').removeAttr('disabled');
     getEdificios();
-    llenarModalInfoEdificios();
+    //llenarModalInfoEdificios();
 }
 
 function verificarAutorizacion(){
@@ -305,7 +317,7 @@ function llenarModalInfoEdificios(){
     })
 }
 
-function getEdificios(){
+function getEdificiosAntiguo(){ //Funcion de la API antigua
     fetch('/api/edificios', {
         method: 'GET'
     })
@@ -323,7 +335,81 @@ function getEdificios(){
     })
 }
 
-function getAmbiente(){
+function getEdificios(){ //Funcion de la nueva API
+    fetch(rutaAPI+'/edificios', {
+        method: 'GET'
+    })
+    .then(response => {
+        return response.json();
+        if(response.ok){
+            return response.json();
+        }else{
+            //return response.text();
+            if(response.status >= 400 && response.status < 500){
+                throw new Error("El servicio no esta disponible. Por favor, intente despues.");
+            }else{
+                throw new Error("Ocurrio un problema con el servidor.");
+            }
+        }
+    })
+    .then(data => {
+        
+        if(data.ok){
+            console.log(data);
+            let datos = data['datos'];
+
+            let ops = "<option value='' selected disabled>Seleccione el edificio</option>";
+            for(let d of datos){
+                ops += `<option value='${d['id']}'>${d['nombre']}</option>`;
+            }
+            $('#combo_edificio').html(ops);
+        }else{
+            $('#combo_edificio').html("<option value='' selected disabled>No hay datos de edificios</option>");
+            Swal.fire('Error', data.observacion, 'error');
+        }
+        /*if(data.length > 0){
+        }else{
+        }*/
+    })
+    .catch(error => {
+        Swal.fire("Error en el servidor.", "Error: "+error.message, "error");
+    });
+}
+
+function getPiso(){
+    let edificio = $('#combo_edificio').val();
+    fetch(rutaAPI+'/pisos?idEdificacion='+edificio, {
+        method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+        /*if(data['res'] == 1){
+            let datos = data['datos'];
+
+            let ops = "<option value='' selected disabled>Seleccione el ambiente</option>";
+            for(let d of datos){
+                ops += `<option value='${d['Codigo']}'>${d['Descripcion']}</option>`;
+            }
+            $('#combo_ambientes').html(ops);
+        }*/
+
+        if(data.ok){
+            console.log(data);
+            let datos = data['datos'];
+    
+            let ops = "<option value='' selected disabled>Seleccione el piso</option>";
+            for(let d of datos){
+                ops += `<option value='${d['id']}'>${d['nombre']}</option>`;
+            }
+            $('#combo_pisos').html(ops);
+        }else{
+            $('#combo_pisos').html("<option value='' selected disabled>No hay datos de pisos</option>");
+            Swal.fire('Error', data.observacion, 'error');
+        }
+    })
+}
+
+function getAmbienteAnt(){
     let formData = new FormData();
     formData.append('edificio', $('#combo_edificio').val());
 
@@ -345,20 +431,73 @@ function getAmbiente(){
     })
 }
 
+function groupBy(arr, prop) {
+    const map = new Map(Array.from(arr, obj => [obj[prop],
+    []
+    ]));
+    arr.forEach(obj => map.get(obj[prop]).push(obj));
+    return Array.from(map.values());
+}
+
+function getAmbiente(){
+    
+    let edificio = $('#combo_edificio').val();
+    let piso = $('#combo_pisos').val();
+    fetch(rutaAPI+'/ambientes?idEdificacion='+edificio+'&idPiso='+piso, {
+        method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+        /*if(data['res'] == 1){
+            let datos = data['datos'];
+
+            let ops = "<option value='' selected disabled>Seleccione el ambiente</option>";
+            for(let d of datos){
+                ops += `<option value='${d['Codigo']}'>${d['Descripcion']}</option>`;
+            }
+            $('#combo_ambientes').html(ops);
+        }*/
+
+        if(data.ok){
+            console.log(data);
+            let datos = data['datos'];
+    
+            /*let ops = "<option value='' selected disabled>Seleccione el ambiente</option>";
+            for(let d of datos){
+                ops += `<option value='${d['id']}'>${d['nombre']}</option>`;
+            }
+            $('#combo_ambientes').html(ops);*/
+
+            let result = ``;
+            let tipos = groupBy(datos, 'tipoAmbiente')
+            tipos.forEach(i => {
+                result += `<optgroup label="${i[0].tipoAmbiente}">`;
+                i.forEach(j => { result += ` <option value="${j.id}">${j.nombre}</option>` });
+                result += ` </optgroup> `;
+            })
+            $('#combo_ambientes').html(result);
+        }else{
+            $('#combo_ambientes').html("<option value='' selected disabled>No hay datos de ambientes</option>");
+            Swal.fire('Error', data.observacion, 'error');
+        }
+    })
+}
+
 function consultarDatosEnergeticos(){
     let edificio = $('#combo_edificio').val();
+    let piso = $('#combo_pisos').val();
     let ambiente = $('#combo_ambientes').val();
     let fecha = $('#fecha_busqueda').val();
 
-    if(!(edificio || ambiente || fecha)){
+    if(!(edificio || ambiente || piso || fecha)){
         Swal.fire('', 'Se requieren los campos Edificio, Ambientes y Fecha', 'error');
         return;
     }
 
-    informacionConsumo(edificio, ambiente, fecha);
+    informacionConsumo(edificio, piso, ambiente, fecha);
 }
 
-function informacionConsumo(edificio, ambiente, fecha){
+function informacionConsumoAnt(edificio, ambiente, fecha){
     dataConsumoAct = undefined;
     dataConsumoFut = undefined;
     let formData = new FormData();
@@ -433,6 +572,87 @@ function informacionConsumo(edificio, ambiente, fecha){
         }else{
             Swal.fire("", "No se encontro informacion en base a los parametros consultados.", "error");
         }
+    })
+}
+function informacionConsumo(edificio, piso, ambiente, fecha){
+    dataConsumoAct = undefined;
+    dataConsumoFut = undefined;
+   /*let formData = new FormData();
+    formData.append('edificio', edificio);
+    formData.append('ambiente', ambiente);
+    formData.append('fecha', fecha);*/
+    
+    fetch(rutaAPI+'/datos?idEdificacion='+edificio+'&idPiso='+piso+'&idAmbiente='+ambiente+'&fecha='+fecha, {
+        method: 'GET',
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.ok){
+            let datos = data['datos'];
+            
+        }
+        /*let data_actual = data['data_actual'];
+        if(data_actual['res'] == 1){
+            let datos = data_actual['datos'];
+            
+            let consumo_actual = [];
+            for(let ca of datos['consumo_actual']){
+                consumo_actual.push({x: ca['Mes'], y: ca['Consumo_Mensual']})
+            }
+            
+            let consumo_actual_total = [];
+            for(let cat of datos['consumo_actual_total']){
+                consumo_actual_total.push({x: cat['Mes'], y: cat['Consumo_Mensual']})
+            }
+            
+            let dataConsumo = [{
+                name: "Consumo Actual",
+                data: consumo_actual
+            }, {
+                name: "Consumo Total",
+                data: consumo_actual_total
+            }];
+            console.log(dataConsumo)
+            dataConsumoAct = dataConsumo;
+            
+            chConsumoAct.updateSeries(dataConsumo);
+
+            $('#val_consact_amb').text(datos['consumo_actual'][datos['consumo_actual'].length-1]['Consumo_Mensual'] + "kWh");
+            $('#val_consact_edi').text(datos['consumo_actual_total'][datos['consumo_actual_total'].length-1]['Consumo_Mensual'] + "kWh");
+
+            let data_futuro = data['data_futuro'];
+            if(data_futuro && data_futuro['res'] == 1){
+                let datos = data_futuro['datos'];
+                console.log(datos);
+            
+                let consumo_futuro = [];
+                for(let cf of datos['consumo_futuro']){
+                    consumo_futuro.push({x: cf['Mes'], y: cf['Consumo_Mensual'].toFixed(2)})
+                }
+                
+                let consumo_futuro_total = [];
+                for(let cft of datos['consumo_futuro_total']){
+                    consumo_futuro_total.push({x: cft['Mes'], y: cft['Consumo_Mensual'].toFixed(2)})
+                }
+                
+                let dataConsumo = [{
+                    name: "Consumo Futuro",
+                    data: consumo_futuro
+                }, {
+                    name: "Consumo Total",
+                    data: consumo_futuro_total
+                }];
+                console.log(dataConsumo);
+                dataConsumoFut = dataConsumo;
+                
+                chConsumoFut.updateSeries(dataConsumo);
+
+                $('#val_consfut_amb').text(datos['consumo_futuro'][datos['consumo_futuro'].length-1]['Consumo_Mensual'].toFixed(2) + "kWh");
+                $('#val_consfut_edi').text(datos['consumo_futuro_total'][datos['consumo_futuro_total'].length-1]['Consumo_Mensual'].toFixed(2) + "kWh");
+            }
+        }else{
+            Swal.fire("", "No se encontro informacion en base a los parametros consultados.", "error");
+        }*/
     })
 }
 
