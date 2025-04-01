@@ -640,7 +640,7 @@ function voz(texto, indice){
 }
 
 function makeCunksOfText(text) {
-    const maxLength = 200; // entre 190 y 220
+    const maxLength = 190; // entre 190 y 220
     let speechChunks = [];
 
     // Split the text into chunks of maximum length maxLength without breaking words
