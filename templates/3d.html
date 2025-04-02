@@ -15,7 +15,10 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 </head>
 <body>
     <div class="contenedor">
@@ -63,54 +66,87 @@
                 <div class="container mt-5">
                     <h2 class="mb-4 text-center">Asistente de Consumo Eléctrico</h2>
                     <div>
-                        <div class="row mt-2" id="select_param_click">
-                            
-                            <div class="form-group col-3 row mb-3">
-                                <b>Edificio:</b>
-                                <div class="col-10 pe-0">
-                                    <select class="form-select" name="combo_edificio" id="combo_edificio" onchange="getPiso()">
-                                        <option value="" selected disabled>Seleccione el edificio</option>
-                                    </select>
-                                    <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
+                        <div id="select_param_click">
+                            <div class="row mt-2">
+                                <div class="form-group col-4 row mb-3">
+                                    <b>Edificio:</b>
+                                    <div class="col-10 pe-0">
+                                        <select class="form-select" name="combo_edificio" id="combo_edificio" onchange="getPiso()">
+                                            <option value="" selected disabled>Seleccione el edificio</option>
+                                        </select>
+                                        <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
+                                    </div>
+                                    <div class="col-2">
+                                        <button class="btn btn-outline-info rounded-circle" id="btn_consultar_infoedificios" title="Edificios y ambientes disponibles" onclick="$('#modalInfoEdificios').modal('show');"><i class="fa-solid fa-question"></i></button>
+                                    </div>
                                 </div>
-                                <div class="col-2">
-                                    <button class="btn btn-outline-info rounded-circle" id="btn_consultar_infoedificios" title="Edificios y ambientes disponibles" onclick="$('#modalInfoEdificios').modal('show');"><i class="fa-solid fa-question"></i></button>
+                                <div class="form-group col-4 row mb-3">
+                                    <b>Piso:</b>
+                                    <div class="col-12">
+                                        <select class="form-select" name="combo_pisos" id="combo_pisos" onchange="getAmbiente()">
+                                            <option value="" selected disabled>Seleccione el piso</option>
+                                        </select>
+                                        <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
+                                    </div>
+                                </div>
+                                <div class="form-group col-4 row mb-3">
+                                    <b>Ambiente:</b>
+                                    <div class="col-12">
+                                        <select class="form-select" name="combo_ambientes" id="combo_ambientes">
+                                            <option value="" selected disabled>Seleccione el ambiente</option>
+                                        </select>
+                                        <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
+                                    </div>
                                 </div>
                             </div>
-                            <div class="form-group col-3 row mb-3">
-                                <b>Piso:</b>
-                                <div class="col-12">
-                                    <select class="form-select" name="combo_pisos" id="combo_pisos" onchange="getAmbiente()">
-                                        <option value="" selected disabled>Seleccione el piso</option>
-                                    </select>
-                                    <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
-                                </div>
-                            </div>
-                            <div class="form-group col-3 row mb-3">
-                                <b>Ambiente:</b>
-                                <div class="col-12">
-                                    <select class="form-select" name="combo_ambientes" id="combo_ambientes">
-                                        <option value="" selected disabled>Seleccione el ambiente</option>
-                                    </select>
-                                    <!--<input type="text" class="form-control" id="cod-form" placeholder="N° Form" disabled>-->
-                                </div>
-                            </div>
-                            <div class="form-group col-3 row mb-3">
-                                <b>Fecha Inicio:</b>
-                                <div class="col-12">
-                                    <input type="date" class="form-control" id="fecha_busqueda">
-                                    <!-- <div class="input-group input-group-sm">
-                                        <span class="input-group-text">-</span>
+                            <div class="row justify-content-end">
+                                <div class="form-group col-3">
+                                    <div id="reportrange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+                                        <i class="fa fa-calendar"></i>&nbsp;
+                                        <span></span> <i class="fa fa-caret-down"></i>
+                                    </div>
+                                    <script type="text/javascript">
+                                        $(function() {
+                                        
+                                            var start = moment().subtract(29, 'days');
+                                            var end = moment();
+                                        
+                                            function cb(start, end) {
+                                                $('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+                                            }
+                                        
+                                            $('#reportrange').daterangepicker({
+                                                startDate: start,
+                                                endDate: end,
+                                                ranges: {
+                                                   'Today': [moment(), moment()],
+                                                   'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                                                   'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                                                   'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                                                   'This Month': [moment().startOf('month'), moment().endOf('month')],
+                                                   'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+                                                }
+                                            }, cb);
+                                        
+                                            cb(start, end);
+                                        
+                                        });
+                                    </script>
+                                    <!-- <div class="input-group">
+                                        <span class="input-group-text">Fecha Inicio</span>
+                                        <input type="date" class="form-control" id="fecha_busqueda">
+                                        <span class="input-group-text">Fecha Fin</span>
                                         <input type="date" class="form-control" id="fecha_busqueda_fin">
                                     </div> -->
                                 </div>
-                            </div>
-                            <div class="form-group col-1 row mb-3 d-flex justify-content-center align-items-end">
-                                <!--<b>Fecha:</b>-->
-                                <div class="col-12">
-                                    <button class="btn btn-primary" id="btn_consultar_energia" title="Consultar Informacion" onclick="consultarDatosEnergeticos()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                                <div class="form-group col-1 row mb-3 d-flex justify-content-center align-items-end">
+                                    <!--<b>Fecha:</b>-->
+                                    <div class="col-12">
+                                        <button class="btn btn-primary" id="btn_consultar_energia" title="Consultar Informacion" onclick="consultarDatosEnergeticos()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                                    </div>
                                 </div>
                             </div>
+                            
                             
                         </div>
                         <div class="row mt-2" id="select_param_voz" style="display: none;">
@@ -235,7 +271,55 @@
                 <div class="modal-body">
                     <p>Esta es la información de los edificios y ambientes que se encuentra registrada actualmente:</p>
                     <div class="accordion accordion-flush" id="accordionFlushExample">
-                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingOne">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                                Accordion Item #1
+                              </button>
+                            </h2>
+                            <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
+                                <div class="accordion-body p-0 ps-3">
+                                    
+                                    <div class="accordion accordion-flush" id="accordionFlushExampleOne">
+                                        <h2 class="accordion-header" id="flush-headingOneOne">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwoOne" aria-expanded="false" aria-controls="flush-collapseTwoOne">
+                                                Accordion Item #1
+                                            </button>
+                                        </h2>
+                                        <div id="flush-collapseTwoOne" class="accordion-collapse collapse" aria-labelledby="flush-headingTwoOne" data-bs-parent="#accordionFlushExampleOne">
+                                            <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the second item's accordion body. Let's imagine this being filled with some actual content.</div>
+                                        </div>
+                                    </div>
+                                    <ul class="list-group list-group-flush">
+                                        
+                                        <li class="list-group-item">An item</li>
+                                        <li class="list-group-item">A second item</li>
+                                        <li class="list-group-item">A third item</li>
+                                    </ul>
+                                    
+                                </div>
+                            </div>
+                          </div>
+                          <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingTwo">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">
+                                Accordion Item #2
+                              </button>
+                            </h2>
+                            <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
+                              <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the second item's accordion body. Let's imagine this being filled with some actual content.</div>
+                            </div>
+                          </div>
+                          <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingThree">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
+                                Accordion Item #3
+                              </button>
+                            </h2>
+                            <div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
+                              <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the third item's accordion body. Nothing more exciting happening here in terms of content, but just filling up the space to make it look, at least at first glance, a bit more representative of how this would look in a real-world application.</div>
+                            </div>
+                          </div>
                     </div>
                 </div>
                 <div class="modal-footer">

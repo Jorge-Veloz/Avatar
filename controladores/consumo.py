@@ -1,4 +1,5 @@
 from modelos.consumo import ConsumoModelo
+from funciones.algoritmos import getPrediccionConsumo
 
 class ConsumoControlador:
     def __init__(self):
@@ -15,7 +16,7 @@ class ConsumoControlador:
 
         return res
     
-    def getConsumoFuturo(self, datosConsumo):
+    def getConsumoFuturoAnt(self, datosConsumo):
         consumoAmbiente = self.modelo.getConsumoFuturo(datosConsumo['consumo_actual'])
         consumoEdificio = self.modelo.getConsumoFuturo(datosConsumo['consumo_actual_total'])
 
@@ -26,3 +27,7 @@ class ConsumoControlador:
                 'consumo_futuro': consumoAmbiente
             }
         }
+    
+    def getConsumoFuturo(self, datosConsumo):
+        #consumoAmbiente = self.modelo.getConsumoFuturo(datosConsumo['consumo_actual'])
+        return getPrediccionConsumo(datosConsumo)

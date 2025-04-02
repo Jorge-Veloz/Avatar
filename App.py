@@ -5,6 +5,7 @@ from controladores.edificios import EdificiosControlador
 from controladores.ambientes import AmbientesControlador
 from controladores.consumo import ConsumoControlador
 from funciones.asistente import getMensajeSistema
+from funciones.algoritmos import getPrediccionConsumo
 import json
 import os
 from dotenv import load_dotenv
@@ -97,6 +98,18 @@ def getEdificiosAmbientes():
 def getEdificios():
     controlador = EdificiosControlador()
     return jsonify(controlador.getEdificios())
+
+@app.post('/api/prediccion_datos')
+def getPrediccion():
+    datos = request.get_json()
+    #controlador = ConsumoControlador()
+    #return jsonify(controlador.getConsumoFuturo(datos))
+    respuesta = {
+        'observacion': None,
+        'ok': True,
+        'datos': getPrediccionConsumo(datos)
+    }
+    return jsonify(respuesta)
 
 @app.post('/api/ambientes')
 def getAmbientes():

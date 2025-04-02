@@ -272,7 +272,7 @@ function guardarVocesDefault(){
     });
 }
 
-function llenarModalInfoEdificios(){
+function llenarModalInfoEdificiosAnt(){
     fetch('/api/info_edificios_ambientes', {
         method: 'GET'
     })
@@ -315,6 +315,55 @@ function llenarModalInfoEdificios(){
             $('#accordionFlushExample').html(htmlAcordion);
         }
     })
+}
+
+function llenarModalInfoEdificios(data){
+    let htmlAcordion = ``;
+    let datos = data['datos'];
+
+    if(datos.length > 0){
+        datos.forEach((d, indexEdi) => {
+            //let listaEdificios = ``
+            htmlAcordion += `<div class="accordion-item">
+                                <h2 class="accordion-header" id="flush-headingEdificios${indexEdi}">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseEdificios${indexEdi}" aria-expanded="false" aria-controls="flush-collapseEdificios${indexEdi}">
+                                    ${d['nombre']}
+                              </button>
+                            </h2>
+                            <div id="flush-collapseEdificios${indexEdi}" class="accordion-collapse collapse" aria-labelledby="headingEdificios${indexEdi}" data-bs-parent="#accordionFlushExample">
+                                <div class="accordion-body p-0 ps-3">`;
+            if(d['pisos'].length > 0){
+                htmlAcordion += `<div class="accordion accordion-flush" id="accordionFlushExampleEdificio${indexEdi}">`;
+                d['pisos'].forEach((p, indexPiso)=>{
+                    htmlAcordion += `<div class="accordion-item">
+                                    <h2 class="accordion-header" id="flush-headingPiso${indexPiso}">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapsePiso${indexPiso}" aria-expanded="false" aria-controls="flush-collapsePiso${indexPiso}">
+                                            ${p['nombre']}
+                                        </button>
+                                    </h2>
+                                    <div id="flush-collapsePiso${indexPiso}" class="accordion-collapse collapse" aria-labelledby="flush-headingPiso${indexPiso}" data-bs-parent="#accordionFlushExampleEdificio${indexEdi}">
+                                        <div class="accordion-body p-0 ps-3">`;
+                    if(p['ambientes'].length > 0){
+                        htmlAcordion += `<ul class="list-group list-group-flush">`;
+                        p['ambientes'].forEach((a, indexAmbiente) => {
+                            htmlAcordion += `<li class="list-group-item">${a['nombre']}</li>`;
+                        });
+                        htmlAcordion += `</ul>`;
+                    }
+                    htmlAcordion += `</div></div></div>`;
+                })
+                htmlAcordion += `</div>`;
+            }else{
+                //listaEdificios += `<li class="list-group-item">${d['nombre']}</li>`;
+            }
+            htmlAcordion += `</div></div></div>`;
+            //htmlAcordion += `<ul class="list-group list-group-flush">${listaEdificios}</ul>`
+        });
+        
+    }
+    
+    $('#accordionFlushExample').html(htmlAcordion);
+    
 }
 
 function getEdificiosAntiguo(){ //Funcion de la API antigua
@@ -363,6 +412,7 @@ function getEdificios(){ //Funcion de la nueva API
                 ops += `<option value='${d['id']}'>${d['nombre']}</option>`;
             }
             $('#combo_edificio').html(ops);
+            llenarModalInfoEdificios(data);
         }else{
             $('#combo_edificio').html("<option value='' selected disabled>No hay datos de edificios</option>");
             Swal.fire('Error', data.observacion, 'error');
@@ -487,14 +537,17 @@ function consultarDatosEnergeticos(){
     let edificio = $('#combo_edificio').val();
     let piso = $('#combo_pisos').val();
     let ambiente = $('#combo_ambientes').val();
-    let fecha = $('#fecha_busqueda').val();
+    // let fechaInicio = $('#fecha_busqueda').val();
+    // let fechaFin = $('#fecha_busqueda_fin').val();
+    let fechaInicio = $('#reportrange').data('daterangepicker').startDate.format('YYYY-MM-DD');
+    let fechaFin = $('#reportrange').data('daterangepicker').endDate.format('YYYY-MM-DD');;
 
-    if(!(edificio || ambiente || piso || fecha)){
+    if(!(edificio || ambiente || piso || fechaInicio || fechaFin)){
         Swal.fire('', 'Se requieren los campos Edificio, Ambientes y Fecha', 'error');
         return;
     }
 
-    informacionConsumo(edificio, piso, ambiente, fecha);
+    informacionConsumo(edificio, piso, ambiente, fechaInicio, fechaFin);
 }
 
 function informacionConsumoAnt(edificio, ambiente, fecha){
@@ -574,7 +627,7 @@ function informacionConsumoAnt(edificio, ambiente, fecha){
         }
     })
 }
-function informacionConsumo(edificio, piso, ambiente, fecha){
+function informacionConsumo(edificio, piso, ambiente, fechaInicio, fechaFin){
     dataConsumoAct = undefined;
     dataConsumoFut = undefined;
    /*let formData = new FormData();
@@ -582,28 +635,27 @@ function informacionConsumo(edificio, piso, ambiente, fecha){
     formData.append('ambiente', ambiente);
     formData.append('fecha', fecha);*/
     
-    fetch(rutaAPI+'/datos?idEdificacion='+edificio+'&idPiso='+piso+'&idAmbiente='+ambiente+'&fecha='+fecha, {
+    fetch(rutaAPI+'/datos?idEdificacion='+edificio+'&idPiso='+piso+'&idAmbiente='+ambiente+'&fechaInicio='+fechaInicio+'&fechaFin='+fechaFin, {
         method: 'GET',
     })
     .then(response => response.json())
     .then(data => {
         if(data.ok){
             let datos = data['datos'];
-            
-        }
-        /*let data_actual = data['data_actual'];
-        if(data_actual['res'] == 1){
-            let datos = data_actual['datos'];
-            
             let consumo_actual = [];
-            for(let ca of datos['consumo_actual']){
-                consumo_actual.push({x: ca['Mes'], y: ca['Consumo_Mensual']})
+            let consumo_actual_total = [];
+            for(let ca of datos['datos']){
+                consumo_actual.push({x: ca['fecha'], y: parseFloat(ca['kilovatio'])})
+            }
+
+            for(let catotal of datos['datos']){
+                consumo_actual_total.push({x: catotal['fecha'], y: parseFloat(catotal['totalKilovatioEdificio'])})
             }
             
-            let consumo_actual_total = [];
+            /*let consumo_actual_total = [];
             for(let cat of datos['consumo_actual_total']){
                 consumo_actual_total.push({x: cat['Mes'], y: cat['Consumo_Mensual']})
-            }
+            }*/
             
             let dataConsumo = [{
                 name: "Consumo Actual",
@@ -617,42 +669,86 @@ function informacionConsumo(edificio, piso, ambiente, fecha){
             
             chConsumoAct.updateSeries(dataConsumo);
 
-            $('#val_consact_amb').text(datos['consumo_actual'][datos['consumo_actual'].length-1]['Consumo_Mensual'] + "kWh");
-            $('#val_consact_edi').text(datos['consumo_actual_total'][datos['consumo_actual_total'].length-1]['Consumo_Mensual'] + "kWh");
+            $('#val_consact_amb').text(parseFloat(datos['consumoAmbiente']['kilovatio']).toFixed(2) + "kWh");
+            $('#val_consact_edi').text(parseFloat(datos['consumoEdificio']).toFixed(2) + "kWh");
 
-            let data_futuro = data['data_futuro'];
-            if(data_futuro && data_futuro['res'] == 1){
-                let datos = data_futuro['datos'];
-                console.log(datos);
-            
-                let consumo_futuro = [];
-                for(let cf of datos['consumo_futuro']){
-                    consumo_futuro.push({x: cf['Mes'], y: cf['Consumo_Mensual'].toFixed(2)})
-                }
-                
-                let consumo_futuro_total = [];
-                for(let cft of datos['consumo_futuro_total']){
-                    consumo_futuro_total.push({x: cft['Mes'], y: cft['Consumo_Mensual'].toFixed(2)})
-                }
-                
-                let dataConsumo = [{
-                    name: "Consumo Futuro",
-                    data: consumo_futuro
-                }, {
-                    name: "Consumo Total",
-                    data: consumo_futuro_total
-                }];
-                console.log(dataConsumo);
-                dataConsumoFut = dataConsumo;
-                
-                chConsumoFut.updateSeries(dataConsumo);
-
-                $('#val_consfut_amb').text(datos['consumo_futuro'][datos['consumo_futuro'].length-1]['Consumo_Mensual'].toFixed(2) + "kWh");
-                $('#val_consfut_edi').text(datos['consumo_futuro_total'][datos['consumo_futuro_total'].length-1]['Consumo_Mensual'].toFixed(2) + "kWh");
+            if(datos['datos'].length > 0){
+                predecirConsumo(datos['datos']);
+            }else{
+                chConsumoFut.updateSeries([
+                    {
+                        name: "Consumo Futuro",
+                        data: consumo_futuro
+                    }, {
+                        name: "Consumo Futuro Total",
+                        data: consumo_futuro_total
+                    }
+                ]);
             }
+            //$('#val_consact_edi').text(datos['consumo_actual_total'][datos['consumo_actual_total'].length-1]['Consumo_Mensual'] + "kWh");
         }else{
-            Swal.fire("", "No se encontro informacion en base a los parametros consultados.", "error");
-        }*/
+            Swal.fire('Error', data.observacion, 'error');
+        }
+    })
+}
+
+function predecirConsumo(datos){
+    /*let formData = new FormData();
+    formData.append('datos', datos);*/
+    dataConsumoFut = undefined;
+
+    fetch('/api/prediccion_datos', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(datos)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.ok){
+            let datos = data['datos'];
+            let consumo_futuro = [];
+            let consumo_futuro_total = [];
+            //let consumo_actual_total = [];
+            for(let cf of datos){
+                consumo_futuro.push({x: cf['fecha'], y: parseFloat(cf['consumo_predicho'])})
+                consumo_futuro_total.push({x: cf['fecha'], y: parseFloat(cf['consumo_total'])})
+            }
+            
+            /*for(let catotal of datos['datos']){
+                consumo_actual_total.push({x: catotal['fecha'], y: parseFloat(catotal['totalKilovatioEdificio'])})
+            }*/
+            
+            
+            let dataConsumo = [{
+                name: "Consumo Futuro",
+                data: consumo_futuro
+            }, {
+                name: "Consumo Futuro Total",
+                data: consumo_futuro_total
+            }];
+
+            console.log(dataConsumo)
+            dataConsumoFut = dataConsumo;
+                
+            chConsumoFut.updateSeries(dataConsumo);
+            
+            let valorConsFuturoAmb = consumo_futuro.reduce((acumulador, consumo) => {
+                return acumulador + consumo.y;
+            }, 0);  // El valor inicial es 0
+
+            let valorConsFuturoEdi = consumo_futuro_total.reduce((acumulador, consumo) => {
+                return acumulador + consumo.y;
+            }, 0);  // El valor inicial es 0
+            
+            //console.log("La suma de los precios es:", sumaPrecios);
+            $('#val_consfut_amb').text(valorConsFuturoAmb.toFixed(2) + "kWh");
+            $('#val_consfut_edi').text(valorConsFuturoEdi.toFixed(2) + "kWh");
+            //chConsumoAct.updateSeries(dataConsumo);
+        }else{
+            Swal.fire('Ocurrio un error al consultar la informacion.', '', 'error');
+        }
     })
 }
 
@@ -1090,6 +1186,9 @@ function crearChart(elemento, tipo, nombre){
             type: tipo,
             height: '100%',
             width: '100%',
+            toolbar: {
+                show: false
+            },
             events: {
                 markerClick: function(event, chartContext, {seriesIndex, dataPointIndex, w}){
                     let indiceSerie = dataPointIndex;
