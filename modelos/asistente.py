@@ -1,5 +1,5 @@
 from openai import OpenAI
-from funciones.asistente import getFuncionesAsistente
+from funciones.asistente import getFuncionesAsistente, getMensajeSistema
 import os
 import json
 
@@ -8,20 +8,65 @@ class AsistenteModelo():
         self.client = OpenAI(
             api_key=os.environ.get("API_GPT")
         )
-        self.sistema = [
-            {
-                "role": "system",
-                "content": "Eres un asistente medico y te encuentras operativo en el área de triage en una clínica, te preocupas por la salud del paciente en turno y para poder ayudarle necesitas saber todos los sintomas que está presentando. Si el paciente ha experimentado anteriormente otros tipos de sintomas, comenzaras preguntandole si los sigue presentando actualmente, cuando termines de hablar de ello con el paciente, le preguntaras si tiene nuevos sintomas actualmente. Si el paciente no te da mucha información, le preguntaras mas detalle sobre cada uno de los sintomas que presenta."
-                
-            }
-        ]
         self.funciones = getFuncionesAsistente()
+        self.vector_store = self.getVectorDeArchivo('Catalogo edificios pisos y ambientes', ['objeto.json'])
+        self.asistente = self.crearAsistente()
+        #self.hilo = self.client.beta.threads.create()
 
-    def getRespuesta(self, usuario, mensajes, compMsgs):
+    def crearAsistente(self):
+        #Subida del archivo
+        funcionesAsistente = getFuncionesAsistente()
+
+        thisTools = [{"type": "file_search"}] + funcionesAsistente
+
+        asistente = self.client.beta.assistants.create(
+            name="Asistente de Consumo Energetico",
+            #instructions=getMensajeSistema(),
+            instructions="Eres un asistente de consumo energético y te encuentras operativo en el edificio de Humanística de la Universidad Técnica de Manabí. Tu trabajo será mostrar de manera gráfica el histórico del consumo energético tanto del ambiente como de todo el edificio en general. Tendrás que preguntarle al usuario qué edificio, piso y ambiente desea consultar para que puedas presentar la información respectiva. Tienes que basarte en la informacion del archivo json. Cuando el usuario te diga que quiere el consumo de energia del edificio, piso y ambiente, devolveras los identificadores de cada uno.",
+            model="gpt-4o",
+            tools=thisTools,
+            tool_resources={"file_search": {"vector_store_ids": [self.vector_store.id]}},
+        )
+
+        return asistente
+
+    def getVectorDeArchivo(self, nombre, archivos):
+        vector_store = self.client.vector_stores.create(
+            name=nombre
+        )
+        file_paths = archivos
+        file_streams = [open(path, "rb") for path in file_paths]
+
+        file_batch = self.client.vector_stores.file_batches.upload_and_poll(
+            vector_store_id=vector_store.id,
+            files=file_streams
+        )
+
+        return vector_store
+
+    def crearHilo(self):
+        self.hilo = self.client.beta.threads.create()
+        return self.hilo.id
+    
+    def getRespuesta(self, threadId, mensaje):
+        message = self.client.beta.threads.messages.create(
+            thread_id=threadId,
+            role="user",
+            content=mensaje,
+        )
+
+        run = self.client.beta.threads.runs.create_and_poll(
+            thread_id=threadId, assistant_id=self.asistente.id
+        )
+
+        messages = list(self.client.beta.threads.messages.list(thread_id=threadId, run_id=run.id))
+        return [run, messages]
+    
+    def getRespuestaAnt(self, usuario, mensajes, compMsgs):
         tMensajes = mensajes
         for cm in compMsgs:
             if cm and cm['usuario'] == usuario: 
-                tMensajes.insert(cm['lastId'], cm['data']);
+                tMensajes.insert(cm['lastId'], cm['data'])
         response = self.client.chat.completions.create(
             model="gpt-4o", #3.5-turbo
             messages=tMensajes,

@@ -19,6 +19,8 @@ load_dotenv(os.path.join(os.getcwd(), '.env'))
 # Esto evita que el asistente vuelva a repetir el envio de la funcion
 compMsgs = []
 
+modeloAsistente = AsistenteControlador()
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = b'secret_key'
 
@@ -62,6 +64,32 @@ def getPaciente():
     session['mensajes'] = tmpMensaje
     compMsgs = list(filter(lambda x: x['usuario'] != usuarioAct, compMsgs))
     return jsonify({'res': 1, 'user': usuarioAct})
+
+@app.post('/conversar2')
+def getRespuesta2():
+    global compMsgs
+
+    #genero = request.form['genero']
+    mensaje = request.form['mensaje']
+    mensajeList = json.loads(mensaje)
+
+    mensTemp = session.get('mensajes')
+    for melist in mensajeList:
+        mensTemp.append(melist)
+    
+    mTmpAsis = list(mensTemp)
+    controlador = AsistenteControlador()
+    respuesta = controlador.getRespuesta(session.get('user'), mTmpAsis, compMsgs)
+    almacenar_msg = respuesta['almacenar_msg']
+    if respuesta['mensaje']:
+        nuevoCM = {"usuario": session.get('user'), "lastId": len(almacenar_msg), "data": respuesta['mensaje']}
+        compMsgs.append(nuevoCM)
+        almacenar_msg.append(str(respuesta['mensaje']))
+    else:
+        almacenar_msg.append({'role': 'assistant', 'content': respuesta['respuesta_msg']})
+    
+    session['mensajes'] = mensTemp
+    return jsonify({"respuesta_msg": respuesta['respuesta_msg'], "asis_funciones": respuesta['asis_funciones']})
 
 @app.post('/conversar')
 def getRespuesta():

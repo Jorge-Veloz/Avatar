@@ -43,6 +43,33 @@ def getFuncionesAsistente():
         }
     }
 
+    infoConsultaCompleta = {
+        "type": "function",
+        "function":{
+            "name": "get_ids_edificio_piso_ambiente",
+            "description": "Devuelve id del edificio, id del piso y el id del ambiente cuando el usuario consulte el consumo energetico. La informacion debe estar basada en la lista de elementos del archivo json.",
+            "strict": False,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "idEdificio": {
+                        "type": "string",
+                        "description": "id del edificio"
+                    },
+                    "idPiso": {
+                        "type": "string",
+                        "description": "id del piso"
+                    },
+                    "idAmbiente": {
+                        "type": "string",
+                        "description": "id del ambiente"
+                    }
+                },
+                "required": ["idEdificio", "idPiso", "idAmbiente"]
+            }
+        }
+    }
+
     """
     mostrarEdificios = {
         "type": "function",
@@ -152,14 +179,16 @@ def getFuncionesAsistente():
         }
     }
     
-    funciones = [datosUsuario, infoConsulta, getRecomendaciones, guardado]
+    #funciones = [datosUsuario, infoConsulta, getRecomendaciones, guardado]
+    funciones = [infoConsultaCompleta]
     #funciones.append(nombreUsuario)
     #funciones.append(cargoUsuario)
     #funciones += [finalizar, guardado]
     return funciones
 
 def getMensajeSistema():
-    contenidoSistema = "Eres un asistente de consumo energético y te encuentras operativo en el edificio de Humanística de la Universidad Técnica de Manabí. Tu trabajo será mostrar de manera gráfica el histórico del consumo energético tanto del ambiente como de todo el edificio en general. Tendrás que preguntarle al usuario qué edificio y ambiente desea consultar para que puedas presentar la información respectiva."
+    contenidoSistemaAnt = "Eres un asistente de consumo energético y te encuentras operativo en el edificio de Humanística de la Universidad Técnica de Manabí. Tu trabajo será mostrar de manera gráfica el histórico del consumo energético tanto del ambiente como de todo el edificio en general. Tendrás que preguntarle al usuario qué edificio y ambiente desea consultar para que puedas presentar la información respectiva."
+    contenidoSistema = "Eres un asistente de consumo energético y te encuentras operativo en el edificio de Humanística de la Universidad Técnica de Manabí. Tu trabajo será mostrar de manera gráfica el histórico del consumo energético tanto del ambiente como de todo el edificio en general. Tendrás que preguntarle al usuario qué edificio, piso y ambiente desea consultar para que puedas presentar la información respectiva. Tienes que basarte en la informacion del archivo json"
     return [{
         "role": "system",
         "content": contenidoSistema

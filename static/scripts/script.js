@@ -63,7 +63,7 @@ var synth;
 var voces;
 var intervalo;
 const TIEMPO_CORTE = 2;
-const rutaAPI = "http://192.168.0.114:3000/v1/asistente-virtual";
+const rutaAPI = "http://192.168.0.247:3000/v1/asistente-virtual";
 
 var chConsumoAct;
 var chConsumoFut;
@@ -762,7 +762,8 @@ function inicializarAsistente(){
         asistenteFinalizo = false;
         
         if(data['res'] == 1){
-            let txtInicio = "Presentate ante el usuario y dale una bienvenida. Tienes que preguntarle al usuario sobre su nombre y si es estudiante o docente.";
+            //let txtInicio = "Presentate ante el usuario y dale una bienvenida. Tienes que preguntarle al usuario sobre su nombre y si es estudiante o docente.";
+            let txtInicio = "Hola.";
             conversacion.push({'role': 'user', 'content': txtInicio});
             conversarAsistente();
         }
@@ -1064,6 +1065,7 @@ async function ejecutarFuncion(asisFunciones){
         'get_ambiente_edificio': getAmbienteEdificio,
         //'get_edificios': mostrarInfoEdificios,
         'get_recomendaciones': getRecomendaciones,
+        'get_ids_edificio_piso_ambiente': getInfoLugar,
     }
 
     for(let afuncion of asisFunciones){
@@ -1082,6 +1084,24 @@ async function ejecutarFuncion(asisFunciones){
         conversacion.push(respuestaF);
     }
     conversarAsistente();
+}
+
+async function getInfoLugar(respuesta){
+    let fArgumentos = respuesta['funcion_args'];
+
+    if(fArgumentos['idEdificio'] && fArgumentos['idPiso'] && fArgumentos['idAmbiente']){
+        return JSON.stringify({success: true}); 
+    }else if(fArgumentos['idEdificio'] || fArgumentos['idPiso'] || fArgumentos['idAmbiente']){
+        let arregloText = [];
+
+        if(fArgumentos['idEdificio']) arregloText.push(" el edificio")
+        if(fArgumentos['idPiso']) arregloText.push(" el piso")
+        if(fArgumentos['idAmbiente']) arregloText.push(" el ambiente")
+        
+        return "Pidele al usuario que te indique" + arregloText.join(',')+".";
+    }else{
+        return "Vuelve a preguntarle al usuario por los datos del edificio, el piso y el ambiente";
+    }
 }
 
 async function getDatosUsuario(respuesta){
