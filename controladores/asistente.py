@@ -12,6 +12,7 @@ class AsistenteControlador():
         [run, messages] = self.modelo.getRespuesta(threadId, mensaje)
         
         obj_funciones = []
+        respuesta = {}
         if run.required_action:
             print("Tool calls:")
             funciones = run.required_action.submit_tool_outputs.tool_calls
@@ -27,53 +28,31 @@ class AsistenteControlador():
                             "funcion_args": argumentos,
                         }
                     )
-                return {
-                    "almacenar_msg": mensajes,
-                    "mensaje": respuesta['respuesta'],
-                    "respuesta_msg": respuesta_msg,
-                    "asis_funciones": obj_funciones
-                }
+                
+                respuesta['asis_funciones'] = obj_funciones
             else:
-                return {
-                    "almacenar_msg": mensajes,
-                    "mensaje": None,
-                    "respuesta_msg": respuesta_msg,
-                    "asis_funciones": None
-                }
+                respuesta['asis_funciones'] = None
 
         if messages and len(messages) > 0:
             print("Contenido mensaje:")
             print(messages)
             message_content = messages[0].content[0].text
             print(message_content.value)
+            respuesta["respuesta_msg"] = message_content.value
+        else:
+            respuesta["respuesta_msg"] = None
         
-        respuesta_msg = respuesta['respuesta_msg']
-        funciones = respuesta['asis_funciones']
-
-        mensajes = list(map(lambda c: str(c) if not type(c) is dict else c, mensajes))
-        if funciones:
-            obj_funciones = [];
-            for funcion in funciones:
-                argumentos = json.loads(funcion.function.arguments)
-                obj_funciones.append(
-                    {
-                        "funcion_id": funcion.id,
-                        "funcion_name": funcion.function.name,
-                        "funcion_args": argumentos,
-                    }
-                )
+        if respuesta['asis_funciones'] or respuesta["respuesta_msg"]:
             return {
-                "almacenar_msg": mensajes,
-                "mensaje": respuesta['respuesta'],
-                "respuesta_msg": respuesta_msg,
-                "asis_funciones": obj_funciones
+                'ok': True,
+                'observacion': None,
+                'datos': respuesta
             }
         else:
             return {
-                "almacenar_msg": mensajes,
-                "mensaje": None,
-                "respuesta_msg": respuesta_msg,
-                "asis_funciones": None
+                'ok': False,
+                'observacion': 'No se obtuvo respuesta',
+                'datos': respuesta
             }
     
     def getRespuestaAnt(self, usuario, mensajes, compMsgs):
