@@ -56,14 +56,18 @@ def modeloAvatar():
 
 @app.get('/inicializar')
 def inicializarAsistente():
-    global compMsgs
-    compMsgs = []
-    usuarioAct = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-    session['user'] = usuarioAct
-    tmpMensaje = getMensajeSistema()
-    session['mensajes'] = tmpMensaje
-    compMsgs = list(filter(lambda x: x['usuario'] != usuarioAct, compMsgs))
-    return jsonify({'res': 1, 'user': usuarioAct})
+    #global compMsgs
+    #compMsgs = []
+    #usuarioAct = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+    #session['user'] = usuarioAct
+    #tmpMensaje = getMensajeSistema()
+    #session['mensajes'] = tmpMensaje
+    #compMsgs = list(filter(lambda x: x['usuario'] != usuarioAct, compMsgs))
+    if 'idHilo' not in session:
+        session['idHilo'] = controladorAsistente.crearHilo()
+    
+    #respuesta = controladorAsistente.getRespuesta()
+    return jsonify({'res': 1})
 
 @app.get('/inicializarAnt')
 def inicializarAsistenteAnt():
