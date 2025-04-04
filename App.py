@@ -67,7 +67,7 @@ def inicializarAsistente():
         session['idHilo'] = controladorAsistente.crearHilo()
     
     #respuesta = controladorAsistente.getRespuesta()
-    return jsonify({'res': 1})
+    return jsonify({'ok': True, 'observacion': None})
 
 @app.get('/inicializarAnt')
 def inicializarAsistenteAnt():
@@ -108,29 +108,35 @@ def getRespuesta2():
 
 @app.post('/conversar')
 def getRespuesta():
-    global compMsgs
+    #global compMsgs
 
     #genero = request.form['genero']
     mensaje = request.form['mensaje']
-    mensajeList = json.loads(mensaje)
+    #mensajeList = json.loads(mensaje)
 
-    mensTemp = session.get('mensajes')
-    for melist in mensajeList:
-        mensTemp.append(melist)
+    #mensTemp = session.get('mensajes')
+    #for melist in mensajeList:
+    #    mensTemp.append(melist)
     
-    mTmpAsis = list(mensTemp)
-    controlador = AsistenteControlador()
-    respuesta = controlador.getRespuesta(session.get('user'), mTmpAsis, compMsgs)
-    almacenar_msg = respuesta['almacenar_msg']
-    if respuesta['mensaje']:
-        nuevoCM = {"usuario": session.get('user'), "lastId": len(almacenar_msg), "data": respuesta['mensaje']}
-        compMsgs.append(nuevoCM)
-        almacenar_msg.append(str(respuesta['mensaje']))
-    else:
-        almacenar_msg.append({'role': 'assistant', 'content': respuesta['respuesta_msg']})
+    #mTmpAsis = list(mensTemp)
+    #controlador = AsistenteControlador()
+    #respuesta = controlador.getRespuesta(session.get('user'), mTmpAsis, compMsgs)
+    if 'idHilo' not in session:
+        session['idHilo'] = controladorAsistente.crearHilo()
     
-    session['mensajes'] = mensTemp
-    return jsonify({"respuesta_msg": respuesta['respuesta_msg'], "asis_funciones": respuesta['asis_funciones']})
+    respuesta = controladorAsistente.getRespuesta(session.get('idHilo'), mensaje)
+
+    return jsonify(respuesta)
+    # almacenar_msg = respuesta['almacenar_msg']
+    # if respuesta['mensaje']:
+    #     nuevoCM = {"usuario": session.get('user'), "lastId": len(almacenar_msg), "data": respuesta['mensaje']}
+    #     compMsgs.append(nuevoCM)
+    #     almacenar_msg.append(str(respuesta['mensaje']))
+    # else:
+    #     almacenar_msg.append({'role': 'assistant', 'content': respuesta['respuesta_msg']})
+    
+    # session['mensajes'] = mensTemp
+    # return jsonify({"respuesta_msg": respuesta['respuesta_msg'], "asis_funciones": respuesta['asis_funciones']})
 
 @app.get('/api/info_edificios_ambientes')
 def getEdificiosAmbientes():

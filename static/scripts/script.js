@@ -53,6 +53,7 @@ if(window.SpeechSynthesis == undefined){
 var estadoAsistente;
 var asistenteFinalizo = false;
 var conversacion = [];
+var gMensaje = "";
 
 let resolverPromAutor;
 let rechazarPromAutor;
@@ -761,10 +762,10 @@ function inicializarAsistente(){
     .then(data => {
         asistenteFinalizo = false;
         
-        if(data['res'] == 1){
-            //let txtInicio = "Presentate ante el usuario y dale una bienvenida. Tienes que preguntarle al usuario sobre su nombre y si es estudiante o docente.";
-            let txtInicio = "Hola.";
-            conversacion.push({'role': 'user', 'content': txtInicio});
+        if(data.ok){
+            gMensaje = "Presentate ante el usuario y dale una bienvenida. Tienes que preguntarle al usuario sobre su nombre y si es estudiante o docente.";
+            //let txtInicio = "Hola.";
+            //conversacion.push({'role': 'user', 'content': txtInicio});
             conversarAsistente();
         }
         //cambiaAnimacionAsistente("hablar-asistente");
@@ -1015,38 +1016,47 @@ function detenerEscucha(){
 // hace posible la conversacion con el asistente
 function conversarAsistente(){
     const formData = new FormData();
-    formData.append('mensaje', JSON.stringify(conversacion));
-    console.log(conversacion);
+    //formData.append('mensaje', JSON.stringify(conversacion));
+    formData.append('mensaje', gMensaje);
+
+    //console.log(conversacion);
+
     fetch('/conversar', {
         method: 'POST',
         body: formData
     })
     .then(response => response.json())
-    .then(respuesta => {
-        if(!$('#contenedor-typing').hasClass('ct-appear')){
-            $('#contenedor-typing').addClass('ct-appear');
-        }
-        conversacion = [];
-        if(respuesta['asis_funciones']){
-            ejecutarFuncion(respuesta['asis_funciones']);
-            //console.log(respuesta);
+    .then(data => {
 
-        }else if(respuesta['respuesta_msg']){
-            let textType = document.getElementById('typeContenido');
-            let rMensaje = limpiarMensaje(respuesta['respuesta_msg'])
-            let iTextChar = 0;
-
-            textType.textContent = "";
-            idInt = setInterval(() => {
-                if (iTextChar < rMensaje.length) {
-                    textType.textContent += rMensaje.charAt(iTextChar);
-                    iTextChar++;
-                }else{
-                    clearInterval(idInt);
-                }
-            }, 55);
-            hablar(rMensaje);
-            conversacion.push({"role": "assistant", "content": rMensaje});
+        if(data.ok){
+            let respuesta = data['datos'];
+            if(!$('#contenedor-typing').hasClass('ct-appear')){
+                $('#contenedor-typing').addClass('ct-appear');
+            }
+            //conversacion = [];
+            gMensaje = "";
+            if(respuesta['asis_funciones']){
+                ejecutarFuncion(respuesta['asis_funciones']);
+                //console.log(respuesta);
+    
+            }else if(respuesta['respuesta_msg']){
+                let textType = document.getElementById('typeContenido');
+                let rMensaje = limpiarMensaje(respuesta['respuesta_msg'])
+                let iTextChar = 0;
+    
+                textType.textContent = "";
+                idInt = setInterval(() => {
+                    if (iTextChar < rMensaje.length) {
+                        textType.textContent += rMensaje.charAt(iTextChar);
+                        iTextChar++;
+                    }else{
+                        clearInterval(idInt);
+                    }
+                }, 55);
+                hablar(rMensaje);
+                //conversacion.push({"role": "assistant", "content": rMensaje});
+                gMensaje = rMensaje;
+            }
         }
     });
 }
