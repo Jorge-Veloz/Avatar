@@ -19,7 +19,7 @@ load_dotenv(os.path.join(os.getcwd(), '.env'))
 # Esto evita que el asistente vuelva a repetir el envio de la funcion
 compMsgs = []
 
-modeloAsistente = AsistenteControlador()
+controladorAsistente = AsistenteControlador()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = b'secret_key'
@@ -55,7 +55,18 @@ def modeloAvatar():
     return render_template('avatar.html')
 
 @app.get('/inicializar')
-def getPaciente():
+def inicializarAsistente():
+    global compMsgs
+    compMsgs = []
+    usuarioAct = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+    session['user'] = usuarioAct
+    tmpMensaje = getMensajeSistema()
+    session['mensajes'] = tmpMensaje
+    compMsgs = list(filter(lambda x: x['usuario'] != usuarioAct, compMsgs))
+    return jsonify({'res': 1, 'user': usuarioAct})
+
+@app.get('/inicializarAnt')
+def inicializarAsistenteAnt():
     global compMsgs
     compMsgs = []
     usuarioAct = ''.join(random.choices(string.ascii_letters + string.digits, k=10))

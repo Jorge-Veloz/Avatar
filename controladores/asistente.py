@@ -4,13 +4,42 @@ import json
 class AsistenteControlador():
     def __init__(self):
         self.modelo = AsistenteModelo()
+
+    def crearHilo(self):
+        return self.modelo.crearHilo()
        
     def getRespuesta(self, threadId, mensaje):
         [run, messages] = self.modelo.getRespuesta(threadId, mensaje)
-
+        
+        obj_funciones = []
         if run.required_action:
             print("Tool calls:")
-            print(run.required_action.submit_tool_outputs.tool_calls)
+            funciones = run.required_action.submit_tool_outputs.tool_calls
+            print(funciones)
+
+            if len(funciones) > 0:
+                for funcion in funciones:
+                    argumentos = json.loads(funcion.function.arguments)
+                    obj_funciones.append(
+                        {
+                            "funcion_id": funcion.id,
+                            "funcion_name": funcion.function.name,
+                            "funcion_args": argumentos,
+                        }
+                    )
+                return {
+                    "almacenar_msg": mensajes,
+                    "mensaje": respuesta['respuesta'],
+                    "respuesta_msg": respuesta_msg,
+                    "asis_funciones": obj_funciones
+                }
+            else:
+                return {
+                    "almacenar_msg": mensajes,
+                    "mensaje": None,
+                    "respuesta_msg": respuesta_msg,
+                    "asis_funciones": None
+                }
 
         if messages and len(messages) > 0:
             print("Contenido mensaje:")
