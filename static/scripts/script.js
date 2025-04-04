@@ -121,7 +121,8 @@ function inicializarDOM(){
         //cambiaAnimacionAsistente('cargando-asistente');
         const transcript = event.results[0][0].transcript;
     
-        conversacion.push({"role": "user", "content": transcript});
+        //conversacion.push({"role": "user", "content": transcript});
+        gMensaje = transcript;
         conversarAsistente();
     };
     recognition.onerror = (event) => {
@@ -1036,7 +1037,90 @@ function conversarAsistente(){
             //conversacion = [];
             gMensaje = "";
             if(respuesta['asis_funciones']){
-                ejecutarFuncion(respuesta['asis_funciones']);
+                ejecutarFuncion(respuesta['asis_funciones'], respuesta['id_run']);
+                //console.log(respuesta);
+    
+            }else if(respuesta['respuesta_msg']){
+                let textType = document.getElementById('typeContenido');
+                let rMensaje = limpiarMensaje(respuesta['respuesta_msg'])
+                let iTextChar = 0;
+    
+                textType.textContent = "";
+                idInt = setInterval(() => {
+                    if (iTextChar < rMensaje.length) {
+                        textType.textContent += rMensaje.charAt(iTextChar);
+                        iTextChar++;
+                    }else{
+                        clearInterval(idInt);
+                    }
+                }, 55);
+                hablar(rMensaje);
+                //conversacion.push({"role": "assistant", "content": rMensaje});
+                //gMensaje = rMensaje;
+            }
+        }
+    });
+}
+
+//Aqui se iran agregando otros tipos de formateo para darle mas naturalidad al hablar el asistente
+function limpiarMensaje(mensaje){
+    let sinasteriscos = mensaje.replaceAll('*', ''); //Quita los doble asterisco del texto
+    let sinsaltos = sinasteriscos.replaceAll('\n', ''); //Quita los saltos de linea \n del texto
+    return sinsaltos; //retorna el texto limpio
+}
+
+async function ejecutarFuncion(asisFunciones, idRun){
+    console.log(asisFunciones);
+    let handleAFunciones = {
+        'get_usuario': getDatosUsuario,
+        'get_ambiente_edificio': getAmbienteEdificio,
+        //'get_edificios': mostrarInfoEdificios,
+        'get_recomendaciones': getRecomendaciones,
+        'get_ids_edificio_piso_ambiente': getInfoLugar,
+    }
+
+    let respuestaFunciones = []
+
+    for(let afuncion of asisFunciones){
+        //afuncion['funcion']
+        //afuncion['funcion_args'] = JSON.parse(afuncion['funcion_args']);
+        //console.log(afuncion);
+        const activarFuncion = handleAFunciones[afuncion['funcion_name']];
+
+        let rcontent = await activarFuncion(afuncion);
+        let respuestaF = {
+            "tool_call_id": afuncion['funcion_id'],
+            "output": rcontent
+        };
+        //conversacion.push(respuestaF);
+        respuestaFunciones.push(respuestaF);
+    }
+    enviarFunciones(respuestaFunciones, idRun);
+}
+
+function enviarFunciones(respuestaFunciones, idRun){
+    const formData = new FormData();
+    formData.append('toolcall_output', JSON.parse(respuestaFunciones));
+    formData.append('id_run', idRun);
+
+    //console.log(conversacion);
+
+    fetch('/enviar-funciones', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        if(data.ok){
+            let respuesta = data['datos'];
+            if(!$('#contenedor-typing').hasClass('ct-appear')){
+                $('#contenedor-typing').addClass('ct-appear');
+            }
+            //conversacion = [];
+            gMensaje = "";
+            if(respuesta['asis_funciones']){
+                ejecutarFuncion(respuesta['asis_funciones'], respuesta['id_run']);
                 //console.log(respuesta);
     
             }else if(respuesta['respuesta_msg']){
@@ -1061,45 +1145,11 @@ function conversarAsistente(){
     });
 }
 
-//Aqui se iran agregando otros tipos de formateo para darle mas naturalidad al hablar el asistente
-function limpiarMensaje(mensaje){
-    let sinasteriscos = mensaje.replaceAll('*', ''); //Quita los doble asterisco del texto
-    let sinsaltos = sinasteriscos.replaceAll('\n', ''); //Quita los saltos de linea \n del texto
-    return sinsaltos; //retorna el texto limpio
-}
-
-async function ejecutarFuncion(asisFunciones){
-    console.log(asisFunciones);
-    let handleAFunciones = {
-        'get_usuario': getDatosUsuario,
-        'get_ambiente_edificio': getAmbienteEdificio,
-        //'get_edificios': mostrarInfoEdificios,
-        'get_recomendaciones': getRecomendaciones,
-        'get_ids_edificio_piso_ambiente': getInfoLugar,
-    }
-
-    for(let afuncion of asisFunciones){
-        //afuncion['funcion']
-        //afuncion['funcion_args'] = JSON.parse(afuncion['funcion_args']);
-        //console.log(afuncion);
-        const activarFuncion = handleAFunciones[afuncion['funcion_name']];
-
-        let rcontent = await activarFuncion(afuncion);
-        let respuestaF = {
-            "tool_call_id": afuncion['funcion_id'],
-            "role": "tool",
-            "name": afuncion['funcion_name'],
-            "content": rcontent,
-        };
-        conversacion.push(respuestaF);
-    }
-    conversarAsistente();
-}
-
 async function getInfoLugar(respuesta){
     let fArgumentos = respuesta['funcion_args'];
 
     if(fArgumentos['idEdificio'] && fArgumentos['idPiso'] && fArgumentos['idAmbiente']){
+        console.log(fArgumentos);
         return JSON.stringify({success: true}); 
     }else if(fArgumentos['idEdificio'] || fArgumentos['idPiso'] || fArgumentos['idAmbiente']){
         let arregloText = [];
@@ -1108,9 +1158,9 @@ async function getInfoLugar(respuesta){
         if(fArgumentos['idPiso']) arregloText.push(" el piso")
         if(fArgumentos['idAmbiente']) arregloText.push(" el ambiente")
         
-        return "Pidele al usuario que te indique" + arregloText.join(',')+".";
+        return {"error": "Pidele al usuario que te indique" + arregloText.join(',')+"."};
     }else{
-        return "Vuelve a preguntarle al usuario por los datos del edificio, el piso y el ambiente";
+        return {"error": "Vuelve a preguntarle al usuario por los datos del edificio, el piso y el ambiente"};
     }
 }
 
@@ -1228,7 +1278,8 @@ function crearChart(elemento, tipo, nombre){
                             let lblConsActEdi = dataConsumoAct[1].data[indiceSerie].y;
                             $('#val_consact_amb').text(lblConsActAmb+"kWh");
                             $('#val_consact_edi').text(lblConsActEdi+"kWh");
-                            conversacion.push({'role': 'user', 'content': 'Mencionale al usuario que el valor actual de consumo de energia del ambiente es  de '+lblConsActAmb+'kWh, y el valor actual del consumo energetico del edificio es de '+lblConsActEdi+'kWh.'});
+                            //conversacion.push({'role': 'user', 'content': 'Mencionale al usuario que el valor actual de consumo de energia del ambiente es  de '+lblConsActAmb+'kWh, y el valor actual del consumo energetico del edificio es de '+lblConsActEdi+'kWh.'});
+                            gMensaje = 'Mencionale al usuario que el valor actual de consumo de energia del ambiente es  de '+lblConsActAmb+'kWh, y el valor actual del consumo energetico del edificio es de '+lblConsActEdi+'kWh.'
                             cambiaAnimacionAsistente("cargando-asistente");
                             conversarAsistente();
                         }else if(dataConsumoFut && nombre == 'grafica_futuro'){
@@ -1236,7 +1287,8 @@ function crearChart(elemento, tipo, nombre){
                             let lblConsFutEdi = dataConsumoFut[1].data[indiceSerie].y;
                             $('#val_consfut_amb').text(lblConsFutAmb+"kWh");
                             $('#val_consfut_edi').text(lblConsFutEdi+"kWh");
-                            conversacion.push({'role': 'user', 'content': 'Mencionale al usuario que el valor futuro de consumo de energia del ambiente es  de '+lblConsFutAmb+'kWh, y el valor futuro del consumo energetico del edificio es de '+lblConsFutEdi+'kWh.'});
+                            //conversacion.push({'role': 'user', 'content': 'Mencionale al usuario que el valor futuro de consumo de energia del ambiente es  de '+lblConsFutAmb+'kWh, y el valor futuro del consumo energetico del edificio es de '+lblConsFutEdi+'kWh.'});
+                            gMensaje = 'Mencionale al usuario que el valor futuro de consumo de energia del ambiente es  de '+lblConsFutAmb+'kWh, y el valor futuro del consumo energetico del edificio es de '+lblConsFutEdi+'kWh.'
                             cambiaAnimacionAsistente("cargando-asistente");
                             conversarAsistente();
                         }else{

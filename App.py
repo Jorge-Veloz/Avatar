@@ -138,6 +138,26 @@ def getRespuesta():
     # session['mensajes'] = mensTemp
     # return jsonify({"respuesta_msg": respuesta['respuesta_msg'], "asis_funciones": respuesta['asis_funciones']})
 
+@app.post('/enviar-funciones')
+def enviarFunciones():
+    tcFunciones = request.form['toolcall_output']
+    json_tcFunciones = json.loads(tcFunciones)
+    idRun = request.form['id_run']
+
+    if 'idHilo' not in session:
+        return jsonify({
+            'ok': False,
+            'observacion': "No se tiene registros de conversacion. Por favor, recargue la pagina.",
+            'datos': None
+        })
+    else:
+        respuesta = controladorAsistente.enviarFunciones(json_tcFunciones, idRun, session['idHilo'])
+        return jsonify({
+            'ok': True,
+            'observacion': None,
+            'datos': respuesta
+        })
+
 @app.get('/api/info_edificios_ambientes')
 def getEdificiosAmbientes():
     controlador = AmbientesControlador()

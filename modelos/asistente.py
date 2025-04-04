@@ -47,6 +47,27 @@ class AsistenteModelo():
     def crearHilo(self):
         self.hilo = self.client.beta.threads.create()
         return self.hilo.id
+
+    def enviarFunciones(self, tcFunciones, idRun, idHilo):
+        run = None
+        if tcFunciones and len(tcFunciones) > 0:
+            try:
+                run = self.client.beta.threads.runs.submit_tool_outputs_and_poll(
+                    thread_id=idHilo,
+                    run_id=idRun,
+                    tool_outputs=tcFunciones
+                )
+                print("Las herramientas fueron enviadas correctamente.")
+            except Exception as e:
+                print("Fallo al enviar las herramientas:", e)
+        else:
+            print("No hay herramientas para subir.")
+        
+        if run.status == 'completed':
+            messages = list(self.client.beta.threads.messages.list(thread_id=idHilo, run_id=run.id))
+            return [run, messages]
+        else:
+            return [run, None]
     
     def getRespuesta(self, threadId, mensaje):
         message = self.client.beta.threads.messages.create(
