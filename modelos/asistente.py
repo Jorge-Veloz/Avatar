@@ -11,7 +11,12 @@ class AsistenteModelo():
         self.funciones = getFuncionesAsistente()
         self.vector_store = self.getVectorDeArchivo('Catalogo edificios pisos y ambientes', ['objeto.json'])
         self.asistente = self.crearAsistente()
-        #self.hilo = self.client.beta.threads.create()
+        self.hilo = None
+        self.run = None
+        #self.valorPrueba = 1
+        # self.run = self.client.beta.threads.runs.create_and_poll(
+        #     thread_id=self.hilo.id, assistant_id=self.asistente.id
+        # )
 
     def crearAsistente(self):
         #Subida del archivo
@@ -20,7 +25,7 @@ class AsistenteModelo():
         thisTools = [{"type": "file_search"}] + funcionesAsistente
 
         asistente = self.client.beta.assistants.create(
-            name="Asistente de Consumo Energetico",
+            #name="Asistente de Consumo Energetico",
             #instructions=getMensajeSistema(),
             instructions="Eres un asistente de consumo energético y te encuentras operativo en el edificio de Humanística de la Universidad Técnica de Manabí. Tu trabajo será mostrar de manera gráfica el histórico del consumo energético tanto del ambiente como de todo el edificio en general. Tendrás que preguntarle al usuario qué edificio, piso y ambiente desea consultar para que puedas presentar la información respectiva. Tienes que basarte en la informacion del archivo json. Cuando el usuario te diga que quiere el consumo de energia del edificio, piso y ambiente, devolveras los identificadores de cada uno.",
             model="gpt-4o",
@@ -29,7 +34,7 @@ class AsistenteModelo():
         )
 
         return asistente
-
+    
     def getVectorDeArchivo(self, nombre, archivos):
         vector_store = self.client.vector_stores.create(
             name=nombre
@@ -46,13 +51,14 @@ class AsistenteModelo():
 
     def crearHilo(self):
         self.hilo = self.client.beta.threads.create()
-        return self.hilo.id
+        return self.hilo
+        #self.valorPrueba = 2
+        #return self.hilo.id
 
     def enviarFunciones(self, tcFunciones, idRun, idHilo):
-        run = None
         if tcFunciones and len(tcFunciones) > 0:
             try:
-                run = self.client.beta.threads.runs.submit_tool_outputs_and_poll(
+                self.run = self.client.beta.threads.runs.submit_tool_outputs_and_poll(
                     thread_id=idHilo,
                     run_id=idRun,
                     tool_outputs=tcFunciones
@@ -62,12 +68,14 @@ class AsistenteModelo():
                 print("Fallo al enviar las herramientas:", e)
         else:
             print("No hay herramientas para subir.")
-        
-        if run.status == 'completed':
-            messages = list(self.client.beta.threads.messages.list(thread_id=idHilo, run_id=run.id))
-            return [run, messages]
+
+        if self.run.status == 'completed':
+            messages = list(self.client.beta.threads.messages.list(thread_id=idHilo, run_id=idRun))
+            #ejecucion = self.run
+            return [self.run, messages]
         else:
-            return [run, None]
+            #ejecucion = self.run
+            return [self.run, None]
     
     def getRespuesta(self, threadId, mensaje):
         message = self.client.beta.threads.messages.create(
@@ -76,12 +84,12 @@ class AsistenteModelo():
             content=mensaje,
         )
 
-        run = self.client.beta.threads.runs.create_and_poll(
+        self.run = self.client.beta.threads.runs.create_and_poll(
             thread_id=threadId, assistant_id=self.asistente.id
         )
 
-        messages = list(self.client.beta.threads.messages.list(thread_id=threadId, run_id=run.id))
-        return [run, messages]
+        messages = list(self.client.beta.threads.messages.list(thread_id=self.hilo.id, run_id=self.run.id))
+        return [self.run, messages]
     
     def getRespuestaAnt(self, usuario, mensajes, compMsgs):
         tMensajes = mensajes

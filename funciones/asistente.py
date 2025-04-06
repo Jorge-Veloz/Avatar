@@ -52,20 +52,24 @@ def getFuncionesAsistente():
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "idEdificio": {
-                        "type": "string",
-                        "description": "id del edificio"
-                    },
-                    "idPiso": {
-                        "type": "string",
-                        "description": "id del piso"
-                    },
-                    "idAmbiente": {
-                        "type": "string",
-                        "description": "id del ambiente"
-                    }
+                "idEdificio": {
+                    "type": "string",
+                    "description": "id del edificio"
                 },
-                "required": ["idEdificio", "idPiso", "idAmbiente"]
+                "idPiso": {
+                    "type": "string",
+                    "description": "id del piso"
+                },
+                "idAmbiente": {
+                    "type": "string",
+                    "description": "id del ambiente"
+                }
+                },
+                "required": [
+                "idEdificio",
+                "idPiso",
+                "idAmbiente"
+                ]
             }
         }
     }

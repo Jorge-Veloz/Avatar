@@ -1100,7 +1100,7 @@ async function ejecutarFuncion(asisFunciones, idRun){
 
 function enviarFunciones(respuestaFunciones, idRun){
     const formData = new FormData();
-    formData.append('toolcall_output', JSON.parse(respuestaFunciones));
+    formData.append('toolcall_output', JSON.stringify(respuestaFunciones));
     formData.append('id_run', idRun);
 
     //console.log(conversacion);
@@ -1149,7 +1149,7 @@ async function getInfoLugar(respuesta){
     let fArgumentos = respuesta['funcion_args'];
 
     if(fArgumentos['idEdificio'] && fArgumentos['idPiso'] && fArgumentos['idAmbiente']){
-        console.log(fArgumentos);
+        informacionConsumo(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], '2024-06-01', '2024-06-30');
         return JSON.stringify({success: true}); 
     }else if(fArgumentos['idEdificio'] || fArgumentos['idPiso'] || fArgumentos['idAmbiente']){
         let arregloText = [];

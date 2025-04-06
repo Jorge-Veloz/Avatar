@@ -56,6 +56,7 @@ def modeloAvatar():
 
 @app.get('/inicializar')
 def inicializarAsistente():
+    print(session)
     #global compMsgs
     #compMsgs = []
     #usuarioAct = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
@@ -63,8 +64,11 @@ def inicializarAsistente():
     #tmpMensaje = getMensajeSistema()
     #session['mensajes'] = tmpMensaje
     #compMsgs = list(filter(lambda x: x['usuario'] != usuarioAct, compMsgs))
-    if 'idHilo' not in session:
-        session['idHilo'] = controladorAsistente.crearHilo()
+    session.pop('idHilo')
+    print(session)
+    session['idHilo'] = controladorAsistente.crearHilo()
+        #controladorPrueba.setPrueba(5)
+    #controladorAsistente.crearHilo()
     
     #respuesta = controladorAsistente.getRespuesta()
     return jsonify({'ok': True, 'observacion': None})
@@ -93,8 +97,8 @@ def getRespuesta2():
         mensTemp.append(melist)
     
     mTmpAsis = list(mensTemp)
-    controlador = AsistenteControlador()
-    respuesta = controlador.getRespuesta(session.get('user'), mTmpAsis, compMsgs)
+    #controlador = AsistenteControlador()
+    respuesta = controladorAsistente.getRespuesta(session.get('user'), mTmpAsis, compMsgs)
     almacenar_msg = respuesta['almacenar_msg']
     if respuesta['mensaje']:
         nuevoCM = {"usuario": session.get('user'), "lastId": len(almacenar_msg), "data": respuesta['mensaje']}
@@ -122,9 +126,12 @@ def getRespuesta():
     #controlador = AsistenteControlador()
     #respuesta = controlador.getRespuesta(session.get('user'), mTmpAsis, compMsgs)
     if 'idHilo' not in session:
-        session['idHilo'] = controladorAsistente.crearHilo()
+        session.pop('idHilo')
+        session['idHilo'] = controladorAsistente.obtenerIdHilo()
     
     respuesta = controladorAsistente.getRespuesta(session.get('idHilo'), mensaje)
+    #respuesta = controladorAsistente.getRespuesta('id', mensaje)
+    #print(controladorPrueba.getPrueba())
 
     return jsonify(respuesta)
     # almacenar_msg = respuesta['almacenar_msg']
@@ -151,7 +158,7 @@ def enviarFunciones():
             'datos': None
         })
     else:
-        respuesta = controladorAsistente.enviarFunciones(json_tcFunciones, idRun, session['idHilo'])
+        respuesta = controladorAsistente.enviarFunciones(json_tcFunciones, idRun, session.get('idHilo'))
         return jsonify({
             'ok': True,
             'observacion': None,

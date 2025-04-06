@@ -6,13 +6,18 @@ class AsistenteControlador():
         self.modelo = AsistenteModelo()
 
     def crearHilo(self):
-        return self.modelo.crearHilo()
+        hilo = self.modelo.crearHilo()
+        return hilo.id
        
     def getRespuesta(self, threadId, mensaje):
         [run, messages] = self.modelo.getRespuesta(threadId, mensaje)
-        
         obj_funciones = []
-        respuesta = {}
+        respuesta = {
+            'asis_funciones': None,
+            'id_run': None,
+            'respuesta_msg': None
+        }
+
         if run.required_action:
             print("Tool calls:")
             funciones = run.required_action.submit_tool_outputs.tool_calls
@@ -31,18 +36,14 @@ class AsistenteControlador():
                 
                 respuesta['asis_funciones'] = obj_funciones
                 respuesta['id_run'] = run.id
-            else:
-                respuesta['asis_funciones'] = None
-                respuesta['id_run'] = None
 
         if messages and len(messages) > 0:
             print("Contenido mensaje:")
             print(messages)
             message_content = messages[0].content[0].text
-            print(message_content.value)
-            respuesta["respuesta_msg"] = message_content.value
-        else:
-            respuesta["respuesta_msg"] = None
+            rMensaje = self.limpiarMensajes(message_content)
+
+            respuesta["respuesta_msg"] = rMensaje
         
         if ('asis_funciones' in respuesta and respuesta['asis_funciones']) or ('respuesta_msg' in respuesta  and respuesta['respuesta_msg']):
             return {
@@ -57,12 +58,24 @@ class AsistenteControlador():
                 'datos': respuesta
             }
     
+    def limpiarMensajes(self, message_content):
+        #message_content = messages[0].content[0].text
+        annotations = message_content.annotations
+        for index, annotation in enumerate(annotations):
+            message_content.value = message_content.value.replace(annotation.text, "")
+
+        return message_content.value
+
     def enviarFunciones(self, tcFunciones, idRun, idHilo):
         [run, messages] = respuesta = self.modelo.enviarFunciones(tcFunciones, idRun, idHilo)
 
         obj_funciones = []
-        respuesta = {}
-        if run.required_action:
+        respuesta = {
+            'asis_funciones': None,
+            'id_run': None,
+            'respuesta_msg': None
+        }
+        if run and run.required_action:
             print("Tool calls:")
             funciones = run.required_action.submit_tool_outputs.tool_calls
             print(funciones)
@@ -80,9 +93,6 @@ class AsistenteControlador():
                 
                 respuesta['asis_funciones'] = obj_funciones
                 respuesta['id_run'] = run.id
-            else:
-                respuesta['asis_funciones'] = None
-                respuesta['id_run'] = None
 
         if messages and len(messages) > 0:
             print("Contenido mensaje:")
@@ -90,8 +100,7 @@ class AsistenteControlador():
             message_content = messages[0].content[0].text
             print(message_content.value)
             respuesta["respuesta_msg"] = message_content.value
-        else:
-            respuesta["respuesta_msg"] = None
+        
         
         if respuesta['asis_funciones'] or respuesta["respuesta_msg"]:
             return {
