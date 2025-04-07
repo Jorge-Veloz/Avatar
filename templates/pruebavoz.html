@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <title>Document</title>
+</head>
+<body>
+    <button id="grabar" onclick="grabar()">Grabar</button>
+    <button id="pausar" onclick="pausar()">Pausar</button>
+    <script>
+        /*const recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = "es";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;*/
+
+
+        /*recognition.onsoundstart = () => {
+            console.log("Se esta escuchando algo.");
+        };
+
+        recognition.onspeechstart = () => {
+            console.log("Se esta escuchando voz.");
+        };
+
+        recognition.onresult = (event) => {
+        const transcripcion = event.results[0][0].transcript;
+            console.log(transcripcion)
+        };*/
+        // Crea una nueva instancia de webkitSpeechRecognition
+    const recognition = new webkitSpeechRecognition();
+
+// Configura el reconocimiento de voz
+recognition.continuous = true; // Hacer que el reconocimiento sea continuo
+recognition.interimResults = true; // Permite obtener resultados intermedios
+
+function grabar(){
+            recognition.start();
+            console.log("Ready to receive a color command.");
+        }
+
+function pausar(){
+            recognition.stop();
+            console.log("Terminado");
+        }
+
+// Manejo de resultados
+recognition.onresult = (event) => {
+    let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) { // Solo procesar resultados finales
+                finalTranscript += event.results[i][0].transcript;
+            }
+        }
+        if (finalTranscript) {
+            console.log('Texto reconocido: ', finalTranscript);
+        }
+};
+
+// Manejo de errores
+recognition.onerror = (event) => {
+    console.error('Error de reconocimiento de voz:', event.error);
+};
+
+// Manejo de finalización
+recognition.onend = () => {
+    console.log('Reconocimiento de voz ha terminado.');
+    // Reinicia el reconocimiento para continuar escuchando
+    //recognition.start();
+};
+
+
+    </script>
+</body>
+</html>
