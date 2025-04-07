@@ -702,8 +702,8 @@ async function informacionConsumoAsistente(edificio, piso, ambiente, fechaInicio
 
         if(datos.ok){
             graficarInfoConsumo(datos);
-            if(datos['datos'].length > 0){
-                return {"success": true, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación"}
+            if(datos['datos']['datos'].length > 0){
+                return {"success": true, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Además dale unas recomendaciones para optimizar el consumo energetico del edificio y ambientes."}
             }else{
                 return {"success": true, "reason": "Se realizo correctamente la consulta pero no habian datos de consumo de ese ambiente, hazle saber al usuario"}
             }
@@ -1359,7 +1359,7 @@ async function getRecomendaciones(respuesta){
     let fArgumentos = respuesta['funcion_args'];
     $('#txtarea_recomendaciones').val(fArgumentos['recomendaciones']);
     document.querySelector("#txtarea_recomendaciones").scrollIntoView({ behavior: 'smooth' });
-    return "Informale al usuario que se ha porporcionado la informacion sobre las recomendaciones";
+    return {"success": false, "reason": "Informale al usuario que se ha porporcionado la informacion sobre las recomendaciones"}
 }
 
 /*async function mostrarInfoEdificios(respuesta){
