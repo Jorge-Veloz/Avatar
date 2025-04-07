@@ -646,26 +646,80 @@ function informacionConsumoAnt(edificio, ambiente, fecha){
     })
 }
 
-function informacionConsumoAsistente(){
-    if(modo="A"){
-        //Revisar si los identificadores son correctos
-        idIncorrecto = false;
-        let idsEdificios = getIdsCatalogo();
-        [edificio, piso, ambiente].forEach(c => {
-            if(!idsEdificios.includes(c)){
-                idIncorrecto = true;
-            }
-        });
+async function informacionConsumoAsistente(edificio, piso, ambiente, fechaInicio, fechaFin){
+    //Revisar si los identificadores son correctos
+    let idIncorrecto = false;
+    let idsEdificios = getIdsCatalogo();
+    [edificio, piso, ambiente].forEach(c => {
+        if(!idsEdificios.includes(c)){
+            idIncorrecto = true;
+        }
+    });
 
-        if(idIncorrecto){
-            
+    if(idIncorrecto){
+        return {"success": false, "reason": "Vuelve a analizar el archivo, has obtenido mal los identificadores"}
+    }
+
+    //Verificar si la informacion coincide (edificio => piso => ambiente)
+    let vEdificio = catalogoEdificios.filter(e => e.id == edificio);
+
+    if(!vEdificio || (vEdificio && vEdificio.length <= 0)){
+        return {"success": false, "reason": "La informacion que te han proporcionado es erronea. Identificador de edificio no corresponde a ninguno de los edificios del archivo."}
+    }else{
+        let vPiso = vEdificio[0].pisos.filter(p => p.id == piso);
+        
+        if(!vPiso || (vPiso && vPiso.length <= 0)){
+            return {"success": false, "reason": "La informacion que te han proporcionado es erronea. No existe este piso en el edificio mencionado."}
+        }else{
+            let vAmbiente = vPiso[0].ambientes.filter(a => a.id == ambiente);
+            if(!vAmbiente || (vAmbiente && vAmbiente.length <= 0)){
+                return {"success": false, "reason": "La informacion que te han proporcionado es erronea. No existe este ambiente en el piso mencionado."}
+            }
         }
     }
+
+    //Verificar existencia de datos con los parametros
+    try {
+        // Usamos fetch para hacer una solicitud a una API o URL
+        const respuesta = await fetch(rutaAPI+'/datos?idEdificacion='+edificio+'&idPiso='+piso+'&idAmbiente='+ambiente+'&fechaInicio='+fechaInicio+'&fechaFin='+fechaFin, {method: 'GET'}); // URL de ejemplo
+        if (!respuesta.ok) {
+        throw new Error('Error en la respuesta de la API');
+        }
+        // Esperamos a que se convierta la respuesta en formato JSON
+        const datos = await respuesta.json();
+        
+        $('#combo_edificio').val(edificio);
+        $('#combo_pisos').val(piso);
+        $('#combo_ambientes').val(ambiente);
+        $('#reportrange').daterangepicker({
+            locale: {
+                format: 'YYYY-MM-DD' // Establece el formato de fecha
+            },
+            startDate: fechaInicio,  // Fecha inicial
+            endDate: fechaFin,    // Fecha final
+            opens: 'center',          // Posición del calendario
+        });
+
+        if(datos.ok){
+            graficarInfoConsumo(datos);
+            if(datos['datos'].length > 0){
+                return {"success": true, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación"}
+            }else{
+                return {"success": true, "reason": "Se realizo correctamente la consulta pero no habian datos de consumo de ese ambiente, hazle saber al usuario"}
+            }
+        }else{
+            return {"success": true, "reason": "Los datos enviados fueron correctos, mas hubo un error a la consulta en la bd. " + datos.observacion}
+        }
+    } catch (error) {
+      console.error('Hubo un error:', error);
+    }
+
+    //OK: {"success": true, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación"}
 }
 
 function informacionConsumo(edificio, piso, ambiente, fechaInicio, fechaFin){
-    dataConsumoAct = undefined;
-    dataConsumoFut = undefined;
+    /*dataConsumoAct = undefined;
+    dataConsumoFut = undefined;*/
    /*let formData = new FormData();
     formData.append('edificio', edificio);
     formData.append('ambiente', ambiente);
@@ -677,7 +731,8 @@ function informacionConsumo(edificio, piso, ambiente, fechaInicio, fechaFin){
     .then(response => response.json())
     .then(data => {
         if(data.ok){
-            let datos = data['datos'];
+            graficarInfoConsumo(data);
+            /*let datos = data['datos'];
             let consumo_actual = [];
             let consumo_actual_total = [];
             for(let ca of datos['datos']){
@@ -687,11 +742,6 @@ function informacionConsumo(edificio, piso, ambiente, fechaInicio, fechaFin){
             for(let catotal of datos['datos']){
                 consumo_actual_total.push({x: catotal['fecha'], y: parseFloat(catotal['totalKilovatioEdificio'])})
             }
-            
-            /*let consumo_actual_total = [];
-            for(let cat of datos['consumo_actual_total']){
-                consumo_actual_total.push({x: cat['Mes'], y: cat['Consumo_Mensual']})
-            }*/
             
             let dataConsumo = [{
                 name: "Consumo Actual",
@@ -720,12 +770,57 @@ function informacionConsumo(edificio, piso, ambiente, fechaInicio, fechaFin){
                         data: consumo_futuro_total
                     }
                 ]);
-            }
+            }*/
             //$('#val_consact_edi').text(datos['consumo_actual_total'][datos['consumo_actual_total'].length-1]['Consumo_Mensual'] + "kWh");
         }else{
             Swal.fire('Error', data.observacion, 'error');
         }
     })
+}
+
+function graficarInfoConsumo(data){
+    dataConsumoAct = undefined;
+    dataConsumoFut = undefined;
+
+    let datos = data['datos'];
+    let consumo_actual = [];
+    let consumo_actual_total = [];
+    for(let ca of datos['datos']){
+        consumo_actual.push({x: ca['fecha'], y: parseFloat(ca['kilovatio'])})
+    }
+
+    for(let catotal of datos['datos']){
+        consumo_actual_total.push({x: catotal['fecha'], y: parseFloat(catotal['totalKilovatioEdificio'])})
+    }
+    
+    let dataConsumo = [{
+        name: "Consumo Actual",
+        data: consumo_actual
+    }, {
+        name: "Consumo Total",
+        data: consumo_actual_total
+    }];
+    console.log(dataConsumo)
+    dataConsumoAct = dataConsumo;
+    
+    chConsumoAct.updateSeries(dataConsumo);
+
+    $('#val_consact_amb').text(parseFloat(datos['consumoAmbiente']['kilovatio']).toFixed(2) + "kWh");
+    $('#val_consact_edi').text(parseFloat(datos['consumoEdificio']).toFixed(2) + "kWh");
+
+    if(datos['datos'].length > 0){
+        predecirConsumo(datos['datos']);
+    }else{
+        chConsumoFut.updateSeries([
+            {
+                name: "Consumo Futuro",
+                data: consumo_futuro
+            }, {
+                name: "Consumo Futuro Total",
+                data: consumo_futuro_total
+            }
+        ]);
+    }
 }
 
 function predecirConsumo(datos){
@@ -1124,7 +1219,7 @@ async function ejecutarFuncion(asisFunciones, idRun){
         let rcontent = await activarFuncion(afuncion);
         let respuestaF = {
             "tool_call_id": afuncion['funcion_id'],
-            "output": rcontent
+            "output": rcontent['reason']
         };
         //conversacion.push(respuestaF);
         respuestaFunciones.push(respuestaF);
@@ -1184,10 +1279,11 @@ async function getInfoLugar(respuesta){
     let fArgumentos = respuesta['funcion_args'];
 
     if(fArgumentos['idEdificio'] && fArgumentos['idPiso'] && fArgumentos['idAmbiente']){
-        //informacionConsumo(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], '2024-06-01', '2024-06-30');
+        let respuesta = await informacionConsumoAsistente(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], '2024-06-01', '2024-06-30');
         console.log(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], '2024-06-01', '2024-06-30');
         // En caso de datos erroneos aplicar a consulta: {"success": false, "reason": "Vuelve a analizar el archivo, has obtenido mal los identificadores"}
-        return JSON.stringify({"success": true}); 
+        //return JSON.stringify({"success": true}); 
+        return respuesta; 
     }else if(fArgumentos['idEdificio'] || fArgumentos['idPiso'] || fArgumentos['idAmbiente']){
         /*let arregloText = [];
 
