@@ -1114,6 +1114,7 @@ function enviarFunciones(respuestaFunciones, idRun){
 
         if(data.ok){
             let respuesta = data['datos'];
+            console.log(respuesta)
             if(!$('#contenedor-typing').hasClass('ct-appear')){
                 $('#contenedor-typing').addClass('ct-appear');
             }
@@ -1149,7 +1150,7 @@ async function getInfoLugar(respuesta){
     let fArgumentos = respuesta['funcion_args'];
 
     if(fArgumentos['idEdificio'] && fArgumentos['idPiso'] && fArgumentos['idAmbiente']){
-        informacionConsumo(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], '2024-06-01', '2024-06-30');
+        //informacionConsumo(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], '2024-06-01', '2024-06-30');
         return JSON.stringify({success: true}); 
     }else if(fArgumentos['idEdificio'] || fArgumentos['idPiso'] || fArgumentos['idAmbiente']){
         let arregloText = [];

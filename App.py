@@ -158,12 +158,7 @@ def enviarFunciones():
             'datos': None
         })
     else:
-        respuesta = controladorAsistente.enviarFunciones(json_tcFunciones, idRun, session.get('idHilo'))
-        return jsonify({
-            'ok': True,
-            'observacion': None,
-            'datos': respuesta
-        })
+        return controladorAsistente.enviarFunciones(json_tcFunciones, idRun, session.get('idHilo'))
 
 @app.get('/api/info_edificios_ambientes')
 def getEdificiosAmbientes():
