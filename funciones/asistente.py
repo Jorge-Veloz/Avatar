@@ -65,11 +65,7 @@ def getFuncionesAsistente():
                     "description": "id del ambiente"
                 }
                 },
-                "required": [
-                "idEdificio",
-                "idPiso",
-                "idAmbiente"
-                ]
+                "required": [] #"idEdificio", "idPiso", "idAmbiente"
             }
         }
     }

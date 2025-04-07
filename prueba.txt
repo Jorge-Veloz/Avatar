@@ -1,0 +1,5 @@
+1. Datos faltantes: Faltan datos, vuelve a preguntar.
+2. Identificadores incorrectos: Volver a obtener los identificadores.
+3. Consulta equivocada: Los datos no coinciden, vuelve a preguntar.
+4. No hay datos: Informa al usuario.
+5. Hay datos: Informa al usuario.

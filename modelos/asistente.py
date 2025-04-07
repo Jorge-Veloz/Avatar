@@ -8,9 +8,9 @@ class AsistenteModelo():
         self.client = OpenAI(
             api_key=os.environ.get("API_GPT")
         )
-        self.funciones = getFuncionesAsistente()
-        self.vector_store = self.getVectorDeArchivo('Catalogo edificios pisos y ambientes', ['objeto.json'])
-        self.asistente = self.crearAsistente()
+        #self.funciones = getFuncionesAsistente()
+        #self.vector_store = self.getVectorDeArchivo('Catalogo edificios pisos y ambientes', ['objeto.json'])
+        self.asistente = "asst_Ye8S2sU9CjZz7StH4ssZ9Y3H"
         self.hilo = None
         self.run = None
         #self.valorPrueba = 1
@@ -85,7 +85,8 @@ class AsistenteModelo():
         )
 
         self.run = self.client.beta.threads.runs.create_and_poll(
-            thread_id=threadId, assistant_id=self.asistente.id
+            #thread_id=threadId, assistant_id=self.asistente.id
+            thread_id=threadId, assistant_id=self.asistente
         )
 
         messages = list(self.client.beta.threads.messages.list(thread_id=self.hilo.id, run_id=self.run.id))

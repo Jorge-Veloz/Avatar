@@ -55,6 +55,7 @@ var asistenteFinalizo = false;
 var conversacion = [];
 var gMensaje = "";
 
+var catalogoEdificios;
 let resolverPromAutor;
 let rechazarPromAutor;
 
@@ -64,7 +65,7 @@ var synth;
 var voces;
 var intervalo;
 const TIEMPO_CORTE = 2;
-const rutaAPI = "http://192.168.0.247:3000/v1/asistente-virtual";
+const rutaAPI = "http://192.168.100.22:3000/v1/asistente-virtual";
 
 var chConsumoAct;
 var chConsumoFut;
@@ -407,6 +408,7 @@ function getEdificios(){ //Funcion de la nueva API
         
         if(data.ok){
             console.log(data);
+            catalogoEdificios = data['datos'];
             let datos = data['datos'];
 
             let ops = "<option value='' selected disabled>Seleccione el edificio</option>";
@@ -426,6 +428,20 @@ function getEdificios(){ //Funcion de la nueva API
     .catch(error => {
         Swal.fire("Error en el servidor.", "Error: "+error.message, "error");
     });
+}
+
+function getIdsCatalogo(){
+    let idsEdificios = []
+    for(let e of catalogoEdificios){
+        idsEdificios.push(e.id);
+        for(let p of e.pisos){
+            idsEdificios.push(p.id);
+            for(let a of p.ambientes){
+                idsEdificios.push(a.id);
+            }
+        }
+    }
+    return idsEdificios;
 }
 
 function getPiso(){
@@ -629,6 +645,24 @@ function informacionConsumoAnt(edificio, ambiente, fecha){
         }
     })
 }
+
+function informacionConsumoAsistente(){
+    if(modo="A"){
+        //Revisar si los identificadores son correctos
+        idIncorrecto = false;
+        let idsEdificios = getIdsCatalogo();
+        [edificio, piso, ambiente].forEach(c => {
+            if(!idsEdificios.includes(c)){
+                idIncorrecto = true;
+            }
+        });
+
+        if(idIncorrecto){
+            
+        }
+    }
+}
+
 function informacionConsumo(edificio, piso, ambiente, fechaInicio, fechaFin){
     dataConsumoAct = undefined;
     dataConsumoFut = undefined;
@@ -1151,17 +1185,20 @@ async function getInfoLugar(respuesta){
 
     if(fArgumentos['idEdificio'] && fArgumentos['idPiso'] && fArgumentos['idAmbiente']){
         //informacionConsumo(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], '2024-06-01', '2024-06-30');
-        return JSON.stringify({success: true}); 
+        console.log(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], '2024-06-01', '2024-06-30');
+        // En caso de datos erroneos aplicar a consulta: {"success": false, "reason": "Vuelve a analizar el archivo, has obtenido mal los identificadores"}
+        return JSON.stringify({"success": true}); 
     }else if(fArgumentos['idEdificio'] || fArgumentos['idPiso'] || fArgumentos['idAmbiente']){
-        let arregloText = [];
+        /*let arregloText = [];
 
         if(fArgumentos['idEdificio']) arregloText.push(" el edificio")
         if(fArgumentos['idPiso']) arregloText.push(" el piso")
         if(fArgumentos['idAmbiente']) arregloText.push(" el ambiente")
         
-        return {"error": "Pidele al usuario que te indique" + arregloText.join(',')+"."};
+        return {"error": "Pidele al usuario que te indique" + arregloText.join(',')+"."};*/
+        return {"success": false, "reason": "No tienes la informacion completa para poder consultar el consumo energetico"}
     }else{
-        return {"error": "Vuelve a preguntarle al usuario por los datos del edificio, el piso y el ambiente"};
+        return {"success": false, "reason": "Necesitas todos los datos para poder consultar el consumo energetico"};
     }
 }
 

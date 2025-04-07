@@ -64,8 +64,10 @@ def inicializarAsistente():
     #tmpMensaje = getMensajeSistema()
     #session['mensajes'] = tmpMensaje
     #compMsgs = list(filter(lambda x: x['usuario'] != usuarioAct, compMsgs))
-    session.pop('idHilo')
-    print(session)
+    if 'idHilo' in session:
+        session.pop('idHilo')
+        print(session)
+    
     session['idHilo'] = controladorAsistente.crearHilo()
         #controladorPrueba.setPrueba(5)
     #controladorAsistente.crearHilo()
@@ -126,7 +128,6 @@ def getRespuesta():
     #controlador = AsistenteControlador()
     #respuesta = controlador.getRespuesta(session.get('user'), mTmpAsis, compMsgs)
     if 'idHilo' not in session:
-        session.pop('idHilo')
         session['idHilo'] = controladorAsistente.obtenerIdHilo()
     
     respuesta = controladorAsistente.getRespuesta(session.get('idHilo'), mensaje)
