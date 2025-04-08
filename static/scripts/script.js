@@ -714,6 +714,8 @@ async function informacionConsumoAsistente(edificio, piso, ambiente, fechaInicio
         }
     }
 
+    //HACER: Verificacion para las fechas de consulta
+
     //Verificar existencia de datos con los parametros
     try {
         // Usamos fetch para hacer una solicitud a una API o URL
@@ -1350,8 +1352,8 @@ function enviarFunciones(respuestaFunciones, idRun){
 async function getInfoLugar(respuesta){
     let fArgumentos = respuesta['funcion_args'];
 
-    if(fArgumentos['idEdificio'] && fArgumentos['idPiso'] && fArgumentos['idAmbiente']){
-        let respuesta = await informacionConsumoAsistente(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], '2024-06-01', '2024-06-30');
+    if(fArgumentos['idEdificio'] && fArgumentos['idPiso'] && fArgumentos['idAmbiente'] && fArgumentos['fechaInicio'] && fArgumentos['fechaFin']){
+        let respuesta = await informacionConsumoAsistente(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], fArgumentos['fechaInicio'], fArgumentos['fechaFin']);
         console.log(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], '2024-06-01', '2024-06-30');
         // En caso de datos erroneos aplicar a consulta: {"success": false, "reason": "Vuelve a analizar el archivo, has obtenido mal los identificadores"}
         //return JSON.stringify({"success": true}); 
