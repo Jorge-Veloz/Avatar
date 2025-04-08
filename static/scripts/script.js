@@ -66,7 +66,7 @@ var synth;
 var voces;
 var intervalo;
 const TIEMPO_CORTE = 2;
-const rutaAPI = "http://192.168.100.22:3000/v1/asistente-virtual";
+const rutaAPI = "http://192.168.100.18:3000/v1/asistente-virtual";
 
 var chConsumoAct;
 var chConsumoFut;
@@ -112,29 +112,45 @@ function inicializarDOM(){
     recognition.continuous = true; //false
     recognition.interimResults = true; //false
     recognition.onaudiostart = (event) => {
-        gMensaje = '';
-        cambiaAnimacionAsistente('detener-asistente')
-        estadoAsistente = "escuchando";
+        //gMensaje = '';
+        console.log("Iniciando la escucha");
+        if(estadoAsistente && estadoAsistente == "listo"){
+            cambiaAnimacionAsistente('detener-asistente')
+        }
+        //estadoAsistente = "escuchando";
     }
     recognition.onaudioend = (event) => {
-        cambiaAnimacionAsistente('hablar-asistente')
-        estadoAsistente = "esperando";
+        console.log("Se detuvo la escucha.");
+        if(estadoVoz == "activo"){
+            //setTimeout(iniciarEscucha, 1000);
+            detenerEscucha();
+        }
+        if(estadoAsistente && estadoAsistente == "listo"){
+            cambiaAnimacionAsistente('hablar-asistente')
+        }
+        //estadoAsistente = "esperando";
     }
     recognition.onresult = (event) => {
         //cambiaAnimacionAsistente('cargando-asistente');
-        gMensaje = '';
+        let transcripcion = '';
         //let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
             if (event.results[i].isFinal) { // Solo procesar resultados finales
-                gMensaje += event.results[i][0].transcript;
+                transcripcion += event.results[i][0].transcript;
             }
         }
-        if (gMensaje.trim()) {
-            if(estadoAsistente == "escuchando"){
+        if (transcripcion.trim()) {
+            console.log("Texto transcrito: " + transcripcion);
+            /*if(estadoAsistente == "escuchando"){
                 toggleEscucha();
             }else{
                 setTimeout(cambiaAnimacionAsistente('cargando-asistente'), 500);
                 estadoAsistente = "detenido";
+                conversarAsistente();
+            }*/
+            
+            if(estadoAsistente && estadoAsistente == "listo"){
+                gMensaje = transcripcion
                 conversarAsistente();
             }
         }
@@ -145,10 +161,12 @@ function inicializarDOM(){
         conversarAsistente();*/
     };
     recognition.onerror = (event) => {
-        cambiaAnimacionAsistente('hablar-asistente')
         Swal.fire("Error al reconocer la voz", "Error: "+event.error, "error");
-        estadoAsistente = "esperando";
-        toggleEscucha();
+        if(estadoAsistente && estadoAsistente == "listo"){
+            cambiaAnimacionAsistente('hablar-asistente')
+        }
+        //estadoAsistente = "listo";
+        //toggleEscucha();
     };
     /* ========================== Fin Seteo Reconocimiento de Voz ========================== */
 
@@ -181,6 +199,7 @@ function inicializarDOM(){
     
     $('#asistente-btn').removeAttr('disabled');
     getEdificios();
+    iniciarEscucha();
 }
 
 function verificarAutorizacion(){
@@ -901,6 +920,7 @@ function predecirConsumo(datos){
 }
 
 function inicializarAsistente(){
+    if(estadoAsistente) return;
     estadoAsistente = "detenido";
     cambiaAnimacionAsistente("cargando-asistente");
     fetch('/inicializar', {
@@ -911,6 +931,7 @@ function inicializarAsistente(){
         asistenteFinalizo = false;
         
         if(data.ok){
+            
             gMensaje = "Presentate ante el usuario y dale una bienvenida. Tienes que preguntarle al usuario sobre su nombre y si es estudiante o docente.";
             $('#asistente-btn').attr('disabled', true);
             //let txtInicio = "Hola.";
@@ -1028,6 +1049,7 @@ async function hablar(texto) {
     }*/
 
     utterance.onstart = function(){
+        detenerEscucha();
         clearTimeout(intervalo);
         if(indice == 1){
             if(dataConsumoAct && dataConsumoFut){
@@ -1051,19 +1073,20 @@ async function hablar(texto) {
             gestionarErrorVoz();
             console.log("El texto ha terminado de reproducirse.");
             cambiaAnimacionAsistente("hablar-asistente");
-            estadoAsistente = "esperando";
+            estadoAsistente = "listo";
             
             if(dataConsumoAct && dataConsumoFut){
                 permiteGraficaClic = true;
             }else{
                 permiteGraficaClic = false;
             }
+            iniciarEscucha();
 
-            if(asistenteFinalizo){
+            /*if(asistenteFinalizo){
                 $('#inner-wave').removeClass('iw-enabled');
                 guardarFormulario();
                 estadoAsistente = "detenido";
-            }
+            }*/
         }
     };
 
@@ -1159,14 +1182,8 @@ function toggleEscucha(){
 function toggleVoz(){
 
     if(estadoVoz == "activo"){
-        $('#btnMicUp').hide();
-        $('#btnMicStop').show();
-        estadoVoz = "noactivo";
         detenerEscucha();
     }else if(estadoVoz == "noactivo"){
-        $('#btnMicStop').hide();
-        $('#btnMicUp').show();
-        estadoVoz = "activo";
         iniciarEscucha();
     }
     //toggleEscucha()
@@ -1185,20 +1202,26 @@ function toggleVoz(){
 }
 
 function iniciarEscucha(){
+    $('#btnMicStop').hide();
+    $('#btnMicUp').show();
+    estadoVoz = "activo";
     recognition.start();
 }
 
 function detenerEscucha(){
+    $('#btnMicUp').hide();
+    $('#btnMicStop').show();
+    estadoVoz = "noactivo";
     recognition.stop();
 }
 
 // hace posible la conversacion con el asistente
 function conversarAsistente(){
-    const formData = new FormData();
-    //formData.append('mensaje', JSON.stringify(conversacion));
-    formData.append('mensaje', gMensaje);
+    cambiaAnimacionAsistente('cargando-asistente');
+    estadoAsistente = "detenido";
 
-    //console.log(conversacion);
+    const formData = new FormData();
+    formData.append('mensaje', gMensaje);
 
     fetch('/conversar', {
         method: 'POST',

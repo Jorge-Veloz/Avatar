@@ -10,7 +10,7 @@ class AsistenteModelo():
         )
         #self.funciones = getFuncionesAsistente()
         #self.vector_store = self.getVectorDeArchivo('Catalogo edificios pisos y ambientes', ['objeto.json'])
-        self.asistente = "asst_Ye8S2sU9CjZz7StH4ssZ9Y3H"
+        self.asistente = os.environ.get("ID_ASISTENTE")
         self.hilo = None
         self.run = None
         #self.valorPrueba = 1
