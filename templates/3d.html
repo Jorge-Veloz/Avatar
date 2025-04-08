@@ -24,8 +24,18 @@
     <div class="contenedor">
         <div class="asistente" style="padding-top: 0;">
             <!--<div id="unity-container" class="unity-desktop" >-->
+            <div class="controles" id="cont-voice-btn" style="z-index:500;position: absolute;top: 25%;left: 18%;cursor: pointer;"><!--bottom: 88px;-->
+                <div class="container-voice" id="voice-btn"  onclick="toggleVoz()">
+                    <div class="voice-btn voice-micup" id="btnMicUp">
+                        <i class="fa-solid fa-microphone" style="font-size:15pt;color: #6d6b6b;" aria-hidden="true"></i>
+                    </div>
+                    <div class="voice-btn voice-micstop" id="btnMicStop" style="display: none;">
+                        <i class="fa-solid fa-microphone-slash" style="font-size:15pt;color: #c32828;" aria-hidden="true"></i>
+                    </div>
+                </div>
+            </div>
             <div class="controles" id="controles" style="z-index:500;position: absolute;top:22%"><!--bottom: 88px;-->
-                <div class="container-icon" id="asistente-btn" onclick="toggleEscucha()" disabled>
+                <div class="container-icon" id="asistente-btn" onclick="inicializarAsistente()" disabled>
                     <div id="outer-circle">
                         <div class="inner-wave inicializar-asistente" id="inner-wave" disabled>
                             <span id="icon_control" class="icon_control" title="Iniciar Asistente">

@@ -48,6 +48,10 @@ function pausar(){
         }
 
 // Manejo de resultados
+recognition.onaudiostart = (event) => {
+    console.log("Iniciando escucha");
+}
+
 recognition.onresult = (event) => {
     let finalTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -66,7 +70,7 @@ recognition.onerror = (event) => {
 };
 
 // Manejo de finalización
-recognition.onend = () => {
+recognition.onaudioend = () => {
     console.log('Reconocimiento de voz ha terminado.');
     // Reinicia el reconocimiento para continuar escuchando
     //recognition.start();

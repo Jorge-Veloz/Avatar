@@ -54,6 +54,7 @@ var estadoAsistente;
 var asistenteFinalizo = false;
 var conversacion = [];
 var gMensaje = "";
+var estadoVoz = "activo";
 
 var catalogoEdificios;
 let resolverPromAutor;
@@ -75,7 +76,7 @@ var permiteGraficaClic = false;
 
 //Inicializacion de los servicios
 document.addEventListener("DOMContentLoaded", () => {
-    probarAPI();
+    //probarAPI();
     if(localStorage.getItem('autorizacion') == 1){
         inicializarDOM();
     }else{
@@ -108,28 +109,46 @@ function inicializarDOM(){
     /* ========================== Seteo Reconocimiento de Voz ========================== */
     recognition = new webkitSpeechRecognition();
     recognition.lang = 'es-ES';
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.continuous = true; //false
+    recognition.interimResults = true; //false
     recognition.onaudiostart = (event) => {
+        gMensaje = '';
         cambiaAnimacionAsistente('detener-asistente')
         estadoAsistente = "escuchando";
     }
     recognition.onaudioend = (event) => {
-        cambiaAnimacionAsistente('cargando-asistente')
-        estadoAsistente = "detenido";
+        cambiaAnimacionAsistente('hablar-asistente')
+        estadoAsistente = "esperando";
     }
     recognition.onresult = (event) => {
         //cambiaAnimacionAsistente('cargando-asistente');
-        const transcript = event.results[0][0].transcript;
+        gMensaje = '';
+        //let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) { // Solo procesar resultados finales
+                gMensaje += event.results[i][0].transcript;
+            }
+        }
+        if (gMensaje.trim()) {
+            if(estadoAsistente == "escuchando"){
+                toggleEscucha();
+            }else{
+                setTimeout(cambiaAnimacionAsistente('cargando-asistente'), 500);
+                estadoAsistente = "detenido";
+                conversarAsistente();
+            }
+        }
+        /*const transcript = event.results[0][0].transcript;
     
         //conversacion.push({"role": "user", "content": transcript});
         gMensaje = transcript;
-        conversarAsistente();
+        conversarAsistente();*/
     };
     recognition.onerror = (event) => {
         cambiaAnimacionAsistente('hablar-asistente')
         Swal.fire("Error al reconocer la voz", "Error: "+event.error, "error");
         estadoAsistente = "esperando";
+        toggleEscucha();
     };
     /* ========================== Fin Seteo Reconocimiento de Voz ========================== */
 
@@ -156,14 +175,12 @@ function inicializarDOM(){
     /* ========================== Fin Seteo Reproduccion de Voz ========================== */
 
     /* ========================== Seteo Charts ========================== */
-    //setearCharts();
     chConsumoAct = crearChart(document.querySelector("#grafica_cons_act"), 'line', 'grafica_actual');
     chConsumoFut = crearChart(document.querySelector("#grafica_cons_fut"), 'line', 'grafica_futuro');
     /* ========================== Fin Seteo Charts ========================== */
-    //$('#fecha_busqueda').val(new Date().toISOString().split('T')[0]);
+    
     $('#asistente-btn').removeAttr('disabled');
     getEdificios();
-    //llenarModalInfoEdificios();
 }
 
 function verificarAutorizacion(){
@@ -884,6 +901,7 @@ function predecirConsumo(datos){
 }
 
 function inicializarAsistente(){
+    estadoAsistente = "detenido";
     cambiaAnimacionAsistente("cargando-asistente");
     fetch('/inicializar', {
         method: 'GET',
@@ -894,6 +912,7 @@ function inicializarAsistente(){
         
         if(data.ok){
             gMensaje = "Presentate ante el usuario y dale una bienvenida. Tienes que preguntarle al usuario sobre su nombre y si es estudiante o docente.";
+            $('#asistente-btn').attr('disabled', true);
             //let txtInicio = "Hola.";
             //conversacion.push({'role': 'user', 'content': txtInicio});
             conversarAsistente();
@@ -963,14 +982,14 @@ function cambiaAnimacionAsistente(animacion){
         {
             $('#inner-wave').addClass(animacion);
             $('#icon_control').html('<i class="fa-solid fa-microphone"></i>');
-            $('#icon_control').attr('title', 'Hablar');
+            $('#icon_control').attr('title', '');
         }
         break;
         case 'detener-asistente':
         {
             $('#inner-wave').addClass(animacion);
             $('#icon_control').html('<i class="fa-solid fa-microphone"></i>');
-            $('#icon_control').attr('title', 'Dejar de hablar');
+            $('#icon_control').attr('title', 'Escuchando...');
         }
         break;
         case 'reproduciendo-asistente':
@@ -1129,10 +1148,40 @@ function toggleEscucha(){
         }else if(estadoAsistente == "escuchando"){
             detenerEscucha();
         }
+    }
+    /*if(estadoAsistente){
     }else{
         estadoAsistente = "detenido";
         inicializarAsistente();
+    }*/
+}
+
+function toggleVoz(){
+
+    if(estadoVoz == "activo"){
+        $('#btnMicUp').hide();
+        $('#btnMicStop').show();
+        estadoVoz = "noactivo";
+        detenerEscucha();
+    }else if(estadoVoz == "noactivo"){
+        $('#btnMicStop').hide();
+        $('#btnMicUp').show();
+        estadoVoz = "activo";
+        iniciarEscucha();
     }
+    //toggleEscucha()
+
+    
+    /*if(estadoAsistente){
+        if(estadoAsistente == "esperando"){
+            iniciarEscucha();
+        }else if(estadoAsistente == "escuchando"){
+            detenerEscucha();
+        }
+    }else{
+        estadoAsistente = "detenido";
+        inicializarAsistente();
+    }*/
 }
 
 function iniciarEscucha(){
