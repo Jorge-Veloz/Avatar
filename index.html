@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head><base href=""/>
+		<title>Asistente de consumo eléctrico</title>
+		<meta charset="utf-8" />
+		<meta name="description" content="Saul HTML Free - Bootstrap 5 HTML Multipurpose Admin Dashboard Theme" />
+		<meta name="keywords" content="Saul, bootstrap, bootstrap 5, dmin themes, free admin themes, bootstrap admin, bootstrap dashboard" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:type" content="article" />
+		<meta property="og:title" content="Saul HTML Free - Bootstrap 5 HTML Multipurpose Admin Dashboard Theme" />
+		<meta property="og:url" content="https://keenthemes.com/products/saul-html-pro" />
+		<meta property="og:site_name" content="Keenthemes | Saul HTML Free" />
+		<link rel="canonical" href="https://preview.keenthemes.com/saul-html-free" />
+		<link rel="shortcut icon" href="assets/media/logos/favicon.ico" />
+		
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
+		
+		<link href="assets/plugins/global/plugins.bundle.css" rel="stylesheet" type="text/css" />
+		<link href="assets/css/style.bundle.css" rel="stylesheet" type="text/css" />
+		<style>
+			@media (min-width: 768px) {
+				.fixed-card {
+					position: fixed;   /* Posición fija */
+					z-index: 1000;     /* Asegura que esté por encima de otros elementos */
+					width: 32%;
+				}
+			}
+			/* En pantallas menores a 768px (móviles) se comporta de forma normal */
+			@media (max-width: 767.98px) {
+				.fixed-card {
+					position: static;
+				}
+			}
+		</style>
+	</head>
+
+	<body id="kt_app_body" data-kt-app-header-fixed="true" data-kt-app-header-fixed-mobile="true" data-kt-app-sidebar-enabled="true" data-kt-app-sidebar-fixed="true" data-kt-app-sidebar-hoverable="true" data-kt-app-sidebar-push-toolbar="true" data-kt-app-sidebar-push-footer="true" data-kt-app-toolbar-enabled="true" data-kt-app-aside-enabled="true" data-kt-app-aside-fixed="true" data-kt-app-aside-push-toolbar="true" data-kt-app-aside-push-footer="true" class="app-default">
+
+		<script>var defaultThemeMode = "light"; var themeMode; if ( document.documentElement ) { if ( document.documentElement.hasAttribute("data-bs-theme-mode")) { themeMode = document.documentElement.getAttribute("data-bs-theme-mode"); } else { if ( localStorage.getItem("data-bs-theme") !== null ) { themeMode = localStorage.getItem("data-bs-theme"); } else { themeMode = defaultThemeMode; } } if (themeMode === "system") { themeMode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; } document.documentElement.setAttribute("data-bs-theme", themeMode); }</script>
+
+		<div class="d-flex flex-column flex-root app-root" id="kt_app_root">
+			<div class="app-main flex-column flex-row-fluid m-5" id="kt_app_main">
+				<div class="row">
+					<div class="col-md-4">
+						<div class="fixed-card">
+							<div class="controles d-flex align-items-center position-absolute" id="controles" style="z-index: 1;bottom: 5%;left: 43%;">
+								<a href="#" class="asistente-btn btn btn-lg btn-icon btn-light btn-active-secondary me-5 rounded-circle" onclick="toggleEscucha()">
+									<i class="bi bi-mic-fill fs-2 text-gray-800"></i>
+								</a>
+								<p id="info-adicional"></p>
+							</div>
+							<div class="card">
+								<div class="px-0">
+									<iframe src="./avatar.html" class="d-flex rounded w-100 justify-content-center align-items-center" style="height: 95vh;">
+									</iframe>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-8 d-flex flex-column gap-5">
+						<div class="card">
+							<div class="card-header app-toolbar py-5">
+								<div class="page-title d-flex flex-column justify-content-center">
+									<h1 class="fw-bolder mb-0">Asistente de consumo eléctrico</h1>
+								</div>
+								<a href="#" class="btn btn-sm btn-primary ms-3 px-4 py-3" id="btnConsultarDatos">
+									<i class="fa-solid fa-magnifying-glass me-2" aria-hidden="true"></i>
+									<span class="text-btn-consultar-datos">Consultar datos</span>
+								</a>
+							</div>
+							<div class="card-body d-flex flex-column">
+								<div class="row">
+									<div class="col-sm-12 col-md-3 col-lg-3 col-xl-3 col-xxl-3">
+										<div class="form-group">
+											<b>Edificio:</b>
+											<select class="form-select bg-light" name="combo_edificio" id="combo_edificio">
+                                            	<option value="" selected="" disabled="">Seleccionar</option>
+											</select>
+											<!--<button class="btn btn-outline-info rounded-circle" id="btn_consultar_infoedificios" title="Edificios y ambientes disponibles" onclick="$('#modalInfoEdificios').modal('show');"><i class="fa-solid fa-question"></i></button>-->
+										</div>
+									</div>
+									<div class="col-sm-12 col-md-2 col-lg-2 col-xl-2 col-xxl-2">
+										<div class="form-group">
+											<b>Piso:</b>
+											<select class="form-select bg-light" name="combo_pisos" id="combo_pisos">
+												<option value="" selected="" disabled="">Seleccionar</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-sm-12 col-md-3 col-lg-3 col-xl-3 col-xxl-3">
+										<div class="form-group">
+											<b>Ambiente:</b>
+											<select class="form-select bg-light" name="combo_ambientes" id="combo_ambientes">
+												<option value="" selected="" disabled="">Seleccionar</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-sm-12 col-md-4 col-lg-4 col-xl-4 col-xxl-4">
+										<div class="form-group">
+											<b>Fechas:</b>
+											<div id="reportrange" class="form-control bg-light">
+												<i class="fa fa-calendar"></i>
+												<span></span> <i class="fa fa-caret-down"></i>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="card card-flush">
+							<div class="card-header app-toolbar py-5">
+								<div class="page-title d-flex flex-column justify-content-center">
+									<h2 class="fw-bold mb-2">Consumo actual</h2>
+									<span class="fs-6 fw-semibold text-gray-500">Consumo actual de energía</span>
+								</div>
+								<div class="d-flex flex-wrap d-grid gap-5">
+									<div class="me-md-2 d-flex flex-column align-items-end">   
+										<div class="d-flex mb-2">   
+											<span class="fs-4 fw-semibold text-gray-500 me-1">W</span>
+											<span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2 consumo-actual-edificio">--</span>                
+										</div>
+										<span class="fs-6 fw-semibold text-gray-500">Total del edificio</span>
+									</div>
+									<div class="border-start-dashed border-start border-gray-300 ps-md-10 d-flex flex-column align-items-end">   
+										<div class="d-flex mb-2">   
+											<span class="fs-4 fw-semibold text-gray-500 me-1">W</span>
+											<span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2 consumo-actual-ambiente">--</span>                
+										</div>
+										<span class="fs-6 fw-semibold text-gray-500">Total del ambiente</span>
+									</div>
+								</div>
+							</div>
+							<div class="card-body d-flex justify-content-between flex-column pb-1 px-0">
+								<div id="grafico1" class="min-h-auto ps-4 pe-6" style="height: 150px"></div>
+							</div>
+						</div>
+						<div class="card card-flush">
+							<div class="card-header app-toolbar py-5">
+								<div class="page-title d-flex flex-column justify-content-center">
+									<h2 class="fw-bold mb-2">Consumo futuro</h2>
+									<span class="fs-6 fw-semibold text-gray-500">Consumo actual de energía</span>
+								</div>
+								<div class="d-flex flex-wrap d-grid gap-5">
+									<div class="me-md-2 d-flex flex-column align-items-end">   
+										<div class="d-flex mb-2">   
+											<span class="fs-4 fw-semibold text-gray-500 me-1">W</span>
+											<span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2 consumo-futuro-edificio">--</span>                
+										</div>
+										<span class="fs-6 fw-semibold text-gray-500">Total del edificio</span>
+									</div>
+									<div class="border-start-dashed border-start border-gray-300 ps-md-10 d-flex flex-column align-items-end">   
+										<div class="d-flex mb-2">   
+											<span class="fs-4 fw-semibold text-gray-500 me-1">W</span>
+											<span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2 consumo-futuro-ambiente">--</span>                
+										</div>
+										<span class="fs-6 fw-semibold text-gray-500">Total del ambiente</span>
+									</div>
+								</div>
+							</div>
+							<div class="card-body d-flex justify-content-between flex-column pb-1 px-0">
+								<div id="grafico2" class="min-h-auto ps-4 pe-6" style="height: 150px"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<div id="kt_app_footer" class="app-footer align-items-center justify-content-center justify-content-md-between flex-column flex-md-row py-3">
+
+					<div class="text-dark order-2 order-md-1">
+						<span class="text-muted fw-semibold me-1">2023&copy;</span>
+						<a href="https://keenthemes.com" target="_blank" class="text-gray-800 text-hover-primary">Keenthemes</a>
+					</div>
+
+					<ul class="menu menu-gray-600 menu-hover-primary fw-semibold order-1">
+						<li class="menu-item">
+							<a href="https://keenthemes.com" target="_blank" class="menu-link px-2">About</a>
+						</li>
+						<li class="menu-item">
+							<a href="https://devs.keenthemes.com" target="_blank" class="menu-link px-2">Support</a>
+						</li>
+						<li class="menu-item">
+							<a href="https://keenthemes.com/products/saul-html-pro" target="_blank" class="menu-link px-2">Purchase</a>
+						</li>
+					</ul>
+
+				</div>
+			</div>
+		</div>
+		
+		<div id="kt_scrolltop" class="scrolltop" data-kt-scrolltop="true">
+			<i class="ki-duotone ki-arrow-up">
+				<span class="path1"></span>
+				<span class="path2"></span>
+			</i>
+		</div>
+		
+		<script>var hostUrl = "assets/";</script>
+
+		<script src="assets/plugins/global/plugins.bundle.js"></script>
+		<script src="assets/js/scripts.bundle.js"></script>
+		<script src="assets/js/widgets.bundle.js"></script>
+		<script src="assets/js/app/global.js"></script>
+    	<script src="assets/js/app/index.js"></script>
+		
+	</body>
+
+	
+    <div class="modal fade" id="modalInfoEdificios" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Información Edificios y Ambientes</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Esta es la información de los edificios y ambientes que se encuentra registrada actualmente:</p>
+                    <div class="accordion accordion-flush" id="accordionFlushExample">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingOne">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseOne" aria-expanded="false" aria-controls="flush-collapseOne">
+                                Accordion Item #1
+                              </button>
+                            </h2>
+                            <div id="flush-collapseOne" class="accordion-collapse collapse" aria-labelledby="flush-headingOne" data-bs-parent="#accordionFlushExample">
+                                <div class="accordion-body p-0 ps-3">
+                                    
+                                    <div class="accordion accordion-flush" id="accordionFlushExampleOne">
+                                        <h2 class="accordion-header" id="flush-headingOneOne">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwoOne" aria-expanded="false" aria-controls="flush-collapseTwoOne">
+                                                Accordion Item #1
+                                            </button>
+                                        </h2>
+                                        <div id="flush-collapseTwoOne" class="accordion-collapse collapse" aria-labelledby="flush-headingTwoOne" data-bs-parent="#accordionFlushExampleOne">
+                                            <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the second item's accordion body. Let's imagine this being filled with some actual content.</div>
+                                        </div>
+                                    </div>
+                                    <ul class="list-group list-group-flush">
+                                        
+                                        <li class="list-group-item">An item</li>
+                                        <li class="list-group-item">A second item</li>
+                                        <li class="list-group-item">A third item</li>
+                                    </ul>
+                                    
+                                </div>
+                            </div>
+                          </div>
+                          <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingTwo">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseTwo" aria-expanded="false" aria-controls="flush-collapseTwo">
+                                Accordion Item #2
+                              </button>
+                            </h2>
+                            <div id="flush-collapseTwo" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo" data-bs-parent="#accordionFlushExample">
+                              <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the second item's accordion body. Let's imagine this being filled with some actual content.</div>
+                            </div>
+                          </div>
+                          <div class="accordion-item">
+                            <h2 class="accordion-header" id="flush-headingThree">
+                              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseThree" aria-expanded="false" aria-controls="flush-collapseThree">
+                                Accordion Item #3
+                              </button>
+                            </h2>
+                            <div id="flush-collapseThree" class="accordion-collapse collapse" aria-labelledby="flush-headingThree" data-bs-parent="#accordionFlushExample">
+                              <div class="accordion-body">Placeholder content for this accordion, which is intended to demonstrate the <code>.accordion-flush</code> class. This is the third item's accordion body. Nothing more exciting happening here in terms of content, but just filling up the space to make it look, at least at first glance, a bit more representative of how this would look in a real-world application.</div>
+                            </div>
+                          </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</html>
