@@ -8,6 +8,7 @@
 		<meta name="description" content="Saul HTML Free - Bootstrap 5 HTML Multipurpose Admin Dashboard Theme" />
 		<meta name="keywords" content="Saul, bootstrap, bootstrap 5, dmin themes, free admin themes, bootstrap admin, bootstrap dashboard" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="shortcut icon" type="image/ico" href="{{ url_for('serve_assets', filename='media/img/favicon.ico') }}"/>
 		<meta property="og:locale" content="en_US" />
 		<meta property="og:type" content="article" />
 		<meta property="og:title" content="Saul HTML Free - Bootstrap 5 HTML Multipurpose Admin Dashboard Theme" />
@@ -50,8 +51,10 @@
 					<div class="col-md-4">
 						<div class="fixed-card">
 							<div class="controles d-flex align-items-center position-absolute" id="controles" style="z-index: 1;bottom: 5%;left: 43%;">
-								<a href="#" class="asistente-btn btn btn-lg btn-icon btn-light btn-active-secondary me-5 rounded-circle" onclick="toggleEscucha()">
-									<i class="bi bi-mic-fill fs-2 text-gray-800"></i>
+								<a href="#" id="btnVoz" class="asistente-btn btn btn-lg btn-icon btn-light btn-active-secondary me-5 rounded-circle">
+									<i id="btnMicInit" class="bi bi-play-fill fs-2 text-info"></i>
+									<i id="btnMicUp" class="bi bi-mic-fill fs-2 text-gray-800" style="display: none;"></i>
+									<i id="btnMicStop" class="bi bi-mic-mute-fill fs-2 text-danger" style="display: none;"></i>
 								</a>
 								<p id="info-adicional"></p>
 							</div>
@@ -207,11 +210,43 @@
 		<script src="{{ url_for('serve_assets', filename='js/widgets.bundle.js') }}"></script>
 		<script src="{{ url_for('serve_assets', filename='js/app/global.js') }}"></script>
     	<script src="{{ url_for('serve_assets', filename='js/app/index.js') }}"></script>
-		
+
 	</body>
 
-	
-    <div class="modal fade" id="modalInfoEdificios" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+	<div class="modal fade" id="modal_autorizacion" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">AUTORIZACIÓN DE USO DE DATOS PARA INVESTIGACIONES</h5>
+                </div>
+                <div class="modal-body text-justify">
+                    <p><b>Por favor, antes de continuar es necesario que lea y acepte lo siguiente:</b></p>
+                    <p style="font-size: 10pt;">
+                        De conformidad con lo dispuesto en la Ley Orgánica de Protección de Datos Personales vigente 
+                        en la República del Ecuador, acepto el contenido del presente formulario electrónico y doy 
+                        mi consentimiento explícito a la Universidad Técnica de Manabí (UTM) para el tratamiento de 
+                        mis datos personales y datos sensibles consignados en el mismo, quien actuará como el 
+                        responsable del tratamiento de mis datos personales y sensibles, de acuerdo a lo establecido 
+                        en la norma antes citada. Con la suscripción del presente documento, consiento y autorizo a 
+                        la Universidad Técnica de Manabí (UTM) mis datos personales y sensibles <b>sean utilizados 
+                        únicamente con fines investigativos de la UTM, y los mismo no podrán ser cedidos y tratados 
+                        por terceros, ni publicados.</b> Declaro que toda la información consignada es verídica y exacta, 
+                        especialmente en la calidad en la que lo manifiesto en el presente documento. 
+                        También se me ha notificado que la información respecto al tratamiento, finalidad, 
+                        conservación, ejercicio de derechos determinados en la Ley Orgánica de Protección de Datos 
+                        Personales. El consentimiento explícito para el tratamiento de datos personales y sensibles 
+                        otorgado por el presente instrumento se realiza de manera voluntaria, previa, explícita, 
+                        informada e inequívoca.
+                    </p>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" id="rechazar_auto" class="btn btn-secondary">Rechazar</button>
+                    <button type="button" id="aceptar_autor" class="btn btn-primary">Aceptar</button>
+                </div>
+              </div>
+        </div>
+    </div>
+	<div class="modal fade" id="modalInfoEdificios" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -275,6 +310,45 @@
                     <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal_voces" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Seleccione una voz para el asistente</h5>
+                    <!--<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>-->
+                </div>
+                <div class="modal-body text-justify">
+                    <p style="font-size: 10pt;">
+                        No se ha encontrado la voz del asistente en su navegador.
+                        Por favor, seleccione una voz para el asistente de energía. <br/>
+                        <em>Nota: Esta voz será guardada en el navegador, y será utilizada por defecto en próximas consultas.</em>
+                    </p>
+                    <form>
+                        <div class="mb-3">
+                            <label for="select_voz" class="col-form-label"><b>Voz para asistente energético:</b></label>
+                            <div class="input-group">
+                                <select id="select_voz" class="form-select" aria-label="Default select male voice">
+                                    <option selected disabled>Seleccione voz...</option>
+                                    <!--<option value="1">One</option>
+                                    <option value="2">Two</option>
+                                    <option value="3">Three</option>-->
+                                </select>
+                                <span class="input-group-btn">
+                                    <button id="play_voz" type="button" class="btn btn-success">
+                                        <i class="fa-solid fa-play" style="color:white;"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            <!--<input type="text" class="form-control" id="recipient-name">-->
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="guardar_voz" class="btn btn-primary" disabled>Guardar voz</button>
+                </div>
+              </div>
         </div>
     </div>
 

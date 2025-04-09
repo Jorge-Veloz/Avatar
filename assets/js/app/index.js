@@ -11,7 +11,9 @@ const Index = (function() {
     let asistenteFinalizo = false;
     let conversacion = [];
     let gMensaje = "";
+    var estadoVoz = "activo";
 
+    var catalogoEdificios;
     let resolverPromAutor;
     let rechazarPromAutor;
 
@@ -76,24 +78,28 @@ const Index = (function() {
 
     document.addEventListener("DOMContentLoaded", async () => {
 
-        await getEdificios();
         await initGraficos();
-
+        
         if(localStorage.getItem('autorizacion') == 1){
             inicializarDOM();
         }else{
             $('#modal_autorizacion').modal('show');
-            verificarAutorizacion()
-            .then((res)=>{
+            //await verificarAutorizacion()
+            /*.then((res)=>{
                 $('#modal_autorizacion').modal('hide');
                 localStorage.setItem('autorizacion', 1);
                 inicializarDOM();
-            })
-            .catch((err) =>{
-                localStorage.setItem('autorizacion', 0);
-                location.href = "https://www.google.com/";
-            });
+                })
+                .catch((err) =>{
+                    console.log("Ocurrio un error")
+                    localStorage.setItem('autorizacion', 0);
+                    //location.href = "https://www.google.com/";
+                    });*/
         }
+                
+        $('#rechazar_auto').on('click', () => {clickAutorizacion('R')});
+        $('#aceptar_autor').on('click', () => {clickAutorizacion('A')});
+        await getEdificios();
     });
 
     $(function() {
@@ -123,6 +129,8 @@ const Index = (function() {
         cb(start, end);
     
     });
+
+    $('#btnVoz').on('click', toggleVoz);
 
     $('#combo_edificio').on('change', function() {
         let idEdificio = $(this).val();
@@ -160,32 +168,68 @@ const Index = (function() {
     });
 
     function inicializarDOM(){
+        $('#select_voz').on('change', verificarVoz);
+        $('#play_voz').on('click', reproducir);
+        $('#guardar_voz').on('click', guardarVocesDefault);
         cambiaAnimacionAsistente('deshabilitado-asistente');
         /* ========================== Seteo Reconocimiento de Voz ========================== */
         recognition = new webkitSpeechRecognition();
         recognition.lang = 'es-ES';
-        recognition.continuous = false;
-        recognition.interimResults = false;
+        recognition.continuous = true;
+        recognition.interimResults = true;
         recognition.onaudiostart = (event) => {
-            cambiaAnimacionAsistente('detener-asistente')
-            estadoAsistente = "escuchando";
+            console.log("Iniciando la escucha");
+            if(estadoAsistente && estadoAsistente == "listo"){
+                cambiaAnimacionAsistente('detener-asistente')
+            }
         }
         recognition.onaudioend = (event) => {
-            cambiaAnimacionAsistente('cargando-asistente')
-            estadoAsistente = "detenido";
+            console.log("Se detuvo la escucha.");
+            if(estadoVoz == "activo"){
+                //setTimeout(iniciarEscucha, 1000);
+                detenerEscucha();
+            }
+            if(estadoAsistente && estadoAsistente == "listo"){
+                cambiaAnimacionAsistente('hablar-asistente')
+            }
         }
         recognition.onresult = (event) => {
             //cambiaAnimacionAsistente('cargando-asistente');
-            const transcript = event.results[0][0].transcript;
+            let transcripcion = '';
+            //let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                if (event.results[i].isFinal) { // Solo procesar resultados finales
+                    transcripcion += event.results[i][0].transcript;
+                }
+            }
+            if (transcripcion.trim()) {
+                console.log("Texto transcrito: " + transcripcion);
+                /*if(estadoAsistente == "escuchando"){
+                    toggleEscucha();
+                }else{
+                    setTimeout(cambiaAnimacionAsistente('cargando-asistente'), 500);
+                    estadoAsistente = "detenido";
+                    conversarAsistente();
+                }*/
+                
+                if(estadoAsistente && estadoAsistente == "listo"){
+                    gMensaje = transcripcion
+                    conversarAsistente();
+                }
+            }
+            /*const transcript = event.results[0][0].transcript;
         
             //conversacion.push({"role": "user", "content": transcript});
             gMensaje = transcript;
-            conversarAsistente();
+            conversarAsistente();*/
         };
         recognition.onerror = (event) => {
-            cambiaAnimacionAsistente('hablar-asistente')
             Swal.fire("Error al reconocer la voz", "Error: "+event.error, "error");
-            estadoAsistente = "esperando";
+            if(estadoAsistente && estadoAsistente == "listo"){
+                cambiaAnimacionAsistente('hablar-asistente')
+            }
+            //estadoAsistente = "listo";
+            //toggleEscucha();
         };
         /* ========================== Fin Seteo Reconocimiento de Voz ========================== */
 
@@ -345,11 +389,131 @@ const Index = (function() {
         chart2 = new ApexCharts(element2, options);
         chart2.render();
     }
+
+    function llenarModalInfoEdificios(){
+        let htmlAcordion = ``;
+        let datos = dataEdificios;
+    
+        if(datos && datos.length > 0){
+            datos.forEach((d, indexEdi) => {
+                //let listaEdificios = ``
+                htmlAcordion += `<div class="accordion-item">
+                                    <h2 class="accordion-header" id="flush-headingEdificios${indexEdi}">
+                                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapseEdificios${indexEdi}" aria-expanded="false" aria-controls="flush-collapseEdificios${indexEdi}">
+                                        ${d['nombre']}
+                                  </button>
+                                </h2>
+                                <div id="flush-collapseEdificios${indexEdi}" class="accordion-collapse collapse" aria-labelledby="headingEdificios${indexEdi}" data-bs-parent="#accordionFlushExample">
+                                    <div class="accordion-body p-0 ps-3">`;
+                if(d['pisos'].length > 0){
+                    htmlAcordion += `<div class="accordion accordion-flush" id="accordionFlushExampleEdificio${indexEdi}">`;
+                    d['pisos'].forEach((p, indexPiso)=>{
+                        htmlAcordion += `<div class="accordion-item">
+                                        <h2 class="accordion-header" id="flush-headingPiso${indexPiso}">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapsePiso${indexPiso}" aria-expanded="false" aria-controls="flush-collapsePiso${indexPiso}">
+                                                ${p['nombre']}
+                                            </button>
+                                        </h2>
+                                        <div id="flush-collapsePiso${indexPiso}" class="accordion-collapse collapse" aria-labelledby="flush-headingPiso${indexPiso}" data-bs-parent="#accordionFlushExampleEdificio${indexEdi}">
+                                            <div class="accordion-body p-0 ps-3">`;
+                        if(p['ambientes'].length > 0){
+                            htmlAcordion += `<ul class="list-group list-group-flush">`;
+                            p['ambientes'].forEach((a, indexAmbiente) => {
+                                htmlAcordion += `<li class="list-group-item">${a['nombre']}</li>`;
+                            });
+                            htmlAcordion += `</ul>`;
+                        }
+                        htmlAcordion += `</div></div></div>`;
+                    })
+                    htmlAcordion += `</div>`;
+                }else{
+                    //listaEdificios += `<li class="list-group-item">${d['nombre']}</li>`;
+                }
+                htmlAcordion += `</div></div></div>`;
+                //htmlAcordion += `<ul class="list-group list-group-flush">${listaEdificios}</ul>`
+            });
+            
+        }
+        
+        $('#accordionFlushExample').html(htmlAcordion);
+        
+    }
+
+    async function informacionConsumoAsistente(edificio, piso, ambiente, fechaInicio, fechaFin){
+        //Revisar si los identificadores son correctos
+        let idIncorrecto = false;
+        let idsEdificios = getIdsCatalogo();
+        [edificio, piso, ambiente].forEach(c => {
+            if(!idsEdificios.includes(c)){
+                idIncorrecto = true;
+            }
+        });
+    
+        if(idIncorrecto){
+            return {"success": false, "reason": "Vuelve a analizar el archivo, has obtenido mal los identificadores"}
+        }
+    
+        //Verificar si la informacion coincide (edificio => piso => ambiente)
+        let vEdificio = dataEdificios.filter(e => e.id == edificio);
+    
+        if(!vEdificio || (vEdificio && vEdificio.length <= 0)){
+            return {"success": false, "reason": "La informacion que te han proporcionado es erronea. Identificador de edificio no corresponde a ninguno de los edificios del archivo."}
+        }else{
+            let vPiso = vEdificio[0].pisos.filter(p => p.id == piso);
+            
+            if(!vPiso || (vPiso && vPiso.length <= 0)){
+                return {"success": false, "reason": "La informacion que te han proporcionado es erronea. No existe este piso en el edificio mencionado."}
+            }else{
+                let vAmbiente = vPiso[0].ambientes.filter(a => a.id == ambiente);
+                if(!vAmbiente || (vAmbiente && vAmbiente.length <= 0)){
+                    return {"success": false, "reason": "La informacion que te han proporcionado es erronea. No existe este ambiente en el piso mencionado."}
+                }
+            }
+        }
+    
+        //Verificar existencia de datos con los parametros
+        try {
+            // Usamos fetch para hacer una solicitud a una API o URL
+            const respuesta = await fetch(rutaAPI+'/datos?idEdificacion='+edificio+'&idPiso='+piso+'&idAmbiente='+ambiente+'&fechaInicio='+fechaInicio+'&fechaFin='+fechaFin, {method: 'GET'}); // URL de ejemplo
+            if (!respuesta.ok) {
+                throw new Error('Error en la respuesta de la API');
+            }
+            // Esperamos a que se convierta la respuesta en formato JSON
+            const datos = await respuesta.json();
+            
+            $('#combo_edificio').val(edificio);
+            $('#combo_pisos').val(piso);
+            $('#combo_ambientes').val(ambiente);
+            $('#reportrange').daterangepicker({
+                locale: {
+                    format: 'YYYY-MM-DD' // Establece el formato de fecha
+                },
+                startDate: fechaInicio,  // Fecha inicial
+                endDate: fechaFin,    // Fecha final
+                opens: 'center',          // Posición del calendario
+            });
+    
+            if(datos.ok){
+                graficarInfoConsumo(datos);
+                if(datos['datos']['datos'].length > 0){
+                    return {"success": true, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Además dale unas recomendaciones para optimizar el consumo energetico del edificio y ambientes."}
+                }else{
+                    return {"success": true, "reason": "Se realizo correctamente la consulta pero no habian datos de consumo de ese ambiente, hazle saber al usuario"}
+                }
+            }else{
+                return {"success": true, "reason": "Los datos enviados fueron correctos, mas hubo un error a la consulta en la bd. " + datos.observacion}
+            }
+        } catch (error) {
+          console.error('Hubo un error:', error);
+        }
+    
+        //OK: {"success": true, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación"}
+    }
     
     function informacionConsumo(params){
         
-        dataConsumoAct = undefined;
-        dataConsumoFut = undefined;
+        /*dataConsumoAct = undefined;
+        dataConsumoFut = undefined;*/
         
         $('.text-btn-consultar-datos').html('Consultando datos... <span class="indicator-progress">Cargando... <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>');
         $('#btnConsultarDatos,select').addClass('disabled');
@@ -364,45 +528,7 @@ const Index = (function() {
             $('#btnConsultarDatos,select').removeClass('disabled');
 
             if(result.ok){
-
-                document.querySelector('.consumo-actual-ambiente').innerHTML = result.datos.consumoAmbiente.kilovatio.toLocaleString('es-ES', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-
-                document.querySelector('.consumo-actual-edificio').innerHTML = result.datos.consumoEdificio.toLocaleString('es-ES', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                });
-                
-                const resultConsumoActualAmbiente = result.datos.datos.map( e => {
-                    return {
-                        x: e.fecha,
-                        y: parseFloat(e.kilovatio)
-                    }
-                }, []);
-
-                const resultConsumoActualEdificio = result.datos.datos.map( e => {
-                    return {
-                        x: e.fecha,
-                        y: parseFloat(e.totalKilovatioEdificio)
-                    }
-                }, []);
-
-                const options = {
-                    series: [{
-                        name: 'Consumo actual',
-                        data: resultConsumoActualAmbiente
-                    }, {
-                        name: 'Consumo total',
-                        data: resultConsumoActualEdificio
-                    }],
-                };
-
-                chart1.updateOptions(options)
-
-                predecirConsumo(result.datos.datos);
-
+                graficarInfoConsumo(result)
             }else{
                 Swal.fire('Error', result.observacion, 'error');
             }
@@ -411,6 +537,46 @@ const Index = (function() {
             $('#btnConsultarDatos,select').removeClass('disabled');
             Swal.fire("Error en el servidor.", "Error: "+error.message, "error");
         });
+    }
+
+    function graficarInfoConsumo(result){
+        document.querySelector('.consumo-actual-ambiente').innerHTML = result.datos.consumoAmbiente.kilovatio.toLocaleString('es-ES', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+        document.querySelector('.consumo-actual-edificio').innerHTML = result.datos.consumoEdificio.toLocaleString('es-ES', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        const resultConsumoActualAmbiente = result.datos.datos.map( e => {
+            return {
+                x: e.fecha,
+                y: parseFloat(e.kilovatio)
+            }
+        }, []);
+
+        const resultConsumoActualEdificio = result.datos.datos.map( e => {
+            return {
+                x: e.fecha,
+                y: parseFloat(e.totalKilovatioEdificio)
+            }
+        }, []);
+
+        const options = {
+            series: [{
+                name: 'Consumo actual',
+                data: resultConsumoActualAmbiente
+            }, {
+                name: 'Consumo total',
+                data: resultConsumoActualEdificio
+            }],
+        };
+
+        chart1.updateOptions(options)
+
+        predecirConsumo(result.datos.datos);
     }
 
     function predecirConsumo(datos){
@@ -531,31 +697,29 @@ const Index = (function() {
 
 
 
-
-    function verificarAutorizacion(){
+    async function verificarAutorizacion(){
         return new Promise((resolve, reject) => {
             resolverPromAutor = resolve;
             rechazarPromAutor = reject;
         })
     }
 
+    
     function clickAutorizacion(accion){
-        if(accion == 'A' && resolverPromAutor){
-            resolverPromAutor('Autorizacion aceptada');
-            resolverPromAutor = null;
-            rechazarPromAutor = null;
-        }else if(accion == 'R' && rechazarPromAutor){
-            rechazarPromAutor('Autorizacion rechazada');
-            resolverPromAutor = null;
-            rechazarPromAutor = null;
+        console.log(accion);
+        if(accion == 'A'){
+            $('#modal_autorizacion').modal('hide');
+            localStorage.setItem('autorizacion', 1);
+            inicializarDOM();
+            //resolverPromAutor('Autorizacion aceptada');
+            /*resolverPromAutor = null;
+            rechazarPromAutor = null;*/
         }else{
-            Swal.fire('Ocurrio un error al procesar la accion.')
-            .then(r => {
-                location.href='https://www.google.com/';
-            });
+            location.href = "https://www.google.com/";
         }
     }
 
+    /* TODO: Revisar modales */
     function setearVoces(){
         //toggleLoading('ocultar');
 
@@ -579,6 +743,7 @@ const Index = (function() {
         //console.log(localStorage.getItem(`voz_${generoAsistente}`));
     }
 
+    /* TODO: Revisar modales */
     function verificarVoz(){
         let vAsis = $('#select_voz').val();
         //console.log(vMasc + vFem);
@@ -589,6 +754,7 @@ const Index = (function() {
         }
     }
 
+    /* TODO: Revisar modales */
     function selectorVoces(){
         let vES = voces.filter(v => v.lang == 'es-MX' || v.lang == 'es-ES' || v.lang == 'es-US');
         let opcHTML = "<option value='' selected disabled>Seleccione voz...</option>";
@@ -603,6 +769,7 @@ const Index = (function() {
         $('#modal_voces').modal('show');
     }
 
+    /* TODO: Revisar modales */
     function reproducir(){
         gestionarErrorVoz();
 
@@ -626,6 +793,7 @@ const Index = (function() {
         }
     }
 
+    /* TODO: Revisar modales */
     function guardarVocesDefault(){
         //toggleLoading('mostrar', 'Guardando voces...')
         let vAsistente = $('#select_voz').val();
@@ -664,7 +832,7 @@ const Index = (function() {
                     ops += `<option value='${element.id}'>${element.nombre}</option>`;
                 });
                 $('#combo_edificio').html(ops);
-                // llenarModalInfoEdificios(result.datos);
+                llenarModalInfoEdificios();
                 
             }else{
                 $('#combo_edificio,#combo_pisos,#combo_ambientes').html("<option value='0' selected disabled>Seleccionar</option>");
@@ -676,6 +844,20 @@ const Index = (function() {
         });
     }
 
+    function getIdsCatalogo(){
+        let idsEdificios = []
+        for(let e of dataEdificios){
+            idsEdificios.push(e.id);
+            for(let p of e.pisos){
+                idsEdificios.push(p.id);
+                for(let a of p.ambientes){
+                    idsEdificios.push(a.id);
+                }
+            }
+        }
+        return idsEdificios;
+    }
+
     function groupBy(arr, prop) {
         const map = new Map(Array.from(arr, obj => [obj[prop],
         []
@@ -685,7 +867,10 @@ const Index = (function() {
     }
     
     function inicializarAsistente(){
+        if(estadoAsistente) return;
+        estadoAsistente = "detenido";
         cambiaAnimacionAsistente("cargando-asistente");
+        $('#btnVoz').attr('disabled', true);
         fetch('/inicializar', {
             method: 'GET',
         })
@@ -833,19 +1018,20 @@ const Index = (function() {
                 gestionarErrorVoz();
                 console.log("El texto ha terminado de reproducirse.");
                 cambiaAnimacionAsistente("hablar-asistente");
-                estadoAsistente = "esperando";
+                estadoAsistente = "listo";
                 
                 if(dataConsumoAct && dataConsumoFut){
                     permiteGraficaClic = true;
                 }else{
                     permiteGraficaClic = false;
                 }
+                iniciarEscucha();
 
-                if(asistenteFinalizo){
-                    $('#inner-wave').removeClass('iw-enabled');
-                    guardarFormulario();
-                    estadoAsistente = "detenido";
-                }
+                // if(asistenteFinalizo){
+                //     $('#inner-wave').removeClass('iw-enabled');
+                //     guardarFormulario();
+                //     estadoAsistente = "detenido";
+                // }
             }
         };
 
@@ -860,11 +1046,11 @@ const Index = (function() {
 
         // Eventos adicionales para medir el estado de la sintesis de voz
         utterance.onpause = (vBoundary) => {
-            console.log("Boundary event: " + vBoundary);
+            console.log("Pause event: " + vBoundary);
         };
 
         utterance.onboundary = (vPause) => {
-            console.log("Pause event: " + vPause);
+            console.log("Boundary event: " + vPause);
         };
         
         utterance.onresume = (vResume) => {
@@ -930,27 +1116,45 @@ const Index = (function() {
             }else if(estadoAsistente == "escuchando"){
                 detenerEscucha();
             }
-        }else{
-            estadoAsistente = "detenido";
-            inicializarAsistente();
         }
     }
 
+    function toggleVoz(){
+        if(estadoAsistente){
+            if(estadoVoz == "activo"){
+                detenerEscucha();
+            }else if(estadoVoz == "noactivo"){
+                iniciarEscucha();
+            }
+        }else{
+            inicializarAsistente();
+        }
+        //toggleEscucha()
+    }
+
     function iniciarEscucha(){
+        $('#btnMicInit').hide();
+        $('#btnMicStop').hide();
+        $('#btnMicUp').show();
+        estadoVoz = "activo";
         recognition.start();
     }
 
     function detenerEscucha(){
+        $('#btnMicInit').hide();
+        $('#btnMicUp').hide();
+        $('#btnMicStop').show();
+        estadoVoz = "noactivo";
         recognition.stop();
     }
 
     // hace posible la conversacion con el asistente
     function conversarAsistente(){
-        const formData = new FormData();
-        //formData.append('mensaje', JSON.stringify(conversacion));
-        formData.append('mensaje', gMensaje);
+        cambiaAnimacionAsistente('cargando-asistente');
+        estadoAsistente = "detenido";
 
-        //console.log(conversacion);
+        const formData = new FormData();
+        formData.append('mensaje', gMensaje);
 
         fetch('/conversar', {
             method: 'POST',
@@ -975,7 +1179,8 @@ const Index = (function() {
                     let rMensaje = limpiarMensaje(respuesta['respuesta_msg'])
                     let iTextChar = 0;
         
-                    textType.textContent = "";
+                    //TODO: Se implementara despues
+                    /*textType.textContent = "";
                     idInt = setInterval(() => {
                         if (iTextChar < rMensaje.length) {
                             textType.textContent += rMensaje.charAt(iTextChar);
@@ -983,7 +1188,9 @@ const Index = (function() {
                         }else{
                             clearInterval(idInt);
                         }
-                    }, 55);
+                    }, 55);*/
+
+                    console.log(rMensaje);
                     hablar(rMensaje);
                     //conversacion.push({"role": "assistant", "content": rMensaje});
                     //gMensaje = rMensaje;
@@ -995,7 +1202,7 @@ const Index = (function() {
     //Aqui se iran agregando otros tipos de formateo para darle mas naturalidad al hablar el asistente
     function limpiarMensaje(mensaje){
         let sinasteriscos = mensaje.replaceAll('*', ''); //Quita los doble asterisco del texto
-        let sinsaltos = sinasteriscos.replaceAll('\n', ''); //Quita los saltos de linea \n del texto
+        let sinsaltos = sinasteriscos.replaceAll('\n', ' '); //Quita los saltos de linea \n del texto
         return sinsaltos; //retorna el texto limpio
     }
 
@@ -1020,7 +1227,7 @@ const Index = (function() {
             let rcontent = await activarFuncion(afuncion);
             let respuestaF = {
                 "tool_call_id": afuncion['funcion_id'],
-                "output": rcontent
+                "output": rcontent['reason']
             };
             //conversacion.push(respuestaF);
             respuestaFunciones.push(respuestaF);
@@ -1058,7 +1265,7 @@ const Index = (function() {
                     let rMensaje = limpiarMensaje(respuesta['respuesta_msg'])
                     let iTextChar = 0;
         
-                    textType.textContent = "";
+                    /*textType.textContent = "";
                     idInt = setInterval(() => {
                         if (iTextChar < rMensaje.length) {
                             textType.textContent += rMensaje.charAt(iTextChar);
@@ -1066,7 +1273,8 @@ const Index = (function() {
                         }else{
                             clearInterval(idInt);
                         }
-                    }, 55);
+                    }, 55);*/
+                    console.log(rMensaje);
                     hablar(rMensaje);
                     //conversacion.push({"role": "assistant", "content": rMensaje});
                     gMensaje = rMensaje;
@@ -1078,19 +1286,23 @@ const Index = (function() {
     async function getInfoLugar(respuesta){
         let fArgumentos = respuesta['funcion_args'];
 
-        if(fArgumentos['idEdificio'] && fArgumentos['idPiso'] && fArgumentos['idAmbiente']){
-            informacionConsumo(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], '01-06-2024', '10-06-2024');
-            return JSON.stringify({success: true}); 
+        if(fArgumentos['idEdificio'] && fArgumentos['idPiso'] && fArgumentos['idAmbiente'] && fArgumentos['fechaInicio'] && fArgumentos['fechaFin']){
+            let respuesta = await informacionConsumoAsistente(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], fArgumentos['fechaInicio'], fArgumentos['fechaFin']);
+            //console.log(fArgumentos['idEdificio'], fArgumentos['idPiso'], fArgumentos['idAmbiente'], '2024-06-01', '2024-06-30');
+            // En caso de datos erroneos aplicar a consulta: {"success": false, "reason": "Vuelve a analizar el archivo, has obtenido mal los identificadores"}
+            //return JSON.stringify({"success": true}); 
+            return respuesta; 
         }else if(fArgumentos['idEdificio'] || fArgumentos['idPiso'] || fArgumentos['idAmbiente']){
-            let arregloText = [];
+            /*let arregloText = [];
 
             if(fArgumentos['idEdificio']) arregloText.push(" el edificio")
             if(fArgumentos['idPiso']) arregloText.push(" el piso")
             if(fArgumentos['idAmbiente']) arregloText.push(" el ambiente")
             
-            return {"error": "Pidele al usuario que te indique" + arregloText.join(',')+"."};
+            return {"error": "Pidele al usuario que te indique" + arregloText.join(',')+"."};*/
+            return {"success": false, "reason": "No tienes la informacion completa para poder consultar el consumo energetico"}
         }else{
-            return {"error": "Vuelve a preguntarle al usuario por los datos del edificio, el piso y el ambiente"};
+            return {"success": false, "reason": "Necesitas todos los datos para poder consultar el consumo energetico"};
         }
     }
 
@@ -1155,7 +1367,7 @@ const Index = (function() {
         let fArgumentos = respuesta['funcion_args'];
         $('#txtarea_recomendaciones').val(fArgumentos['recomendaciones']);
         document.querySelector("#txtarea_recomendaciones").scrollIntoView({ behavior: 'smooth' });
-        return "Informale al usuario que se ha porporcionado la informacion sobre las recomendaciones";
+        return {"success": false, "reason": "Informale al usuario que se ha porporcionado la informacion sobre las recomendaciones"}
     }
 
     /*async function mostrarInfoEdificios(respuesta){
