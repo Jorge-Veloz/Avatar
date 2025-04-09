@@ -1156,6 +1156,9 @@ const Index = (function() {
         const formData = new FormData();
         formData.append('mensaje', gMensaje);
 
+        if(estadoVoz == "activo"){
+            detenerEscucha()
+        }
         fetch('/conversar', {
             method: 'POST',
             body: formData
