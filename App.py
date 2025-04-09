@@ -23,6 +23,7 @@ controladorAsistente = AsistenteControlador()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = b'secret_key'
+app.config['ASSETS_FOLDER'] = os.path.join(os.getcwd(), 'assets')
 
 # Inicializacion del JWT
 jwt = JWTManager(app)
@@ -31,6 +32,12 @@ with app.test_request_context():
     url_for('static', filename='/resources/')
     url_for('static', filename='/css/')
     url_for('static', filename='/scripts/')
+    url_for('static', filename='/assets/')
+
+# Ruta para servir archivos de la carpeta "assets"
+@app.route('/assets/<path:filename>')
+def serve_assets(filename):
+    return send_from_directory(app.config['ASSETS_FOLDER'], filename)
 
 @app.route('/<path:filename>')
 def serve_file(filename):
@@ -38,7 +45,7 @@ def serve_file(filename):
 
 @app.get('/')
 def Index():
-    return render_template('3d.html')
+    return render_template('index.html')
 
 @app.get('/pruebaAPI')
 def pruebaAPI():
