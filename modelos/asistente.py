@@ -49,6 +49,9 @@ class AsistenteModelo():
 
         return vector_store
 
+    def getListaMensajes(self, idHilo):
+        return self.client.beta.threads.messages.list(idHilo)
+
     def crearHilo(self):
         self.hilo = self.client.beta.threads.create()
         return self.hilo

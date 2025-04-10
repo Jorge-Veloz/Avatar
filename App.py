@@ -121,37 +121,12 @@ def getRespuesta2():
 
 @app.post('/conversar')
 def getRespuesta():
-    #global compMsgs
-
-    #genero = request.form['genero']
     mensaje = request.form['mensaje']
-    #mensajeList = json.loads(mensaje)
-
-    #mensTemp = session.get('mensajes')
-    #for melist in mensajeList:
-    #    mensTemp.append(melist)
-    
-    #mTmpAsis = list(mensTemp)
-    #controlador = AsistenteControlador()
-    #respuesta = controlador.getRespuesta(session.get('user'), mTmpAsis, compMsgs)
     if 'idHilo' not in session:
         session['idHilo'] = controladorAsistente.obtenerIdHilo()
     
     respuesta = controladorAsistente.getRespuesta(session.get('idHilo'), mensaje)
-    #respuesta = controladorAsistente.getRespuesta('id', mensaje)
-    #print(controladorPrueba.getPrueba())
-
     return jsonify(respuesta)
-    # almacenar_msg = respuesta['almacenar_msg']
-    # if respuesta['mensaje']:
-    #     nuevoCM = {"usuario": session.get('user'), "lastId": len(almacenar_msg), "data": respuesta['mensaje']}
-    #     compMsgs.append(nuevoCM)
-    #     almacenar_msg.append(str(respuesta['mensaje']))
-    # else:
-    #     almacenar_msg.append({'role': 'assistant', 'content': respuesta['respuesta_msg']})
-    
-    # session['mensajes'] = mensTemp
-    # return jsonify({"respuesta_msg": respuesta['respuesta_msg'], "asis_funciones": respuesta['asis_funciones']})
 
 @app.post('/enviar-funciones')
 def enviarFunciones():
@@ -167,6 +142,22 @@ def enviarFunciones():
         })
     else:
         return controladorAsistente.enviarFunciones(json_tcFunciones, idRun, session.get('idHilo'))
+    
+@app.get('/lista-mensajes')
+def listarMensajes():
+    if 'idHilo' not in session:
+        return jsonify({
+            'ok': False,
+            'observacion': "No se ha iniciado una conversacion con el asistente.",
+            'datos': None
+        })
+    else:
+        listaMensajes = controladorAsistente.getListaMensajes(session.get('idHilo'))
+        return jsonify({
+            'ok': True,
+            'observacion': None,
+            'datos': listaMensajes
+        })
 
 @app.get('/api/info_edificios_ambientes')
 def getEdificiosAmbientes():
