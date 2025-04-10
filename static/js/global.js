@@ -21,7 +21,7 @@ function comprobarPermisos(tipo){
                 //solicitarPermisos('microfono');
             } else if (permissionStatus.state === 'denied') {
                 Swal.fire({
-                    title:"Acceso al Microfono Denegado",
+                    title:"❌ Acceso al micrófono denegado",
                     html:"<p>El acceso al microfono ha sido denegado por el usuario.</p><p><em>Por favor, proporcione acceso el microfono para usar el asistente.</em></p>",
                     icon:"error",
                     showConfirmButton: false,
@@ -60,8 +60,8 @@ function accionarPermisos(estado){
     } else if (estado === 'prompt') {
         Swal.fire({
             //title:"Error",
-            title:"Para poder usar el asistente correctamente debe concederle permisos de acceso al micrófono.",
-            html: "<button class='btn btn-success' onclick='solicitarPermisos(\"microfono\")'>Solicitar acceso</button>",
+            title:"Activa el micrófono para usar el asistente de voz.",
+            html: "<button class='btn btn-info' onclick='solicitarPermisos(\"microfono\")'>Permitir acceso</button>",
             icon:"info",
             showConfirmButton: false,
             allowOutsideClick: false
@@ -69,8 +69,8 @@ function accionarPermisos(estado){
         //solicitarPermisos('microfono');
     } else if (estado === 'denied') {
         Swal.fire({
-            title:"Acceso al Microfono Denegado",
-            html:"<p>El acceso al microfono ha sido denegado por el usuario.</p><p><em>Por favor, proporcione acceso el microfono para usar el asistente.</em></p>",
+            title:"❌ Acceso al micrófono denegado",
+            html:"<p>No pudimos acceder al micrófono porque se denegaron los permisos.</p><p><em>Por favor, activa el micrófono para usar el asistente de voz.</em></p>",
             icon:"error",
             showConfirmButton: false,
             allowOutsideClick: false
@@ -91,24 +91,24 @@ function solicitarPermisos(permiso){
         .catch(function(error) {
             if (error.name === 'NotAllowedError') {
                 Swal.fire({
-                    title:"Acceso al Microfono Denegado",
-                    html:"<p>El acceso al microfono ha sido denegado por el usuario.</p><p><em>Por favor, proporcione acceso el microfono para usar el asistente.</em></p>",
+                    title:"❌ ¡Acceso al micrófono denegado!",
+                    html:"<p>No pudimos acceder al micrófono porque se denegaron los permisos.</p><p><em>Por favor, activa el micrófono para usar el asistente de voz.</em></p>",
                     icon:"error",
                     showConfirmButton: false,
                     allowOutsideClick: false
                 });
             } else if (error.name === 'NotFoundError') {
                 Swal.fire({
-                    title:"Microfono no encontrado",
-                    html:"<p>No se encontró ningún micrófono disponible.</p><p><em>Debe tener habilitado el microfono para usar el asistente.</em></p>",
+                    title:"¡Micrófono no encontrado!",
+                    html:"<p>No se encontró ningún micrófono disponible.</p><p><em>Debe tener habilitado el micrófono para usar el asistente.</em></p>",
                     icon:"error",
                     showConfirmButton: false,
                     allowOutsideClick: false
                 });
             } else {
                 Swal.fire({
-                    title:"Error de acceso al microfono",
-                    html:"<p>No se pudo solicitar acceso al microfono.</p><p><em>Por favor, habilite el acceso al microfono manualmente para usar el asistente.</em></p>",
+                    title:"¡Error de acceso al micrófono!",
+                    html:"<p>No se pudo solicitar acceso al micrófono.</p><p><em>Por favor, habilite el acceso al micrófono manualmente para usar el asistente.</em></p>",
                     icon:"error",
                     showConfirmButton: false,
                     allowOutsideClick: false

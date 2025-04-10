@@ -277,39 +277,33 @@ const Index = (function() {
         const element1 = document.getElementById("grafico1");
         const element2 = document.getElementById("grafico2");
         
-        const noData = {
-            text: 'Sin datos',
-            align: 'center',
-            verticalAlign: 'middle',
-            style: {
-                color: labelColor,
-                fontSize: '12px'
-            }
-        }
-
-        const grid = {
-            borderColor: borderColor,
-            strokeDashArray: 4,
-            yaxis: {
-                lines: {
-                    show: true
+        let options = {
+            noData: {
+                text: 'Sin datos',
+                align: 'center',
+                verticalAlign: 'middle',
+                style: {
+                    color: labelColor,
+                    fontSize: '12px'
                 }
             },
-        }
-        
-        const options = {
-            noData: noData,
-            series: [],
+            series: [{
+                name: 'Consumo actual',
+                data: []
+            }, {
+                name: 'Consumo futuro',
+                data: []
+            }],
             chart: {
                 fontFamily: 'Inter, Roboto, Poppins',
-                // stacked: true,
-                type: 'line',
+                stacked: true,
+                type: 'area',
                 height: parseInt(KTUtil.css(element1, 'height')) + 10,
-                toolbar: {
-                    show: false,
-                    tools: false
-                },
+                toolbar: { show: false },
                 sparkline: { enabled: false }
+            },
+            dataLabels: {
+                enabled: false
             },
             markers: {
                 size: 4,
@@ -321,64 +315,22 @@ const Index = (function() {
                 }
             },
             stroke: {
-                curve: 'smooth',
-                width: 3.5
+                curve: 'smooth'
             },
-            
-            /*legend: {
-                position: 'top',
-                show: true,
-                tooltipHoverFormatter: function(val, opts) {
-                    return val + ' - <b>' + opts.w.globals.series[opts.seriesIndex][opts.dataPointIndex] + '</b>'
-                }
-            },*/
+            yaxis: {
+                show: false
+            },
+            xaxis: {
+                // type: 'datetime',
+                categories: []
+                // categories: ["2018-09-19T00:00:00.000Z", "2018-09-19T01:30:00.000Z", "2018-09-19T02:30:00.000Z", "2018-09-19T03:30:00.000Z", "2018-09-19T04:30:00.000Z", "2018-09-19T05:30:00.000Z", "2018-09-19T06:30:00.000Z"]
+            },
             legend: {
-                position: 'top',
-                horizontalAlign: 'center',
-                labels: {
-                useSeriesColors: true // Mantiene el color de cada serie
-                },
-                formatter: function(seriesName) {
-                return seriesName; // Mantiene solo el nombre sin modificarlo en el hover
-                }
+                position: 'top'
             },
-            dataLabels: {
-                position: 'left',
-                enabled: false
-            },
-            colors: [colorSuccess, colorInfo, colorWarning, ColorBsGray500],
-            /*tooltip: {
-                y: [
-                {
-                    title: {
-                    formatter: function (val) {
-                        return val + " (mins)"
-                    }
-                    }
-                },
-                {
-                    title: {
-                    formatter: function (val) {
-                        return val + " per session"
-                    }
-                    }
-                },
-                {
-                    title: {
-                    formatter: function (val) {
-                        return val;
-                    }
-                    }
-                }
-                ]
-            },*/
-            grid: {
-                borderColor: borderColor,
-                strokeDashArray: 4,
-                yaxis: {
-                    lines: {
-                        show: true
-                    }
+            tooltip: {
+                x: {
+                    format: 'dd MMM yyyy'
                 },
             },
         };
@@ -567,20 +519,23 @@ const Index = (function() {
                 y: parseFloat(e.totalKilovatioEdificio)
             }
         }, []);
-
+        
         const options = {
             series: [{
                 name: 'Consumo actual',
-                data: resultConsumoActualAmbiente
+                data: resultConsumoActualAmbiente,
+                // color: 'var(--bs-success)',
             }, {
-                name: 'Consumo total',
-                data: resultConsumoActualEdificio
+                name: 'Consumo futuro',
+                data: resultConsumoActualEdificio,
+                // color: 'var(--bs-info)',
             }],
         };
 
         chart1.updateOptions(options)
 
         predecirConsumo(result.datos.datos);
+
     }
 
     function predecirConsumo(datos){
@@ -601,14 +556,14 @@ const Index = (function() {
                 const resultConsumoFuturoAmbiente = result.datos.map( e => {
                     return {
                         x: e.fecha,
-                        y: parseFloat(e.consumo_predicho)
+                        y: Number(e.consumo_predicho.toFixed(2)),
                     }
                 }, []);
 
                 const resultConsumoFuturoEdificio = result.datos.map( e => {
                     return {
                         x: e.fecha,
-                        y: parseFloat(e.consumo_total)
+                        y: Number(e.consumo_total.toFixed(2)),
                     }
                 }, []);
 
@@ -619,7 +574,7 @@ const Index = (function() {
                 let consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acumulador, consumo) => {
                     return acumulador + consumo.y;
                 }, 0);
-
+                
                 document.querySelector('.consumo-futuro-ambiente').innerHTML = consumoFuturoAmbiente.toLocaleString('es-ES', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
@@ -633,57 +588,17 @@ const Index = (function() {
                 const options = {
                     series: [{
                         name: 'Consumo futuro',
-                        data: resultConsumoFuturoAmbiente
+                        data: resultConsumoFuturoAmbiente,
+                        // color: 'var(--bs-success)',
                     }, {
-                        name: 'Consumo futuro total',
-                        data: resultConsumoFuturoEdificio
+                        name: 'Consumo futuro edificio',
+                        data: resultConsumoFuturoEdificio,
+                        // color: 'var(--bs-info)',
                     }],
                 };
                 
                 chart2.updateOptions(options)
 
-
-                return false;
-
-                let datos = result['datos'];
-                let consumo_futuro = [];
-                let consumo_futuro_total = [];
-                //let consumo_actual_total = [];
-                for(let cf of datos){
-                    consumo_futuro.push({x: cf['fecha'], y: parseFloat(cf['consumo_predicho'])})
-                    consumo_futuro_total.push({x: cf['fecha'], y: parseFloat(cf['consumo_total'])})
-                }
-                
-                /*for(let catotal of datos['datos']){
-                    consumo_actual_total.push({x: catotal['fecha'], y: parseFloat(catotal['totalKilovatioEdificio'])})
-                }*/
-                
-                
-                let dataConsumo = [{
-                    name: "Consumo Futuro",
-                    data: consumo_futuro
-                }, {
-                    name: "Consumo Futuro Total",
-                    data: consumo_futuro_total
-                }];
-
-                console.log(dataConsumo)
-                dataConsumoFut = dataConsumo;
-                    
-                chConsumoFut.updateSeries(dataConsumo);
-                
-                let valorConsFuturoAmb = consumo_futuro.reduce((acumulador, consumo) => {
-                    return acumulador + consumo.y;
-                }, 0);  // El valor inicial es 0
-
-                let valorConsFuturoEdi = consumo_futuro_total.reduce((acumulador, consumo) => {
-                    return acumulador + consumo.y;
-                }, 0);  // El valor inicial es 0
-                
-                //console.log("La suma de los precios es:", sumaPrecios);
-                $('#val_consfut_amb').text(valorConsFuturoAmb.toFixed(2) + "kWh");
-                $('#val_consfut_edi').text(valorConsFuturoEdi.toFixed(2) + "kWh");
-                //chConsumoAct.updateSeries(dataConsumo);
             }else{
                 Swal.fire('Ocurrio un error al consultar la informacion.', '', 'error');
             }
