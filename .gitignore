@@ -1,3 +1,5 @@
 .env
 /db/asistente_energia_db.sql
 /db/backup/
+/controladores/__pycache__/
+/modelos/__pycache__/

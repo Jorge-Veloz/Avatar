@@ -8,7 +8,19 @@ class AsistenteControlador():
     def crearHilo(self):
         hilo = self.modelo.crearHilo()
         return hilo.id
-       
+    
+    def getListaMensajes(self, idHilo):
+        listaMensajes = self.modelo.getListaMensajes(idHilo)
+        print(listaMensajes)
+        mensajes = [{
+            "creado": m.created_at,
+            "rol": m.role,
+            "texto": m.content[0].text.value
+        } for m in listaMensajes.data]
+
+        return mensajes
+        #x = [x if x==2 else 1 for x in listaMensajes]
+
     def getRespuesta(self, threadId, mensaje):
         [run, messages] = self.modelo.getRespuesta(threadId, mensaje)
         obj_funciones = []
