@@ -440,6 +440,10 @@ const Index = (function() {
     }
 
     async function informacionConsumoAsistente(edificio, piso, ambiente, fechaInicio, fechaFin){
+        if(dataEdificios.length <= 0){
+            return {"success": false, "reason": "Imposible consultar la información solicitada, ya que no existe debido a un error de conexión con la base de datos."}
+        }
+
         //Revisar si los identificadores son correctos
         let idIncorrecto = false;
         let idsEdificios = getIdsCatalogo();
