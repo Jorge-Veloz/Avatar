@@ -9,8 +9,8 @@
   
     // ============================== Constantes y Configuración ==============================
     const TIEMPO_CORTE = 2;
-    const rutaAPI = "http://localhost:3000/v1/asistente-virtual";
-    // const rutaAPI = "http://192.168.100.18:3000/v1/asistente-virtual";
+    //const rutaAPI = "http://localhost:3000/v1/asistente-virtual";
+    const rutaAPI = "http://192.168.100.18:3000/v1/asistente-virtual";
     const errorChromeMsg = `<a href="https://www.google.com/intl/es-419/chrome/">Se recomienda usar Chrome</a>`;
     const errorEdgeMsg = `<a href="https://www.microsoft.com/es-es/edge/download">Edge</a>`;
   
