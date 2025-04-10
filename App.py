@@ -230,4 +230,4 @@ def validarParametros():
     return jsonify({'res': res, 'edificio': d_edificio['ID'], 'ambiente': d_ambiente['Codigo']})
 
 if __name__ == '__main__':
-    app.run(port=3000, debug=True)
+    app.run(port=3005, debug=True)

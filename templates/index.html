@@ -126,16 +126,16 @@
 									<div class="me-md-2 d-flex flex-column align-items-end">   
 										<div class="d-flex mb-2">   
 											<span class="fs-4 fw-semibold text-gray-500 me-1">W</span>
-											<span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2 consumo-actual-edificio">--</span>                
+											<span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2 consumo-actual-ambiente">--</span>                
 										</div>
-										<span class="fs-6 fw-semibold text-gray-500">Total del edificio</span>
+										<span class="fs-6 fw-semibold text-gray-500">Total del ambiente</span>
 									</div>
 									<div class="border-start-dashed border-start border-gray-300 ps-md-10 d-flex flex-column align-items-end">   
 										<div class="d-flex mb-2">   
 											<span class="fs-4 fw-semibold text-gray-500 me-1">W</span>
-											<span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2 consumo-actual-ambiente">--</span>                
+											<span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2 consumo-actual-edificio">--</span>                
 										</div>
-										<span class="fs-6 fw-semibold text-gray-500">Total del ambiente</span>
+										<span class="fs-6 fw-semibold text-gray-500">Total del edificio</span>
 									</div>
 								</div>
 							</div>
@@ -153,16 +153,16 @@
 									<div class="me-md-2 d-flex flex-column align-items-end">   
 										<div class="d-flex mb-2">   
 											<span class="fs-4 fw-semibold text-gray-500 me-1">W</span>
-											<span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2 consumo-futuro-edificio">--</span>                
+											<span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2 consumo-futuro-ambiente">--</span>                
 										</div>
-										<span class="fs-6 fw-semibold text-gray-500">Total del edificio</span>
+										<span class="fs-6 fw-semibold text-gray-500">Total del ambiente</span>
 									</div>
 									<div class="border-start-dashed border-start border-gray-300 ps-md-10 d-flex flex-column align-items-end">   
 										<div class="d-flex mb-2">   
 											<span class="fs-4 fw-semibold text-gray-500 me-1">W</span>
-											<span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2 consumo-futuro-ambiente">--</span>                
+											<span class="fs-2hx fw-bold text-gray-800 me-2 lh-1 ls-n2 consumo-futuro-edificio">--</span>                
 										</div>
-										<span class="fs-6 fw-semibold text-gray-500">Total del ambiente</span>
+										<span class="fs-6 fw-semibold text-gray-500">Total del edificio</span>
 									</div>
 								</div>
 							</div>
@@ -174,13 +174,11 @@
 							<div class="card-header app-toolbar py-5">
 								<div class="page-title d-flex flex-column justify-content-center">
 									<h2 class="fw-bold mb-2">Recomendaciones</h2>
-									<!--<span class="fs-6 fw-semibold text-gray-500">Consumo actual de energía</span>-->
 								</div>
 							</div>
 							<div class="card-body d-flex justify-content-between flex-column pb-1 px-0">
 								<div class="form-floating ps-6 pe-6" style="height: 200px;width: 100%;">
-									<textarea class="form-control" placeholder="Aqui se mostraran las recomendaciones..." id="txtarea_recomendaciones" style="height: 80%"></textarea>
-									<label for="txtarea_recomendaciones" class="mx-3">Recomendaciones</label>
+									<div class="form-control data-recomendaciones" placeholder="Aqui se mostrarán las recomendaciones generadas por el asistente." style="height: 80%"></textarea>
 								</div>
 							</div>
 						</div>
@@ -223,7 +221,7 @@
 		<script src="{{ url_for('serve_assets', filename='js/scripts.bundle.js') }}"></script>
 		<script src="{{ url_for('serve_assets', filename='js/widgets.bundle.js') }}"></script>
 		<script src="../static/js/global.js"></script>
-    	<script src="../static/js/index.js"></script>
+    	<script type="module" src="../static/js/index.js"></script>
 
 	</body>
 
