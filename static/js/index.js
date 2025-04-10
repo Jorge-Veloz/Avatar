@@ -9,8 +9,8 @@
   
     // ============================== Constantes y Configuración ==============================
     const TIEMPO_CORTE = 2;
-    const rutaAPI = "http://localhost:3000/v1/asistente-virtual";
-    // const rutaAPI = "http://192.168.100.18:3000/v1/asistente-virtual";
+    // const rutaAPI = "http://localhost:3000/v1/asistente-virtual";
+    const rutaAPI = "http://192.168.100.18:3000/v1/asistente-virtual";
     const errorChromeMsg = `<a href="https://www.google.com/intl/es-419/chrome/">Se recomienda usar Chrome</a>`;
     const errorEdgeMsg = `<a href="https://www.microsoft.com/es-es/edge/download">Edge</a>`;
   
@@ -333,44 +333,45 @@
       $('#accordionFlushExample').html(htmlAcordion);
     }
   
-    function getIdsCatalogo() {
-      const ids = [];
-      dataEdificios.forEach(e => {
-        ids.push(e.id);
-        e.pisos.forEach(p => {
-          ids.push(p.id);
-          p.ambientes.forEach(a => ids.push(a.id));
-        });
-      });
-      return ids;
-    }
-  
-    async function informacionConsumoAsistente(edificio, piso, ambiente, fechaInicio, fechaFin) {
+    async function informacionConsumoAsistente(params) {
+      
       if (!dataEdificios.length) return { success: false, reason: "Error de conexión con la base de datos." };
-      const idsEdificios = getIdsCatalogo();
-      if (![edificio, piso, ambiente].every(c => idsEdificios.includes(c))) {
-        return { success: false, reason: "Los identificadores obtenidos son incorrectos." };
+      if (!params.idEdificio || !params.idPiso || !params.idAmbiente) return { success: false, reason: "No tienes la información completa para consultar el consumo energético" };
+      
+      const edificio = dataEdificios.find(e => e.id == params.idEdificio);
+      if (edificio) {
+        let ops = "<option value='' selected disabled>Seleccionar</option>";
+        edificio.pisos.forEach(p => ops += `<option value='${p.id}'>${p.nombre}</option>`);
+        $('#combo_pisos').html(ops);
       }
-      const vEdificio = dataEdificios.find(e => e.id == edificio);
-      if (!vEdificio) return { success: false, reason: "Identificador de edificio incorrecto." };
-      const vPiso = vEdificio.pisos.find(p => p.id == piso);
-      if (!vPiso) return { success: false, reason: "El piso no existe en el edificio mencionado." };
-      const vAmbiente = vPiso.ambientes.find(a => a.id == ambiente);
-      if (!vAmbiente) return { success: false, reason: "El ambiente no existe en el piso mencionado." };
-  
+
+      const piso = edificio.pisos.find(p => p.id == params.idPiso);
+      if (piso) {
+        let ops = "<option value='' selected disabled>Seleccionar</option>";
+        groupBy(piso.ambientes, 'tipoAmbiente').forEach(group => {
+          ops += `<optgroup label="${group[0].tipoAmbiente}">`;
+          group.forEach(item => ops += `<option value="${item.id}">${item.nombre}</option>`);
+          ops += `</optgroup>`;
+        });
+        $('#combo_ambientes').html(ops);
+      }
+
+      $('#combo_edificio').val(params.idEdificio)
+      $('#combo_pisos').val(params.idPiso);
+      $('#combo_ambientes').val(params.idAmbiente);
+      $('#reportrange').daterangepicker({
+        locale: { format: 'YYYY-MM-DD' },
+        startDate: params.fechaInicio,
+        endDate: params.fechaFin,
+        opens: 'end'
+      });
+      
       try {
-        const response = await fetch(`${rutaAPI}/datos?idEdificacion=${edificio}&idPiso=${piso}&idAmbiente=${ambiente}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`);
+        
+        const response = await fetch(`${rutaAPI}/datos?idEdificacion=${params.idEdificio}&idPiso=${params.idPiso}&idAmbiente=${params.idAmbiente}&fechaInicio=${params.fechaInicio}&fechaFin=${params.fechaFin}`);
         if (!response.ok) throw new Error('Error en la API');
         const datos = await response.json();
-        $('#combo_edificio').val(edificio);
-        $('#combo_pisos').val(piso);
-        $('#combo_ambientes').val(ambiente);
-        $('#reportrange').daterangepicker({
-          locale: { format: 'YYYY-MM-DD' },
-          startDate: fechaInicio,
-          endDate: fechaFin,
-          opens: 'center'
-        });
+        
         if (datos.ok) {
           graficarInfoConsumo(datos);
           return datos.datos.datos.length > 0
@@ -642,7 +643,7 @@
     async function getInfoLugar(respuesta) {
       const args = respuesta.funcion_args;
       if (args.idEdificio && args.idPiso && args.idAmbiente && args.fechaInicio && args.fechaFin) {
-        return await informacionConsumoAsistente(args.idEdificio, args.idPiso, args.idAmbiente, args.fechaInicio, args.fechaFin);
+        return await informacionConsumoAsistente({idEdificio: args.idEdificio, idPiso: args.idPiso, idAmbiente: args.idAmbiente, fechaInicio: args.fechaInicio, fechaFin: args.fechaFin});
       } else if (args.idEdificio || args.idPiso || args.idAmbiente) {
         return { success: false, reason: "No tienes la información completa para consultar el consumo energético" };
       } else {
