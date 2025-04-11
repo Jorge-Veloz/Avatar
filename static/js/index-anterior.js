@@ -1344,7 +1344,11 @@ function enviarFunciones(respuestaFunciones, idRun){
                 hablar(rMensaje);
                 //conversacion.push({"role": "assistant", "content": rMensaje});
                 gMensaje = rMensaje;
+            }else{
+                return {"success": true, "reason": "No tienes informacion que proporcionar. Preguntale al usuario si necesita alguna otra información."}
             }
+        }else{
+            return {"success": true, "reason": "No tienes informacion que proporcionar. Preguntale al usuario si necesita alguna otra información."}
         }
     });
 }

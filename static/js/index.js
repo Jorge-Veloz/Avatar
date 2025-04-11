@@ -9,8 +9,8 @@
   
     // ============================== Constantes y Configuración ==============================
     const TIEMPO_CORTE = 2;
-    // const rutaAPI = "http://localhost:3000/v1/asistente-virtual";
-    const rutaAPI = "http://192.168.100.18:3000/v1/asistente-virtual";
+    const rutaAPI = "http://localhost:3000/v1/asistente-virtual";
+    // const rutaAPI = "http://192.168.100.18:3000/v1/asistente-virtual";
     const errorChromeMsg = `<a href="https://www.google.com/intl/es-419/chrome/">Se recomienda usar Chrome</a>`;
     const errorEdgeMsg = `<a href="https://www.microsoft.com/es-es/edge/download">Edge</a>`;
   
@@ -91,9 +91,9 @@
       $('#aceptar_autor').on('click', () => clickAutorizacion('A'));
     }
   
-    function initFechas() {
-      const start = moment();
-      const end = moment();
+    function initFechas(params = {}) {
+      const start = params.start ? params.start : moment();
+      const end = params.end ? params.end : moment();
       const cb = function(start, end) {
         fechaInicio = start.format('YYYY-MM-DD');
         fechaFin = end.format('YYYY-MM-DD');
@@ -335,36 +335,48 @@
   
     async function informacionConsumoAsistente(params) {
       
+      let ops = '';
+      
       if (!dataEdificios.length) return { success: false, reason: "Error de conexión con la base de datos." };
       if (!params.idEdificio || !params.idPiso || !params.idAmbiente) return { success: false, reason: "No tienes la información completa para consultar el consumo energético" };
       
+      console.log(params)
       const edificio = dataEdificios.find(e => e.id == params.idEdificio);
-      if (edificio) {
-        let ops = "<option value='' selected disabled>Seleccionar</option>";
-        edificio.pisos.forEach(p => ops += `<option value='${p.id}'>${p.nombre}</option>`);
-        $('#combo_pisos').html(ops);
-      }
+      console.log(edificio)
+      
+      if (edificio === undefined) {
+        return {"success": false, "reason": "La informacion que te han proporcionado es erronea. Identificador de edificio no corresponde a ninguno de los edificios del archivo."}
+        // return {"success": false, "reason": "Vuelve a analizar el archivo, has obtenido mal los identificadores"}
+      }else{
+        const piso = edificio.pisos.find(p => p.id == params.idPiso);
+        if (piso === undefined) {
+          return {"success": false, "reason": "La informacion que te han proporcionado es erronea. No existe este piso en el edificio mencionado."}
+        }else{
 
-      const piso = edificio.pisos.find(p => p.id == params.idPiso);
-      if (piso) {
-        let ops = "<option value='' selected disabled>Seleccionar</option>";
-        groupBy(piso.ambientes, 'tipoAmbiente').forEach(group => {
-          ops += `<optgroup label="${group[0].tipoAmbiente}">`;
-          group.forEach(item => ops += `<option value="${item.id}">${item.nombre}</option>`);
-          ops += `</optgroup>`;
-        });
-        $('#combo_ambientes').html(ops);
+          ops = "<option value='' selected disabled>Seleccionar</option>";
+          edificio.pisos.forEach(p => ops += `<option value='${p.id}'>${p.nombre}</option>`);
+          $('#combo_pisos').html(ops);
+
+          const ambiente = piso.ambientes.find(a => a.id == params.idAmbiente);
+          if (ambiente === undefined) {
+            return {"success": false, "reason": "La informacion que te han proporcionado es erronea. No existe este ambiente en el piso mencionado."}
+          }else{
+            ops = "<option value='' selected disabled>Seleccionar</option>";
+            groupBy(piso.ambientes, 'tipoAmbiente').forEach(group => {
+              ops += `<optgroup label="${group[0].tipoAmbiente}">`;
+              group.forEach(item => ops += `<option value="${item.id}">${item.nombre}</option>`);
+              ops += `</optgroup>`;
+            });
+            $('#combo_ambientes').html(ops);
+          }
+        }
       }
 
       $('#combo_edificio').val(params.idEdificio)
       $('#combo_pisos').val(params.idPiso);
       $('#combo_ambientes').val(params.idAmbiente);
-      $('#reportrange').daterangepicker({
-        locale: { format: 'YYYY-MM-DD' },
-        startDate: params.fechaInicio,
-        endDate: params.fechaFin,
-        opens: 'end'
-      });
+      initFechas({ start: moment(params.fechaInicio), end: moment(params.fechaFin) });
+      // $('#reportrange span').html(`${moment(params.fechaInicio).format('DD MMM YYYY')} - ${moment(params.fechaFin).format('DD MMM YYYY')}`);
       
       try {
         
@@ -567,7 +579,7 @@
         .then(data => {
           asistenteFinalizo = false;
           if (data.ok) {
-            gMensaje = "Preséntate ante el usuario y dale una bienvenida. Pregunta por su nombre y si es estudiante o docente.";
+            gMensaje = "Hola";
             conversarAsistente();
           }
         });
@@ -635,7 +647,11 @@
               console.log(rMensaje);
               hablar(rMensaje);
               gMensaje = rMensaje;
+            }else{
+                return {"success": true, "reason": "No tienes informacion que proporcionar. Preguntale al usuario si necesita alguna otra información."}
             }
+          }else{
+              return {"success": true, "reason": "No tienes informacion que proporcionar. Preguntale al usuario si necesita alguna otra información."}
           }
         });
     }
