@@ -3,3 +3,5 @@
 /db/backup/
 /controladores/__pycache__/
 /modelos/__pycache__/
+/db/__pycache__/
+/funciones/__pycache__/
