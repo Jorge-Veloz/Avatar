@@ -6,8 +6,7 @@ class AsistenteControlador():
         self.modelo = AsistenteModelo()
 
     def crearHilo(self):
-        hilo = self.modelo.crearHilo()
-        return hilo.id
+        return self.modelo.crearHilo()
     
     def getListaMensajes(self, idHilo):
         listaMensajes = self.modelo.getListaMensajes(idHilo)
@@ -70,6 +69,9 @@ class AsistenteControlador():
                 'datos': respuesta
             }
     
+    def conversar(self, respuesta):
+        pass
+
     def limpiarMensajes(self, message_content):
         #message_content = messages[0].content[0].text
         annotations = message_content.annotations

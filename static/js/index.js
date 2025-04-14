@@ -10,7 +10,6 @@
     // ============================== Constantes y Configuración ==============================
     const TIEMPO_CORTE = 2;
     const rutaAPI = "http://localhost:3000/v1/asistente-virtual";
-    // const rutaAPI = "http://192.168.100.18:3000/v1/asistente-virtual";
     const errorChromeMsg = `<a href="https://www.google.com/intl/es-419/chrome/">Se recomienda usar Chrome</a>`;
     const errorEdgeMsg = `<a href="https://www.microsoft.com/es-es/edge/download">Edge</a>`;
   
@@ -274,7 +273,7 @@
     async function getEdificios() {
       $('#combo_edificio, #combo_pisos, #combo_ambientes').html("<option value='0' selected disabled>Cargando...</option>");
       try {
-        const response = await fetch(`${rutaAPI}/edificios`);
+        const response = await fetch(`/edificios`);
         const result = await response.json();
         $('#combo_edificio, #combo_pisos, #combo_ambientes').html("<option value='0' selected disabled>Seleccionar</option>");
         if (result.ok) {
@@ -380,7 +379,7 @@
       
       try {
         
-        const response = await fetch(`${rutaAPI}/datos?idEdificacion=${params.idEdificio}&idPiso=${params.idPiso}&idAmbiente=${params.idAmbiente}&fechaInicio=${params.fechaInicio}&fechaFin=${params.fechaFin}`);
+        const response = await fetch(`/datos?idEdificacion=${params.idEdificio}&idPiso=${params.idPiso}&idAmbiente=${params.idAmbiente}&fechaInicio=${params.fechaInicio}&fechaFin=${params.fechaFin}`);
         if (!response.ok) throw new Error('Error en la API');
         const datos = await response.json();
         
@@ -400,7 +399,7 @@
     function informacionConsumo(params) {
       $('.text-btn-consultar-datos').html('Consultando datos... <span class="indicator-progress">Cargando... <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>');
       $('#btnConsultarDatos, select').addClass('disabled');
-      fetch(`${rutaAPI}/datos?idEdificacion=${params.idEdificio}&idPiso=${params.idPiso}&idAmbiente=${params.idAmbiente}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
+      fetch(`/datos?idEdificacion=${params.idEdificio}&idPiso=${params.idPiso}&idAmbiente=${params.idAmbiente}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
         .then(response => response.json())
         .then(result => {
           $('.text-btn-consultar-datos').html('Consultar datos');
@@ -572,15 +571,28 @@
     // ============================== Funciones del Asistente Conversacional ==============================
     function inicializarAsistente() {
       if (estadoAsistente) return;
+      //estadoAsistente = "detenido";
       estadoAsistente = "detenido";
+      if (estadoVoz === "activo") detenerEscucha();
       $('#btnVoz').attr('disabled', 'true');
       fetch('/inicializar', { method: 'GET' })
         .then(response => response.json())
         .then(data => {
           asistenteFinalizo = false;
           if (data.ok) {
-            gMensaje = "Hola";
-            conversarAsistente();
+            
+            const respuesta = data.datos;
+            if (!$('#contenedor-typing').hasClass('ct-appear')) {
+              $('#contenedor-typing').addClass('ct-appear');
+            }
+            gMensaje = "";
+            if (respuesta.asis_funciones) {
+              ejecutarFuncion(respuesta.asis_funciones, respuesta.id_run);
+            } else if (respuesta.respuesta_msg) {
+              const rMensaje = limpiarMensaje(respuesta.respuesta_msg);
+              console.log(rMensaje);
+              hablar(rMensaje);
+            }
           }
         });
     }

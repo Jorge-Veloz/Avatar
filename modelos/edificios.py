@@ -1,17 +1,23 @@
-from db.db import db
+import requests
+import os
 
 class EdificiosModelo:
     def __init__(self):
-        self.db = db()
+        self.API_DB = os.environ.get('API_DB')
 
     def getEdificios(self):
-        sql = f"SELECT * FROM edificio";
-        datos = self.db.consultarDatos(sql)
-
-        if datos and len(datos) > 0:
-            return datos
-        else:
-            return None
+        try:
+            respuesta = requests.get(self.API_DB+'/edificios')
+            return {"res": 1, "data": respuesta.json()}
+        except Exception as e:
+            return {"res": 0, "data": str(e)}
+    
+    def getConsumoEdificios(self, edificio, piso, ambiente, fechaInicio, fechaFin):
+        try:
+            respuesta = requests.get(self.API_DB + f'/datos?idEdificacion={edificio}&idPiso={piso}&idAmbiente={ambiente}&fechaInicio={fechaInicio}&fechaFin={fechaFin}')
+            return {"res": 1, "data": respuesta.json()}
+        except Exception as e:
+            return {"res": 0, "data": str(e)}
         
     def validarEdificio(self, edificio):
         sql = f"SELECT ID FROM edificio WHERE LOWER(Nombre) = '{edificio}'"

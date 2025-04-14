@@ -18,8 +18,10 @@ load_dotenv(os.path.join(os.getcwd(), '.env'))
 # Guardara todos los ChatCompletions de respuesta a las funciones del asistente
 # Esto evita que el asistente vuelva a repetir el envio de la funcion
 compMsgs = []
+API_DB = os.environ.get("API_DB")
 
 controladorAsistente = AsistenteControlador()
+controladorEdificios = EdificiosControlador()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = b'secret_key'
@@ -64,23 +66,74 @@ def modeloAvatar():
 @app.get('/inicializar')
 def inicializarAsistente():
     print(session)
-    #global compMsgs
-    #compMsgs = []
-    #usuarioAct = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-    #session['user'] = usuarioAct
-    #tmpMensaje = getMensajeSistema()
-    #session['mensajes'] = tmpMensaje
-    #compMsgs = list(filter(lambda x: x['usuario'] != usuarioAct, compMsgs))
     if 'idHilo' in session:
         session.pop('idHilo')
         print(session)
     
-    session['idHilo'] = controladorAsistente.crearHilo()
-        #controladorPrueba.setPrueba(5)
-    #controladorAsistente.crearHilo()
+    hilo = controladorAsistente.crearHilo()
+
+    if hilo:
+        session['idHilo'] = hilo.id
+        return jsonify(controladorAsistente.getRespuesta(hilo.id, "Hola."))
+    else: 
+        return jsonify({'ok': False, 'observacion': "Ocurrio un error al crear el hilo.", 'datos': None})
+
+@app.get('/edificios')
+def getEdificios():
+    respuesta = controladorEdificios.getEdificios()
+    return jsonify(respuesta)
+
+@app.get('/datos')
+def getConsumoEdificios():
+    edificio = request.args.get('idEdificacion')
+    piso = request.args.get('idPiso')
+    ambiente = request.args.get('idAmbiente')
+    fechaInicio = request.args.get('fechaInicio')
+    fechaFin = request.args.get('fechaFin')
+
+    respuesta = controladorEdificios.getConsumoEdificios(edificio, piso, ambiente, fechaInicio, fechaFin)
+    return jsonify(respuesta)
+
+@app.post('/conversar')
+def getRespuesta():
+    mensaje = request.form['mensaje']
+    if 'idHilo' not in session:
+        session['idHilo'] = controladorAsistente.obtenerIdHilo()
     
-    #respuesta = controladorAsistente.getRespuesta()
-    return jsonify({'ok': True, 'observacion': None})
+    respuesta = controladorAsistente.getRespuesta(session.get('idHilo'), mensaje)
+    resultado = procesamientoConversacion(respuesta)
+    
+    #salida = controladorAsistente.conversar(respuesta)
+    return jsonify(resultado)
+
+def procesamientoConversacion(respuesta):
+    if ('asis_funciones' in respuesta and respuesta['asis_funciones']):
+        asisFunciones = respuesta['asis_funciones']
+        funciones = {
+            'get_recomendaciones': controladorEdificios.getRecomendaciones,
+            'get_ids_edificio_piso_ambiente': controladorEdificios.getInfoLugar,
+        }
+
+        resFunciones = []
+        for afuncion in asisFunciones: 
+            func = funciones[afuncion['funcion_name']]
+            rcontent = func(afuncion['funcion_args'])
+            resFunciones.append({ "tool_call_id": afuncion['funcion_id'], "output": rcontent['reason'] })
+        
+        respuesta2 = controladorAsistente.enviarFunciones(resFunciones, respuesta['id_run'], session.get('idHilo'))
+        return procesamientoConversacion(respuesta2)
+    elif ('respuesta_msg' in respuesta  and respuesta['respuesta_msg']):
+        return {
+            'ok': True,
+            'observacion': None,
+            'datos': respuesta['respuesta_msg']
+        }
+    else:
+        return {
+            'ok': False,
+            'observacion': 'No se obtuvo respuesta',
+            'datos': None
+        }
 
 @app.get('/inicializarAnt')
 def inicializarAsistenteAnt():
@@ -119,15 +172,6 @@ def getRespuesta2():
     session['mensajes'] = mensTemp
     return jsonify({"respuesta_msg": respuesta['respuesta_msg'], "asis_funciones": respuesta['asis_funciones']})
 
-@app.post('/conversar')
-def getRespuesta():
-    mensaje = request.form['mensaje']
-    if 'idHilo' not in session:
-        session['idHilo'] = controladorAsistente.obtenerIdHilo()
-    
-    respuesta = controladorAsistente.getRespuesta(session.get('idHilo'), mensaje)
-    return jsonify(respuesta)
-
 @app.post('/enviar-funciones')
 def enviarFunciones():
     tcFunciones = request.form['toolcall_output']
@@ -164,10 +208,7 @@ def getEdificiosAmbientes():
     controlador = AmbientesControlador()
     return jsonify(controlador.getAmbientesCompleta())
 
-@app.get('/api/edificios')
-def getEdificios():
-    controlador = EdificiosControlador()
-    return jsonify(controlador.getEdificios())
+
 
 @app.post('/api/prediccion_datos')
 def getPrediccion():

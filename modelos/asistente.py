@@ -55,8 +55,6 @@ class AsistenteModelo():
     def crearHilo(self):
         self.hilo = self.client.beta.threads.create()
         return self.hilo
-        #self.valorPrueba = 2
-        #return self.hilo.id
 
     def enviarFunciones(self, tcFunciones, idRun, idHilo):
         if tcFunciones and len(tcFunciones) > 0:
