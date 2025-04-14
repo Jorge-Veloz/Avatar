@@ -51,12 +51,12 @@ class EdificiosControlador:
         respuesta = self.modelo.getConsumoEdificios(edificio, piso, ambiente, fechaInicio, fechaFin)
         if respuesta['res']:
             if respuesta['data']['ok']:
-                if len(respuesta['data']['ok']['datos']['datos']) > 0:
-                    return { "success": True, "reason": "Datos del consumo energético obtenidos. Se graficarán y se darán recomendaciones para optimizar." }
+                if len(respuesta['data']['datos']['datos']) > 0:
+                    return { "success": True, "reason": "Datos del consumo energético obtenidos. Se graficarán y se darán recomendaciones para optimizar.", "info": respuesta['data']['datos']}
                 else:
-                    return { "success": True, "reason": "Consulta realizada correctamente, pero no se encontraron datos de consumo para el ambiente." }
+                    return { "success": True, "reason": "Consulta realizada correctamente, pero no se encontraron datos de consumo para el ambiente.", "info": respuesta['data']['datos']}
             else:
-                return { "success": True, "reason": "Ocurrio un error al realizar la consulta del consumo energetico: " + respuesta['data']['observacion'] }
+                return { "success": False, "reason": "Ocurrio un error al realizar la consulta del consumo energetico: " + respuesta['data']['observacion'] }
         else:
             return { "success": False, "reason": "Hubo un error al consultar la informacion, no se pudo establecer una conexion con la API de consumo energetico."}
 
