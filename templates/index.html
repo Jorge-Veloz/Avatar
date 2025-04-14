@@ -38,6 +38,17 @@
 					position: static;
 				}
 			}
+
+			#canvas {
+				position: fixed;
+				left: 16px;
+				bottom: 16px;
+				width: 31.9%;
+				height: 50px;
+				border-bottom-right-radius: 15px;
+				border-bottom-left-radius: 15px;
+			}
+			
 		</style>
 	</head>
 
@@ -62,6 +73,7 @@
 								<div class="px-0">
 									<iframe src="/avatar" class="d-flex rounded w-100 justify-content-center align-items-center" style="height: 95vh;">
 									</iframe>
+									<canvas id="canvas"></canvas>
 								</div>
 							</div>
 						</div>
@@ -222,6 +234,80 @@
 		<script src="{{ url_for('serve_assets', filename='js/widgets.bundle.js') }}"></script>
 		<script src="../static/js/global.js"></script>
     	<script src="../static/js/index.js"></script>
+		<script>
+			// https://www.myinstants.com/media/sounds/ylvis-cute.mp3 //
+			window.it = 0
+			window.onload = function () {
+				// Elements
+				var audio = document.getElementById("audio");
+				var canvas = document.getElementById("canvas");
+				var WIDTH = (canvas.width = window.innerWidth);
+				var HEIGHT = (canvas.height = window.innerHeight);
+
+				var ctx = canvas.getContext("2d");
+
+				var mouseX = 0;
+				var mouseY = 0;
+				
+				
+				// Microphone //
+				async function mic() {
+					var micStream = await navigator.mediaDevices.getUserMedia({
+						audio: true
+					});
+					
+					visualize(2, micStream);
+					 
+				}
+
+				mic();
+
+				function visualize(from, source) {
+					var context = new AudioContext();
+					var select = document.querySelector("select#mode");
+					var src = context.createMediaStreamSource(source);
+					
+					console.log(src);
+					var analyser = context.createAnalyser();
+					var listen = context.createGain();
+
+					src.connect(listen);
+					listen.connect(analyser);
+					if (from == 0) {
+						analyser.connect(context.destination);
+					}
+					analyser.fftSize = 2 ** 12;
+					var frequencyBins = analyser.fftSize / 2;
+
+					var bufferLength = analyser.frequencyBinCount;
+					console.log(bufferLength);
+					let dataArray = new Uint8Array(bufferLength);
+					var dataHistory = [];
+
+					renderFrame();
+
+					function renderFrame() {
+						requestAnimationFrame(renderFrame);
+
+						// Borrar el canvas sin fondo
+						ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+						analyser.getByteFrequencyData(dataArray);
+						let barWidth = (WIDTH / bufferLength) * 2.5;
+						let x = 0;
+						for (let i = 0; i < bufferLength; i++) {
+							// Ajusta la altura (barHeight) según los datos de frecuencia
+							let barHeight = dataArray[i] / 2;
+							// Opcional: Usar rgba y controlar la opacidad de la barra
+							ctx.fillStyle = `rgba(${barHeight + 100}, 50, 50, 1)`;
+							ctx.fillRect(x, HEIGHT - barHeight, barWidth, barHeight);
+							x += barWidth + 1;
+						}
+					}
+
+				}
+			}
+		</script>
 
 	</body>
 
