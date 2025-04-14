@@ -43,30 +43,31 @@ class EdificiosControlador:
             else:
                 return {"success": False, "reason": "No tienes los datos ya que no hubo conexion a la base de datos.", "info": None}
 
-        elif edificio or piso or ambiente or fechaInicio or fechaFin:
+        elif idEdificio or idPiso or idAmbiente or fechaInicio or fechaFin:
             return {"success": False, "reason": "No tienes la información completa para consultar el consumo energético", "info": None}
         else:
             return {"success": False, "reason": "Necesitas todos los datos para consultar el consumo energético", "info": None}
         
-        respuesta = self.modelo.getConsumoEdificios(edificio, piso, ambiente, fechaInicio, fechaFin)
-        print("Datos obtenidos por medio del asistente")
-        print(respuesta)
-        
+        respuesta = self.modelo.getConsumoEdificios(idEdificio, idPiso, idAmbiente, fechaInicio, fechaFin)
+        #print("Datos obtenidos por medio del asistente")
+        #print(respuesta)
+
         if respuesta['res']:
             if respuesta['data']['ok']:
+                respuesta['data']['params'] = {'idEdificio': idEdificio, 'idPiso': idPiso, 'idAmbiente': idAmbiente, 'fechaInicio': fechaInicio, 'fechaFin': fechaFin}
                 if len(respuesta['data']['datos']['datos']) > 0:
-                    return { "success": True, "reason": "Datos del consumo energético obtenidos. Se graficarán y se darán recomendaciones para optimizar.", "info": respuesta['data']['datos']}
+                    return { "success": True, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Además dale unas recomendaciones para optimizar el consumo energetico del edificio y ambientes. Es importante que no menciones los identificadores al usuario.", "info": respuesta['data']}
                 else:
-                    return { "success": True, "reason": "Consulta realizada correctamente, pero no se encontraron datos de consumo para el ambiente.", "info": respuesta['data']['datos']}
+                    return { "success": True, "reason": "Se realizo correctamente la consulta pero no habian datos de consumo de ese ambiente, hazle saber al usuario", "info": respuesta['data']}
             else:
-                return { "success": False, "reason": "Ocurrio un error al realizar la consulta del consumo energetico: " + respuesta['data']['observacion'] , "info": None}
+                return { "success": False, "reason": "Los datos enviados fueron correctos, mas hubo un error a la consulta en la bd. Se trata del error: " + respuesta['data']['observacion'] , "info": None}
         else:
             return { "success": False, "reason": "Hubo un error al consultar la informacion, no se pudo establecer una conexion con la API de consumo energetico.", "info": None}
         
     def getRecomendaciones(self, argumentos):
         [recomendaciones] = argumentos.values()
         print(recomendaciones)
-        return { "success": True, "reason": "Se han proporcionado las recomendaciones al usuario", "info":recomendaciones }
+        return { "success": True, "reason": "Informale al usuario que se ha porporcionado la informacion sobre las recomendaciones", "info":recomendaciones }
 
     def getConsumoEdificios(self, edificio, piso, ambiente, fechaInicio, fechaFin):
         respuesta = self.modelo.getConsumoEdificios(edificio, piso, ambiente, fechaInicio, fechaFin)

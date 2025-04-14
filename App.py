@@ -68,7 +68,11 @@ def inicializarAsistente():
     print(session)
     if 'idHilo' in session:
         session.pop('idHilo')
-        print(session)
+
+    if 'contenido' in session:
+        session.pop('contenido')
+    
+    print(session)
     
     hilo = controladorAsistente.crearHilo()
 
@@ -129,6 +133,8 @@ def procesamientoConversacion(respuesta):
             resFunciones.append({ "tool_call_id": afuncion['funcion_id'], "output": rcontent['reason'] })
 
         print(session.get('contenido'))
+        print("Envio de funciones:")
+        print(resFunciones)
         respuesta2 = controladorAsistente.enviarFunciones(resFunciones, respuesta['id_run'], session.get('idHilo'))
         return procesamientoConversacion(respuesta2['datos'])
     elif ('respuesta_msg' in respuesta  and respuesta['respuesta_msg']):
@@ -138,10 +144,11 @@ def procesamientoConversacion(respuesta):
             'datos': {"respuesta": respuesta['respuesta_msg'], "info": session.get('contenido')}
         }
     else:
+        respuesta2 = controladorAsistente.getRespuesta(session.get('idHilo'), "No hubo respuesta por parte del asistente a la peticion previamente mencionada. Da una respuesta al usuario.")
         return {
-            'ok': False,
-            'observacion': 'No se obtuvo respuesta',
-            'datos': None
+            'ok': True,
+            'observacion': None,
+            'datos':  {"respuesta": respuesta2['respuesta_msg'], "info": session.get('contenido')}
         }
 
 @app.get('/inicializarAnt')

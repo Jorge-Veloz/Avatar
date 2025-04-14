@@ -706,8 +706,39 @@
       } else {
         return { success: false, reason: "Necesitas todos los datos para consultar el consumo energético" };
       }*/
-      console.log(datos);
-      //graficarInfoConsumo(datos);
+      if(respuesta.ok){
+        let ops = '';
+        let params = respuesta.params;
+        const edificio = dataEdificios.find(e => e.id == params.idEdificio);
+        console.log(edificio)
+
+        if(edificio){
+          const piso = edificio.pisos.find(p => p.id == params.idPiso);
+          if (piso) {
+            ops = "<option value='' selected disabled>Seleccionar</option>";
+            edificio.pisos.forEach(p => ops += `<option value='${p.id}'>${p.nombre}</option>`);
+            $('#combo_pisos').html(ops);
+  
+            const ambiente = piso.ambientes.find(a => a.id == params.idAmbiente);
+            if (ambiente) {
+              ops = "<option value='' selected disabled>Seleccionar</option>";
+              groupBy(piso.ambientes, 'tipoAmbiente').forEach(group => {
+                ops += `<optgroup label="${group[0].tipoAmbiente}">`;
+                group.forEach(item => ops += `<option value="${item.id}">${item.nombre}</option>`);
+                ops += `</optgroup>`;
+              });
+              $('#combo_ambientes').html(ops);
+            }
+          }
+        }
+
+        $('#combo_edificio').val(params.idEdificio)
+        $('#combo_pisos').val(params.idPiso);
+        $('#combo_ambientes').val(params.idAmbiente);
+        initFechas({ start: moment(params.fechaInicio), end: moment(params.fechaFin) });
+        //console.log(respuesta);
+        graficarInfoConsumo(respuesta);
+      }
     }
 
     async function getInfoLugarAnt(respuesta) {
