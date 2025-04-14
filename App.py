@@ -81,7 +81,8 @@ def inicializarAsistente():
 @app.get('/edificios')
 def getEdificios():
     respuesta = controladorEdificios.getEdificios()
-    return jsonify(respuesta)
+    estado = 200 if respuesta['ok'] else 500
+    return jsonify(respuesta), estado
 
 @app.get('/datos')
 def getConsumoEdificios():
@@ -101,12 +102,15 @@ def getRespuesta():
         session['idHilo'] = controladorAsistente.obtenerIdHilo()
     
     respuesta = controladorAsistente.getRespuesta(session.get('idHilo'), mensaje)
-    resultado = procesamientoConversacion(respuesta)
+    session['contenido'] = []
+    resultado = procesamientoConversacion(respuesta['datos'])
     
     #salida = controladorAsistente.conversar(respuesta)
     return jsonify(resultado)
 
 def procesamientoConversacion(respuesta):
+    print("Salida de la respuesta:")
+    print(respuesta)
     if ('asis_funciones' in respuesta and respuesta['asis_funciones']):
         asisFunciones = respuesta['asis_funciones']
         funciones = {
@@ -118,15 +122,20 @@ def procesamientoConversacion(respuesta):
         for afuncion in asisFunciones: 
             func = funciones[afuncion['funcion_name']]
             rcontent = func(afuncion['funcion_args'])
+
+            if rcontent['info']:
+                session['contenido'].append({"nombre": afuncion['funcion_name'], "valor": rcontent['info']})
+
             resFunciones.append({ "tool_call_id": afuncion['funcion_id'], "output": rcontent['reason'] })
-        
+
+        print(session.get('contenido'))
         respuesta2 = controladorAsistente.enviarFunciones(resFunciones, respuesta['id_run'], session.get('idHilo'))
-        return procesamientoConversacion(respuesta2)
+        return procesamientoConversacion(respuesta2['datos'])
     elif ('respuesta_msg' in respuesta  and respuesta['respuesta_msg']):
         return {
             'ok': True,
             'observacion': None,
-            'datos': respuesta['respuesta_msg']
+            'datos': {"respuesta": respuesta['respuesta_msg'], "info": session.get('contenido')}
         }
     else:
         return {

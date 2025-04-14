@@ -605,29 +605,58 @@
       fetch('/conversar', { method: 'POST', body: formData })
         .then(response => response.json())
         .then(data => {
+          console.log(data);
           if (data.ok) {
             const respuesta = data.datos;
             if (!$('#contenedor-typing').hasClass('ct-appear')) {
               $('#contenedor-typing').addClass('ct-appear');
             }
             gMensaje = "";
-            if (respuesta.asis_funciones) {
+            
+            if(respuesta['info'] && respuesta['info'].length > 0){
+              console.log("Informacion adicional");
+              ejecutarFuncion(respuesta['info'])
+            }
+
+            let respuestaMsg = respuesta['respuesta']
+            if (respuestaMsg) {
+              const rMensaje = limpiarMensaje(respuestaMsg);
+              console.log(rMensaje);
+              hablar(rMensaje);
+            }
+            
+            /*if (respuesta.asis_funciones) {
               ejecutarFuncion(respuesta.asis_funciones, respuesta.id_run);
             } else if (respuesta.respuesta_msg) {
               const rMensaje = limpiarMensaje(respuesta.respuesta_msg);
               console.log(rMensaje);
               hablar(rMensaje);
-            }
+            }*/
+
           }
         });
     }
   
-    async function ejecutarFuncion(asisFunciones, idRun) {
+    function ejecutarFuncion(aFunciones) {
       const funciones = {
         'get_usuario': getDatosUsuario,
         'get_ambiente_edificio': getAmbienteEdificio,
         'get_recomendaciones': getRecomendaciones,
         'get_ids_edificio_piso_ambiente': getInfoLugar,
+      };
+  
+      for (const afuncion of aFunciones) {
+        const func = funciones[afuncion.nombre];
+        func(afuncion.valor);
+      }
+    }
+
+    async function ejecutarFuncionAnt(asisFunciones, idRun) {
+      const funciones = {
+        'get_usuario': getDatosUsuario,
+        'get_ambiente_edificio': getAmbienteEdificio,
+        'get_recomendaciones': getRecomendacionesAnt,
+        'get_ids_edificio_piso_ambiente': getInfoLugarAnt,
       };
   
       const respuestas = [];
@@ -668,7 +697,20 @@
         });
     }
   
-    async function getInfoLugar(respuesta) {
+    function getInfoLugar(respuesta) {
+      /*const args = respuesta.funcion_args;
+      if (args.idEdificio && args.idPiso && args.idAmbiente && args.fechaInicio && args.fechaFin) {
+        return await informacionConsumoAsistente({idEdificio: args.idEdificio, idPiso: args.idPiso, idAmbiente: args.idAmbiente, fechaInicio: args.fechaInicio, fechaFin: args.fechaFin});
+      } else if (args.idEdificio || args.idPiso || args.idAmbiente) {
+        return { success: false, reason: "No tienes la información completa para consultar el consumo energético" };
+      } else {
+        return { success: false, reason: "Necesitas todos los datos para consultar el consumo energético" };
+      }*/
+      console.log(datos);
+      //graficarInfoConsumo(datos);
+    }
+
+    async function getInfoLugarAnt(respuesta) {
       const args = respuesta.funcion_args;
       if (args.idEdificio && args.idPiso && args.idAmbiente && args.fechaInicio && args.fechaFin) {
         return await informacionConsumoAsistente({idEdificio: args.idEdificio, idPiso: args.idPiso, idAmbiente: args.idAmbiente, fechaInicio: args.fechaInicio, fechaFin: args.fechaFin});
@@ -725,11 +767,18 @@
       }
     }
   
-    async function getRecomendaciones(respuesta) {
+    function getRecomendaciones(respuesta) {
+      //const args = respuesta;
+      $('.data-recomendaciones').html(`${respuesta}`);
+      $(".data-recomendaciones").get(0).scrollIntoView({ behavior: 'smooth' });
+      //return { success: false, reason: "Se han proporcionado las recomendaciones al usuario" };
+    }
+
+    async function getRecomendacionesAnt(respuesta) {
       const args = respuesta.funcion_args;
       $('.data-recomendaciones').html(`${args.recomendaciones}`);
       $(".data-recomendaciones").get(0).scrollIntoView({ behavior: 'smooth' });
-      return { success: false, reason: "Se han proporcionado las recomendaciones al usuario" };
+      //return { success: false, reason: "Se han proporcionado las recomendaciones al usuario" };
     }
   
     // ============================== Funciones Utilitarias ==============================
@@ -745,7 +794,7 @@
     }
   
     function limpiarMensaje(mensaje) {
-      return mensaje.replaceAll('*', '').replaceAll('\n', ' ');
+      return mensaje.replaceAll('*', '').replaceAll('\n', '. ');
     }
   
     // ============================== Configuración de Voz e Interfaz de Usuario ==============================
