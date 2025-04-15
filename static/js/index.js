@@ -3,6 +3,8 @@
  * Optimized and Organized Code - Stéfano Solintecom Project
  * Creado: 14-10-2024 | Última actualización: 03-11-2024
  */
+
+import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?min';
  
 (function() {
     'use strict';
@@ -27,15 +29,38 @@
     let recognition, utterance, synth, voces;
     let intervalo;
     let resolverPromAutor, rechazarPromAutor;
-  
+    let statusMicrofono = false;
+
+    // instantiate analyzer
+    const audioMotion = new AudioMotionAnalyzer(
+      document.getElementById('audioMotion'),
+      {
+        height: 400,
+        ansiBands: false,
+        showScaleX: false,
+        bgAlpha: 0,
+        overlay: true,
+        mode: 2,
+        frequencyScale: "log",
+        showPeaks: false,
+        reflexRatio: 0.5,
+        reflexAlpha: 1,
+        reflexBright: 1,
+        smoothing: 0.7
+      }
+    );
+    
+    // global variable to save microphone stream
+    let micStream;
+
     // ============================== Inicialización General ==============================
     $(document).ready(async function() {
       initMicrofono();
       initConsentimiento();
       initFechas();
       initGraficos();
+      await bindUIEvents();
       await getEdificios();
-      bindUIEvents();
     });
   
     // ------------------------------ Funciones de Inicialización ------------------------------
@@ -174,8 +199,8 @@
 
     }
   
-    function bindUIEvents() {
-      $('#btnVoz').on('click', toggleVoz);
+    async function bindUIEvents() {
+      $('#btnIniciarRecorrido').on('click', await iniciarRecorrido);
       $('#combo_edificio').on('change', onEdificioChange);
       $('#combo_pisos').on('change', onPisoChange);
       $('#btnConsultarDatos').on('click', function() {
@@ -192,7 +217,16 @@
       $('#play_voz').on('click', reproducir);
       $('#guardar_voz').on('click', guardarVocesDefault);
     }
-  
+    
+    $('#btnMicrofono').on('click', function() {
+      console.log(statusMicrofono)
+      if (!statusMicrofono) {
+        iniciarEscucha();
+      } else {
+        detenerEscucha();
+      }
+    });
+
     // ------------------------------ Eventos de Selección ------------------------------
     function onEdificioChange(event) {
       const idEdificio = event.target.value;
@@ -230,17 +264,42 @@
       recognition.lang = 'es-ES';
       recognition.continuous = true;
       recognition.interimResults = true;
+      
       recognition.onaudiostart = function() {
+        
+        if ( navigator.mediaDevices ) {
+          navigator.mediaDevices.getUserMedia( { audio: true, video: false } )
+          .then( stream => {
+            // create stream using audioMotion audio context
+            micStream = audioMotion.audioCtx.createMediaStreamSource( stream );
+            // connect microphone stream to analyzer
+            audioMotion.connectInput( micStream );
+            // mute output to prevent feedback loops from the speakers
+            audioMotion.volume = 0;
+          })
+          .catch( err => {
+            alert('Microphone access denied by user');
+          });
+        } else {
+          alert('User mediaDevices not available');
+        }
+
         console.log("Iniciando la escucha");
         // Se remueven las llamadas a la animación
       };
       recognition.onaudioend = function() {
+        
+        //Desconectamos el micrófono del analizador
+        audioMotion.disconnectInput(micStream);
+        micStream = null;
+        
         console.log("Se detuvo la escucha.");
         if (estadoVoz === "activo") {
           detenerEscucha();
         }
       };
       recognition.onresult = function(event) {
+        
         let transcripcion = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
           if (event.results[i].isFinal) transcripcion += event.results[i][0].transcript;
@@ -259,6 +318,7 @@
       utterance = new SpeechSynthesisUtterance();
       synth = window.speechSynthesis;
       gestionarErrorVoz();
+      
       if (/Android|iPhone|iPad/i.test(navigator.userAgent)) {
         utterance.lang = 'es-ES';
       } else if (/Macintosh/i.test(navigator.userAgent)) {
@@ -266,7 +326,9 @@
       } else {
         synth.onvoiceschanged = setearVoces;
       }
+      
       $('#asistente-btn').removeAttr('disabled');
+      
     }
   
     // ============================== Funciones para Llamadas a la API y Gestión de Datos ==============================
@@ -472,24 +534,62 @@
     }
   
     // ============================== Funciones de Voz (Reconocimiento y Síntesis) ==============================
-    function toggleVoz() {
-      if (estadoAsistente) {
-        estadoVoz === "activo" ? detenerEscucha() : iniciarEscucha();
-      } else {
-        inicializarAsistente();
-      }
+    async function iniciarRecorrido() {
+      // if (estadoAsistente) return;
+      
+      // estadoAsistente = "detenido";
+      
+      detenerEscucha();
+      
+      document.querySelector('#btnIniciarRecorrido').classList.add('disabled');
+      document.querySelector('.spinner-iniciar-recorrido').classList.remove('d-none');
+      document.querySelector('.spinner-iniciar-recorrido').classList.add('d-flex');
+
+      await fetch('/inicializar', { method: 'GET' })
+        .then(response => response.json())
+        .then(result => {
+
+          document.querySelector('#btnIniciarRecorrido').classList.remove('disabled');
+          document.querySelector('.spinner-iniciar-recorrido').classList.remove('d-flex');
+          document.querySelector('.spinner-iniciar-recorrido').classList.add('d-none');
+
+          asistenteFinalizo = false;
+          if (result.ok) {
+            
+            const respuesta = result.datos;
+            if (!$('#contenedor-typing').hasClass('ct-appear')) {
+              $('#contenedor-typing').addClass('ct-appear');
+            }
+            gMensaje = "";
+            if (respuesta.asis_funciones) {
+              ejecutarFuncion(respuesta.asis_funciones, respuesta.id_run);
+            } else if (respuesta.respuesta_msg) {
+              const rMensaje = limpiarMensaje(respuesta.respuesta_msg);
+              console.log(rMensaje);
+              hablar(rMensaje);
+            }
+          }
+        }).catch(error => {
+          console.error('Error:', error);
+          document.querySelector('#btnIniciarRecorrido').classList.remove('disabled');
+          document.querySelector('.spinner-iniciar-recorrido').classList.remove('d-flex');
+          document.querySelector('.spinner-iniciar-recorrido').classList.add('d-none');
+        });
     }
-  
+    
     function iniciarEscucha() {
-      $('#btnMicInit').hide();
+      // $('#btnMicInit').hide();
       $('#btnMicStop').hide();
       $('#btnMicUp').show();
       estadoVoz = "activo";
-      recognition.start();
+      estadoAsistente = "listo";
+      if (recognition && recognition.state !== 'started') {
+        recognition.start();
+      }
     }
   
     function detenerEscucha() {
-      $('#btnMicInit').hide();
+      // $('#btnMicInit').hide();
       $('#btnMicUp').hide();
       $('#btnMicStop').show();
       estadoVoz = "noactivo";
@@ -504,6 +604,7 @@
     }
   
     async function hablar(texto) {
+      console.log("Texto a hablar: " + texto);
       gestionarErrorVoz();
       const speechChunks = makeChunksOfText(texto);
       let indice = 0;
@@ -569,34 +670,6 @@
     }
   
     // ============================== Funciones del Asistente Conversacional ==============================
-    function inicializarAsistente() {
-      if (estadoAsistente) return;
-      //estadoAsistente = "detenido";
-      estadoAsistente = "detenido";
-      if (estadoVoz === "activo") detenerEscucha();
-      $('#btnVoz').attr('disabled', 'true');
-      fetch('/inicializar', { method: 'GET' })
-        .then(response => response.json())
-        .then(data => {
-          asistenteFinalizo = false;
-          if (data.ok) {
-            
-            const respuesta = data.datos;
-            if (!$('#contenedor-typing').hasClass('ct-appear')) {
-              $('#contenedor-typing').addClass('ct-appear');
-            }
-            gMensaje = "";
-            if (respuesta.asis_funciones) {
-              ejecutarFuncion(respuesta.asis_funciones, respuesta.id_run);
-            } else if (respuesta.respuesta_msg) {
-              const rMensaje = limpiarMensaje(respuesta.respuesta_msg);
-              console.log(rMensaje);
-              hablar(rMensaje);
-            }
-          }
-        });
-    }
-  
     function conversarAsistente() {
       estadoAsistente = "detenido";
       const formData = new FormData();
@@ -650,52 +723,6 @@
         func(afuncion.valor);
       }
     }
-
-    async function ejecutarFuncionAnt(asisFunciones, idRun) {
-      const funciones = {
-        'get_usuario': getDatosUsuario,
-        'get_ambiente_edificio': getAmbienteEdificio,
-        'get_recomendaciones': getRecomendacionesAnt,
-        'get_ids_edificio_piso_ambiente': getInfoLugarAnt,
-      };
-  
-      const respuestas = [];
-      for (const afuncion of asisFunciones) {
-        const func = funciones[afuncion.funcion_name];
-        const rcontent = await func(afuncion);
-        respuestas.push({ tool_call_id: afuncion.funcion_id, output: rcontent.reason || rcontent });
-      }
-      enviarFunciones(respuestas, idRun);
-    }
-  
-    function enviarFunciones(respuestaFunciones, idRun) {
-      const formData = new FormData();
-      formData.append('toolcall_output', JSON.stringify(respuestaFunciones));
-      formData.append('id_run', idRun);
-      fetch('/enviar-funciones', { method: 'POST', body: formData })
-        .then(response => response.json())
-        .then(data => {
-          if (data.ok) {
-            const respuesta = data.datos;
-            if (!$('#contenedor-typing').hasClass('ct-appear')) {
-              $('#contenedor-typing').addClass('ct-appear');
-            }
-            gMensaje = "";
-            if (respuesta.asis_funciones) {
-              ejecutarFuncion(respuesta.asis_funciones, respuesta.id_run);
-            } else if (respuesta.respuesta_msg) {
-              const rMensaje = limpiarMensaje(respuesta.respuesta_msg);
-              console.log(rMensaje);
-              hablar(rMensaje);
-              gMensaje = rMensaje;
-            }else{
-                return {"success": true, "reason": "No tienes informacion que proporcionar. Preguntale al usuario si necesita alguna otra información."}
-            }
-          }else{
-              return {"success": true, "reason": "No tienes informacion que proporcionar. Preguntale al usuario si necesita alguna otra información."}
-          }
-        });
-    }
   
     function getInfoLugar(respuesta) {
       /*const args = respuesta.funcion_args;
@@ -738,17 +765,6 @@
         initFechas({ start: moment(params.fechaInicio), end: moment(params.fechaFin) });
         //console.log(respuesta);
         graficarInfoConsumo(respuesta);
-      }
-    }
-
-    async function getInfoLugarAnt(respuesta) {
-      const args = respuesta.funcion_args;
-      if (args.idEdificio && args.idPiso && args.idAmbiente && args.fechaInicio && args.fechaFin) {
-        return await informacionConsumoAsistente({idEdificio: args.idEdificio, idPiso: args.idPiso, idAmbiente: args.idAmbiente, fechaInicio: args.fechaInicio, fechaFin: args.fechaFin});
-      } else if (args.idEdificio || args.idPiso || args.idAmbiente) {
-        return { success: false, reason: "No tienes la información completa para consultar el consumo energético" };
-      } else {
-        return { success: false, reason: "Necesitas todos los datos para consultar el consumo energético" };
       }
     }
   
@@ -801,13 +817,6 @@
     function getRecomendaciones(respuesta) {
       //const args = respuesta;
       $('.data-recomendaciones').html(`${respuesta}`);
-      $(".data-recomendaciones").get(0).scrollIntoView({ behavior: 'smooth' });
-      //return { success: false, reason: "Se han proporcionado las recomendaciones al usuario" };
-    }
-
-    async function getRecomendacionesAnt(respuesta) {
-      const args = respuesta.funcion_args;
-      $('.data-recomendaciones').html(`${args.recomendaciones}`);
       $(".data-recomendaciones").get(0).scrollIntoView({ behavior: 'smooth' });
       //return { success: false, reason: "Se han proporcionado las recomendaciones al usuario" };
     }
@@ -887,5 +896,6 @@
         location.href = "https://www.google.com/";
       }
     }
+
   })();
   
