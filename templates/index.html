@@ -39,7 +39,7 @@
 				}
 			}
 			
-			canvas{
+			#audioMotion > canvas{
 				max-width: 100%;
 				width: 200px;
     			height: 50px;
@@ -58,13 +58,19 @@
 					<div class="col-md-4">
 						<div class="fixed-card">
 							<div class="controles d-flex flex-column align-items-center position-absolute w-100" id="controles" style="z-index: 1;bottom: 5%;">
-								<div id="container"></div>
-								<a href="#" id="btnVoz" class="asistente-btn btn btn-lg btn-icon btn-light btn-active-secondary me-5 rounded-circle">
-									<i id="btnMicInit" class="bi bi-play-fill fs-2 text-info"></i>
-									<i id="btnMicUp" class="bi bi-mic-fill fs-2 text-gray-800" style="display: none;"></i>
-									<i id="btnMicStop" class="bi bi-mic-mute-fill fs-2 text-danger" style="display: none;"></i>
-								</a>
-								<p id="info-adicional"></p>
+								<div id="audioMotion"></div>
+								<div>
+									<a id="btnMicrofono" href="#" class="asistente-btn btn btn-lg btn-icon btn-light btn-active-secondary me-5 rounded-circle">
+										<i id="btnMicUp" class="bi bi-mic-fill fs-2 text-gray-800" style="display: none;"></i>
+										<i id="btnMicStop" class="bi bi-mic-mute-fill fs-2 text-danger"></i>
+									</a>
+									<a href="#" id="btnIniciarRecorrido" class="btn btn-sm btn-icon btn-light me-5 rounded-circle p-2">
+										<div class="spinner-border spinner-iniciar-recorrido text-primary d-none position-absolute" role="status" style="display: none;">
+											<span class="sr-only">Loading...</span>
+										</div>
+										<i id="btnMicInit" class="bi bi-info-circle fs-2 text-info"></i>
+									</a>
+								</div>
 							</div>
 							<div class="card">
 								<div class="px-0">
@@ -229,53 +235,8 @@
 		<script src="{{ url_for('serve_assets', filename='js/scripts.bundle.js') }}"></script>
 		<script src="{{ url_for('serve_assets', filename='js/widgets.bundle.js') }}"></script>
 		<script src="../static/js/global.js"></script>
-    	<script src="../static/js/index.js"></script>
-		<script type="module">
-			
-			import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?min';
-
-			// global variable to save microphone stream
-			let micStream;
-
-			// instantiate analyzer
-			const audioMotion = new AudioMotionAnalyzer(
-				document.getElementById('container'),
-				{
-					height: 400,
-					ansiBands: false,
-					showScaleX: false,
-					bgAlpha: 0,
-					overlay: true,
-					mode: 2,
-					frequencyScale: "log",
-					showPeaks: false,
-					reflexRatio: 0.5,
-					reflexAlpha: 1,
-					reflexBright: 1,
-					smoothing: 0.7
-				}
-			);
-
-			if ( navigator.mediaDevices ) {
-				navigator.mediaDevices.getUserMedia( { audio: true, video: false } )
-				.then( stream => {
-					// create stream using audioMotion audio context
-					micStream = audioMotion.audioCtx.createMediaStreamSource( stream );
-					// connect microphone stream to analyzer
-					audioMotion.connectInput( micStream );
-					// mute output to prevent feedback loops from the speakers
-					audioMotion.volume = 0;
-				})
-				.catch( err => {
-					alert('Microphone access denied by user');
-				});
-			} else {
-				alert('User mediaDevices not available');
-			}
-
-			
-		</script>
-
+    	<script type="module" src="../static/js/index.js"></script>
+		
 	</body>
 
 	<div class="modal fade" id="modal_autorizacion" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">

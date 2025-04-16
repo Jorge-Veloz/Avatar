@@ -1,6 +1,9 @@
-flask==3.0.3
-mysql-connector-python==8.4.0
-openai==1.70.0
-python-dotenv==1.0.1
-pandas==2.1.2
-requests==2.32.3
+flask
+mysql-connector-python
+openai
+python-dotenv
+pandas
+requests
+flask_jwt_extended
+matplotlib
+statsmodels
