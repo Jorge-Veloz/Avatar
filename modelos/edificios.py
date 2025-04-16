@@ -3,7 +3,7 @@ import os
 
 class EdificiosModelo:
     def __init__(self):
-        self.API_DB = os.environ.get('API_DB')
+        self.API_DB = os.environ.get('RUTA_API')
 
     def getEdificios(self):
         try:

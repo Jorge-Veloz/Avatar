@@ -11,7 +11,7 @@ class AsistenteModelo():
         #self.funciones = getFuncionesAsistente()
         #self.vector_store = self.getVectorDeArchivo('Catalogo edificios pisos y ambientes', ['objeto.json'])
         self.asistente = os.environ.get("ID_ASISTENTE")
-        self.hilo = None
+        self.hilo = []
         self.run = None
         #self.valorPrueba = 1
         # self.run = self.client.beta.threads.runs.create_and_poll(
@@ -53,6 +53,11 @@ class AsistenteModelo():
         return self.client.beta.threads.messages.list(idHilo)
 
     def crearHilo(self):
+        #Aqui se creara el hilo en la bd
+        self.hilo = []
+        return self.hilo
+    
+    def crearHiloAnt(self):
         self.hilo = self.client.beta.threads.create()
         return self.hilo
 
