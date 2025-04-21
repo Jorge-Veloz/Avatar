@@ -1,17 +1,24 @@
 from openai import OpenAI
+from ollama import Client
+from flask import session
 from funciones.asistente import getFuncionesAsistente, getMensajeSistema
 import os
-import json
+import random
+import string
 
 class AsistenteModelo():
     def __init__(self):
         self.client = OpenAI(
             api_key=os.environ.get("API_GPT")
         )
+        self.cliente = Client(
+            host=os.environ.get("RUTA_IA"),
+            headers={'x-some-header': 'some-value'}
+        )
         #self.funciones = getFuncionesAsistente()
         #self.vector_store = self.getVectorDeArchivo('Catalogo edificios pisos y ambientes', ['objeto.json'])
-        self.asistente = os.environ.get("ID_ASISTENTE")
-        self.hilo = []
+        self.asistente = os.environ.get("MODELO_IA")
+        #self.hilo = []
         self.run = None
         #self.valorPrueba = 1
         # self.run = self.client.beta.threads.runs.create_and_poll(
@@ -53,15 +60,24 @@ class AsistenteModelo():
         return self.client.beta.threads.messages.list(idHilo)
 
     def crearHilo(self):
-        #Aqui se creara el hilo en la bd
-        self.hilo = []
-        return self.hilo
+        #Aqui se creara el hilo en la bd y se obtendra el identificador
+        caracteres = string.ascii_letters + string.digits  # Letras y números
+        return ''.join(random.choice(caracteres) for _ in range(20))
+        #hilo = []
+        #return hilo
     
     def crearHiloAnt(self):
         self.hilo = self.client.beta.threads.create()
         return self.hilo
 
-    def enviarFunciones(self, tcFunciones, idRun, idHilo):
+    def enviarFunciones(self, tcFunciones):
+        if tcFunciones and len(tcFunciones) > 0:
+            session['hilo']['mensajes'].append(tcFunciones)
+            print("Las herramientas fueron enviadas correctamente.")
+        else:
+            print("No hay herramientas para subir.")
+    
+    def enviarFuncionesGPT(self, tcFunciones, idRun, idHilo):
         if tcFunciones and len(tcFunciones) > 0:
             try:
                 self.run = self.client.beta.threads.runs.submit_tool_outputs_and_poll(
@@ -83,7 +99,44 @@ class AsistenteModelo():
             #ejecucion = self.run
             return [self.run, None]
     
-    def getRespuesta(self, threadId, mensaje):
+    def getRespuesta(self):
+        print(list(session.get('hilo')['mensajes']))
+        response = self.cliente.chat(
+            model = self.asistente,
+            messages = list(session.get('hilo')['mensajes']),
+            stream = False
+            
+        )
+        """
+            tools = [{
+                "type": "function",
+                "function": {
+                    "name": "is_get_consumo",
+                    "description": "Devuelve verdadero cuando el usuario quiere consultar datos de consumo energetico, caso contrario falso",
+                    "strict": False,
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "isconsumo": {
+                                "type": "boolean",
+                                "description": "verdadero cuando va a consultar datos energeticos, falso en caso contrario"
+                            }
+                        },
+                        "required": ["isconsumo"]
+                    }
+                }
+            }],
+        """
+
+        x = {
+            'respuesta': response,
+            'respuesta_msg': response.message if response and response.message else None,
+            'asis_funciones': response.message.tool_calls if response and response.message.tool_calls else None
+        }
+        print(x)
+        return x
+    
+    def getRespuestaGPT(self, threadId, mensaje):
         message = self.client.beta.threads.messages.create(
             thread_id=threadId,
             role="user",
@@ -98,7 +151,7 @@ class AsistenteModelo():
         messages = list(self.client.beta.threads.messages.list(thread_id=self.hilo.id, run_id=self.run.id))
         return [self.run, messages]
     
-    def getRespuestaAnt(self, usuario, mensajes, compMsgs):
+    def getRespuestaAnt2(self, usuario, mensajes, compMsgs):
         tMensajes = mensajes
         for cm in compMsgs:
             if cm and cm['usuario'] == usuario: 

@@ -61,6 +61,7 @@ import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?mi
       initGraficos();
       await bindUIEvents();
       await getEdificios();
+      fetch('/prueba').then(res => res.json()).then(data => console.log(data))
     });
   
     // ------------------------------ Funciones de Inicialización ------------------------------
@@ -560,11 +561,24 @@ import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?mi
             if (!$('#contenedor-typing').hasClass('ct-appear')) {
               $('#contenedor-typing').addClass('ct-appear');
             }
+            // gMensaje = "";
+            // if (respuesta.asis_funciones) {
+            //   ejecutarFuncion(respuesta.asis_funciones, respuesta.id_run);
+            // } else if (respuesta.respuesta_msg) {
+            //   const rMensaje = limpiarMensaje(respuesta.respuesta_msg);
+            //   console.log(rMensaje);
+            //   hablar(rMensaje);
+            // }
             gMensaje = "";
-            if (respuesta.asis_funciones) {
-              ejecutarFuncion(respuesta.asis_funciones, respuesta.id_run);
-            } else if (respuesta.respuesta_msg) {
-              const rMensaje = limpiarMensaje(respuesta.respuesta_msg);
+            
+            if(respuesta['info'] && respuesta['info'].length > 0){
+              console.log("Informacion adicional");
+              ejecutarFuncion(respuesta['info'])
+            }
+
+            let respuestaMsg = respuesta['respuesta']
+            if (respuestaMsg) {
+              const rMensaje = limpiarMensaje(respuestaMsg);
               console.log(rMensaje);
               hablar(rMensaje);
             }

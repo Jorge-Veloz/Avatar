@@ -65,22 +65,37 @@ def modeloAvatar():
 
 @app.get('/inicializar')
 def inicializarAsistente():
-    print(session)
-    if 'idHilo' in session:
-        session.pop('idHilo')
+    #if 'idHilo' in session:
+    #    session.pop('idHilo')
+
+    if 'hilo' in session:
+        session.pop('hilo')
 
     if 'contenido' in session:
         session.pop('contenido')
     
-    print(session)
+    #print(session)
     
     hilo = controladorAsistente.crearHilo()
+    instrucciones = getMensajeSistema()
+    session['hilo'] = {"id": hilo, "mensajes": [
+        instrucciones, 
+        {"role":"user", "content": "Hola."}]
+    }
 
+    respuesta = controladorAsistente.getRespuesta() #enviar el identificador para obtener historial
+    session['contenido'] = []
+    resultado = procesamientoConversacion(respuesta['datos'])
+    #print(resultado)
+    return jsonify(resultado)
+
+    """
     if hilo:
         session['idHilo'] = hilo.id
         return jsonify(controladorAsistente.getRespuesta(hilo.id, "Hola."))
     else: 
         return jsonify({'ok': False, 'observacion': "Ocurrio un error al crear el hilo.", 'datos': None})
+    """
 
 @app.get('/edificios')
 def getEdificios():
@@ -102,6 +117,27 @@ def getConsumoEdificios():
 @app.post('/conversar')
 def getRespuesta():
     mensaje = request.form['mensaje']
+    
+    print(session['hilo'])
+    if 'hilo' not in session:
+        hilo = controladorAsistente.crearHilo()
+        instrucciones = getMensajeSistema()
+        session['hilo'] = {"id": hilo, "mensajes": [
+            instrucciones, 
+            {"role":"user", "content": "Hola."}
+        ]}
+    else:
+        session['hilo']['mensajes'].append({"role":"user", "content": mensaje})
+    respuesta = controladorAsistente.getRespuesta()
+    session['contenido'] = []
+    resultado = procesamientoConversacion(respuesta['datos'])
+    
+    #salida = controladorAsistente.conversar(respuesta)
+    return jsonify(resultado)
+
+@app.post('/conversarGPT')
+def getRespuestaGPT():
+    mensaje = request.form['mensaje']
     if 'idHilo' not in session:
         session['idHilo'] = controladorAsistente.obtenerIdHilo()
     
@@ -113,6 +149,46 @@ def getRespuesta():
     return jsonify(resultado)
 
 def procesamientoConversacion(respuesta):
+    print("Salida de la respuesta:")
+    print(respuesta)
+    if ('asis_funciones' in respuesta and respuesta['asis_funciones']):
+        asisFunciones = respuesta['asis_funciones']
+        funciones = {
+            'is_get_consumo': controladorAsistente.verificarConsumo,
+            'get_recomendaciones': controladorEdificios.getRecomendaciones,
+            'get_ids_edificio_piso_ambiente': controladorEdificios.getInfoLugar,
+        }
+
+        resFunciones = []
+        for afuncion in asisFunciones: 
+            func = funciones[afuncion['funcion_name']]
+            rcontent = func(afuncion['funcion_args'])
+
+            if rcontent['info']:
+                session['contenido'].append({"nombre": afuncion['funcion_name'], "valor": rcontent['info']})
+
+            resFunciones.append({ "role": "tool", "name": afuncion['funcion_name'], "content": rcontent })
+
+        print(session.get('contenido'))
+        print("Envio de funciones:")
+        print(resFunciones)
+        respuesta2 = controladorAsistente.enviarFunciones(resFunciones)
+        return procesamientoConversacion(respuesta2['datos'])
+    elif ('respuesta_msg' in respuesta and respuesta['respuesta_msg']):
+        return {
+            'ok': True,
+            'observacion': None,
+            'datos': {"respuesta": respuesta['respuesta_msg'], "info": session.get('contenido')}
+        }
+    else:
+        respuesta2 = controladorAsistente.getRespuesta(session.get('idHilo'), "No hubo respuesta por parte del asistente a la peticion previamente mencionada. Da una respuesta al usuario.")
+        return {
+            'ok': True,
+            'observacion': None,
+            'datos':  {"respuesta": respuesta2['respuesta_msg'], "info": session.get('contenido')}
+        }
+    
+def procesamientoConversacionGPT(respuesta):
     print("Salida de la respuesta:")
     print(respuesta)
     if ('asis_funciones' in respuesta and respuesta['asis_funciones']):

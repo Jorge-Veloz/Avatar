@@ -1,4 +1,5 @@
 from modelos.asistente import AsistenteModelo
+from flask import session
 import json
 
 class AsistenteControlador():
@@ -7,7 +8,7 @@ class AsistenteControlador():
 
     def crearHilo(self):
         return self.modelo.crearHilo()
-    
+
     def getListaMensajes(self, idHilo):
         listaMensajes = self.modelo.getListaMensajes(idHilo)
         print(listaMensajes)
@@ -20,8 +21,51 @@ class AsistenteControlador():
         return mensajes
         #x = [x if x==2 else 1 for x in listaMensajes]
 
-    def getRespuesta(self, threadId, mensaje):
-        [run, messages] = self.modelo.getRespuesta(threadId, mensaje)
+    def getRespuesta(self):
+        resultado = self.modelo.getRespuesta()
+        respuesta_msg = resultado['respuesta_msg']
+        funciones = resultado['asis_funciones']
+        
+        res = {
+            "respuesta_msg": "",
+            "asis_funciones": None
+        }
+        if respuesta_msg is not None:
+            session['hilo']['mensajes'].append(dict(respuesta_msg))
+            res['respuesta_msg'] = respuesta_msg.content
+        
+        if funciones:
+            obj_funciones = []
+            for funcion in funciones:
+                #print(funcion.function.arguments)
+                argumentos = dict(funcion.function.arguments)
+                #json_args = json.loads(argumentos)
+                #print(argumentos)
+                
+                obj_funciones.append(
+                    {
+                        #"funcion_id": funcion.id,
+                        "funcion_name": funcion.function.name,
+                        "funcion_args": argumentos,
+                    }
+                )
+            res["asis_funciones"] = obj_funciones
+        
+        if (respuesta_msg and res['respuesta_msg']) or (funciones and res["asis_funciones"]):
+            return {
+                "ok": True,
+                "observacion": None,
+                "datos": dict(res)
+            }
+        else:
+            return {
+                "ok": False,
+                "observacion": "No se obtuvo una respuesta del asistente.",
+                "datos": dict(res)
+            }
+        
+    def getRespuestaGPT(self, threadId, mensaje):
+        [run, messages] = self.modelo.getRespuestaGPT(threadId, mensaje)
         obj_funciones = []
         respuesta = {
             'asis_funciones': None,
@@ -69,6 +113,16 @@ class AsistenteControlador():
                 'datos': respuesta
             }
     
+    def verificarConsumo(self, argumentos):
+        [isconsumo] = argumentos.values()
+
+        if isconsumo:
+            # Consulta con el modelo json
+            return { "success": True, "reason": "Esta tratando de obtener informacion de consumo energetico." , "info": {"esJSON": True}}
+        else:
+            return { "success": True, "reason": "Has retornado el valor correcto, continua con la conversacion", "info": None}
+
+
     def conversar(self, respuesta):
         pass
 
@@ -80,7 +134,57 @@ class AsistenteControlador():
 
         return message_content.value
 
-    def enviarFunciones(self, tcFunciones, idRun, idHilo):
+    def enviarFunciones(self, tcFunciones):
+        self.modelo.enviarFunciones(tcFunciones)
+
+        respuesta = self.modelo.getRespuesta()
+
+        print(respuesta)
+
+        obj_funciones = []
+        resultado = {
+            'asis_funciones': None,
+            'respuesta_msg': None
+        }
+
+        funciones = respuesta["asis_funciones"]
+        if funciones and len(funciones) > 0:
+            for funcion in funciones:
+                argumentos = dict(funcion.function.arguments)
+                obj_funciones.append(
+                    {
+                        "funcion_name": funcion.function.name,
+                        "funcion_args": argumentos,
+                    }
+                )
+            
+            resultado['asis_funciones'] = obj_funciones
+            resultado['id_run'] = run.id
+
+        mensajes = respuesta["respuesta_msg"]
+        if mensajes and len(mensajes) > 0:
+            print("Contenido mensaje:")
+            print(mensajes)
+            message_content = mensajes.content
+            #print(message_content.value)
+            respuesta["respuesta_msg"] = message_content
+        
+        
+        if respuesta['asis_funciones'] or respuesta["respuesta_msg"]:
+            return {
+                'ok': True,
+                'observacion': None,
+                'datos': respuesta
+            }
+        else:
+            return {
+                'ok': False,
+                'observacion': 'No se obtuvo respuesta',
+                'datos': respuesta
+            }
+        #return respuesta
+
+    def enviarFuncionesGPT(self, tcFunciones, idRun, idHilo):
         [run, messages] = respuesta = self.modelo.enviarFunciones(tcFunciones, idRun, idHilo)
 
         obj_funciones = []
