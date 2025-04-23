@@ -7,3 +7,6 @@ requests
 flask_jwt_extended
 matplotlib
 statsmodels
+psycopg2
+ollama
+Flask-SQLAlchemy

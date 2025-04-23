@@ -1,6 +1,8 @@
 import mysql.connector
 import os
 from dotenv import load_dotenv
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 class db():
     def __init__(self):
@@ -68,3 +70,53 @@ class db():
             
         cursor.close()
         return respuesta
+    
+class PostgresDB():
+    def __init__(self, app):
+        self.app = app
+        self.connection = psycopg2.connect(
+            dbname=os.getenv("PG_DB"),
+            user=os.getenv("PG_USER"),
+            password=os.getenv("PG_PASSWORD"),
+            host=os.getenv("PG_HOST"),
+            port=os.getenv("PG_PORT")
+        )
+        self.connection.autocommit = True
+
+    def probarConexion(self):
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+            return {"status": "success", "message": "Conexión exitosa"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+        
+    def consultarDato(self, sql, params=None):
+        with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(sql, params)
+            data = cursor.fetchone()
+            return data if data else None
+
+    def consultarDatos(self, sql, params=None):
+        with self.connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(sql, params)
+            data = cursor.fetchall()
+            return data if data else None
+
+    def insertarDatos(self, sql, params=None, devolucion=False):
+        with self.connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            idRow = cursor.fetchone()[0] if devolucion else None
+            return {'res': 1, 'id': idRow} if devolucion else 1
+
+    def actualizarDatos(self, sql, params=None):
+        with self.connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            filasAct = cursor.rowcount
+            return 1 if filasAct > 0 else 0
+
+    def eliminarDatos(self, sql, params=None):
+        with self.connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            filasElim = cursor.rowcount
+            return 1 if filasElim > 0 else 0

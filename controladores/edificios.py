@@ -15,6 +15,14 @@ class EdificiosControlador:
     def getInfoLugar(self, argumentos):
         [idEdificio, idPiso, idAmbiente, fechaInicio, fechaFin] = argumentos.values()
 
+        res = self.modelo.getConsumoEdificiosAsis(idEdificio, idPiso, idAmbiente, fechaInicio, fechaFin)
+
+        if res['res']:
+            return { "success": True, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Además dale unas recomendaciones para optimizar el consumo energetico del edificio y ambientes. Es importante que no menciones los identificadores al usuario.", "info": res['data']}
+    
+    def getInfoLugarGPT(self, argumentos):
+        [idEdificio, idPiso, idAmbiente, fechaInicio, fechaFin] = argumentos.values()
+
         if idEdificio and idPiso and idAmbiente and fechaInicio and fechaFin:
             resEdificios = self.getEdificios()
 
@@ -66,8 +74,10 @@ class EdificiosControlador:
         
     def getRecomendaciones(self, argumentos):
         [recomendaciones] = argumentos.values()
+        print("Recomendaciones obtenidas:")
         print(recomendaciones)
-        return { "success": True, "reason": "Informale al usuario que se ha porporcionado la informacion sobre las recomendaciones", "info":recomendaciones }
+        #return { "success": True, "reason": "Informale al usuario que se ha porporcionado la informacion sobre las recomendaciones", "info":recomendaciones }
+        return { "success": True, "reason": "Diste correctamente las recomendaciones para optimizar el consumo energetico. Ahora mencionaselo al usuario.", "info":recomendaciones }
 
     def getConsumoEdificios(self, edificio, piso, ambiente, fechaInicio, fechaFin):
         respuesta = self.modelo.getConsumoEdificios(edificio, piso, ambiente, fechaInicio, fechaFin)

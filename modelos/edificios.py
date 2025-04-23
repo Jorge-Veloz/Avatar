@@ -12,6 +12,11 @@ class EdificiosModelo:
         except Exception as e:
             return {"res": 0, "data": str(e)}
     
+    def getConsumoEdificiosAsis(self, edificio, piso, ambiente, fechaInicio, fechaFin):
+        print("Envio de datos:")
+        print(edificio, piso, ambiente, fechaInicio,fechaFin)
+        return {"res": 1, "data": "info obtenida"}
+        
     def getConsumoEdificios(self, edificio, piso, ambiente, fechaInicio, fechaFin):
         print("Envio de datos:")
         print(edificio, piso, ambiente, fechaInicio,fechaFin)

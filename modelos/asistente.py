@@ -72,7 +72,8 @@ class AsistenteModelo():
 
     def enviarFunciones(self, tcFunciones):
         if tcFunciones and len(tcFunciones) > 0:
-            session['hilo']['mensajes'].append(tcFunciones)
+            for tf in tcFunciones:
+                session['hilo']['mensajes'].append(tf)
             print("Las herramientas fueron enviadas correctamente.")
         else:
             print("No hay herramientas para subir.")
@@ -104,35 +105,67 @@ class AsistenteModelo():
         response = self.cliente.chat(
             model = self.asistente,
             messages = list(session.get('hilo')['mensajes']),
-            stream = False
-            
-        )
-        """
+            stream = False,
             tools = [{
                 "type": "function",
                 "function": {
-                    "name": "is_get_consumo",
-                    "description": "Devuelve verdadero cuando el usuario quiere consultar datos de consumo energetico, caso contrario falso",
+                    "name": "get_parametros_edificio_piso_ambiente_fechas",
+                    "description": "Solo cuando el usuario te pida el consumo energetico del edificio, extraeras el nombre del edificio, del piso, del ambiente que te mencione el usuario, la fecha de inicio y la fecha de fin del rango.",
                     "strict": False,
                     "parameters": {
                         "type": "object",
                         "properties": {
-                            "isconsumo": {
-                                "type": "boolean",
-                                "description": "verdadero cuando va a consultar datos energeticos, falso en caso contrario"
-                            }
+                            "edificio": {
+                                "type": "string",
+                                "description": "Nombre del edificio"
+                            }, 
+                            "piso": {
+                                "type": "string",
+                                "description": "Nombre del piso"
+                            }, 
+                            "ambiente": {
+                                "type": "string",
+                                "description": "Nombre del ambiente"
+                            }, 
+                            "fechaIni": {
+                                "type": "string",
+                                "description": "La fecha de inicio de la consulta en formato yyyy-mm-dd"
+                            }, 
+                            "fechaFin": {
+                                "type": "string",
+                                "description": "La fecha de fin de la consulta en formato yyyy-mm-dd"
+                            }, 
                         },
-                        "required": ["isconsumo"]
+                        "required": []
                     }
                 }
-            }],
-        """
+            }, {
+                "type": "function",
+                "function": {
+                    "name": "get_recomendaciones",
+                    "description": "Cuando el usuario desee que le des recomendaciones, deberas expresarle las recomendaciones para optimizar el consumo energético.",
+                    "strict": False,
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "recomendaciones": {
+                                "type": "string",
+                                "description": "Recomendaciones de optimizacion de consumo energetico."
+                            }
+                        },
+                        "required": ["recomendaciones"]
+                    }
+                }
+            }]
+        )
+        
 
         x = {
             'respuesta': response,
             'respuesta_msg': response.message if response and response.message else None,
             'asis_funciones': response.message.tool_calls if response and response.message.tool_calls else None
         }
+        print("Respuesta obtenida:")
         print(x)
         return x
     

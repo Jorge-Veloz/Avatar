@@ -30,7 +30,7 @@ class AsistenteControlador():
             "respuesta_msg": "",
             "asis_funciones": None
         }
-        if respuesta_msg is not None:
+        if respuesta_msg and respuesta_msg.content:
             session['hilo']['mensajes'].append(dict(respuesta_msg))
             res['respuesta_msg'] = respuesta_msg.content
         
@@ -39,16 +39,15 @@ class AsistenteControlador():
             for funcion in funciones:
                 #print(funcion.function.arguments)
                 argumentos = dict(funcion.function.arguments)
+                nombreFuncion = funcion.function.name
+                session['hilo']['mensajes'].append({"role": "tool", "name":nombreFuncion, "content": json.dumps(argumentos)})
                 #json_args = json.loads(argumentos)
                 #print(argumentos)
                 
-                obj_funciones.append(
-                    {
-                        #"funcion_id": funcion.id,
-                        "funcion_name": funcion.function.name,
-                        "funcion_args": argumentos,
-                    }
-                )
+                obj_funciones.append({
+                    "funcion_name": nombreFuncion,
+                    "funcion_args": argumentos,
+                })
             res["asis_funciones"] = obj_funciones
         
         if (respuesta_msg and res['respuesta_msg']) or (funciones and res["asis_funciones"]):
@@ -139,6 +138,50 @@ class AsistenteControlador():
 
         respuesta = self.modelo.getRespuesta()
 
+        respuesta_msg = respuesta['respuesta_msg']
+        funciones = respuesta['asis_funciones']
+        
+        res = {
+            "respuesta_msg": "",
+            "asis_funciones": None
+        }
+        #if respuesta_msg is not None:
+        if respuesta_msg and respuesta_msg.content:
+            session['hilo']['mensajes'].append(dict(respuesta_msg))
+            res['respuesta_msg'] = respuesta_msg.content
+        
+        if funciones:
+            obj_funciones = []
+            for funcion in funciones:
+                #print(funcion.function.arguments)
+                argumentos = dict(funcion.function.arguments)
+                nombreFuncion = funcion.function.name
+                session['hilo']['mensajes'].append({"role": "tool", "name":nombreFuncion, "content": json.dumps(argumentos)})
+                #json_args = json.loads(argumentos)
+                #print(argumentos)
+                
+                obj_funciones.append({
+                    #"funcion_id": funcion.id,
+                    "funcion_name": funcion.function.name,
+                    "funcion_args": argumentos,
+                })
+            
+                
+            res["asis_funciones"] = obj_funciones
+        
+        if (respuesta_msg and res['respuesta_msg']) or (funciones and res["asis_funciones"]):
+            return {
+                "ok": True,
+                "observacion": None,
+                "datos": dict(res)
+            }
+        else:
+            return {
+                "ok": False,
+                "observacion": "No se obtuvo una respuesta del asistente.",
+                "datos": dict(res)
+            }
+        
         print(respuesta)
 
         obj_funciones = []

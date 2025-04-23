@@ -329,7 +329,9 @@ import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?mi
       }
       
       $('#asistente-btn').removeAttr('disabled');
-      
+      fetch('/probarBaseDatos').then(res => res.json()).then(data => {
+        console.log(data);
+      })
     }
   
     // ============================== Funciones para Llamadas a la API y Gestión de Datos ==============================

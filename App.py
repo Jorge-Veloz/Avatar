@@ -4,8 +4,12 @@ from controladores.asistente import AsistenteControlador
 from controladores.edificios import EdificiosControlador
 from controladores.ambientes import AmbientesControlador
 from controladores.consumo import ConsumoControlador
+from controladores.chats import ChatsControlador
 from funciones.asistente import getMensajeSistema
 from funciones.algoritmos import getPrediccionConsumo
+#from config import Config
+#from flask_sqlalchemy import SQLAlchemy
+#from sqlalchemy.sql import text
 import json
 import os
 from dotenv import load_dotenv
@@ -26,6 +30,9 @@ controladorEdificios = EdificiosControlador()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = b'secret_key'
 app.config['ASSETS_FOLDER'] = os.path.join(os.getcwd(), 'assets')
+
+#Descomentar para conectar a la base de datos
+#controladorChats = ChatsControlador(app)
 
 # Inicializacion del JWT
 jwt = JWTManager(app)
@@ -114,6 +121,10 @@ def getConsumoEdificios():
     respuesta = controladorEdificios.getConsumoEdificios(edificio, piso, ambiente, fechaInicio, fechaFin)
     return jsonify(respuesta)
 
+@app.get('/probarBaseDatos')
+def probarBaseDatos():
+    return jsonify(controladorChats.probarConexion())
+
 @app.post('/conversar')
 def getRespuesta():
     mensaje = request.form['mensaje']
@@ -156,7 +167,7 @@ def procesamientoConversacion(respuesta):
         funciones = {
             'is_get_consumo': controladorAsistente.verificarConsumo,
             'get_recomendaciones': controladorEdificios.getRecomendaciones,
-            'get_ids_edificio_piso_ambiente': controladorEdificios.getInfoLugar,
+            'get_parametros_edificio_piso_ambiente_fechas': controladorEdificios.getInfoLugar,
         }
 
         resFunciones = []
@@ -167,7 +178,7 @@ def procesamientoConversacion(respuesta):
             if rcontent['info']:
                 session['contenido'].append({"nombre": afuncion['funcion_name'], "valor": rcontent['info']})
 
-            resFunciones.append({ "role": "tool", "name": afuncion['funcion_name'], "content": rcontent })
+            resFunciones.append({ "role": "tool", "name": afuncion['funcion_name'], "content": rcontent['reason'] })
 
         print(session.get('contenido'))
         print("Envio de funciones:")
