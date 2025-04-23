@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente de consumo energético</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" />
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script defer type="module" src="{{ url_for('static', filename='js/assistant.js') }}"></script>
+</head>
+<body class="bg-[#F8F2EC]">
+    <div class="md:flex">
+        <aside class="relative bg-white m-3 flex flex-col items-center">
+            <iframe src="/avatar" class="overflow-hidden max-w-sm bg-white w-full h-[95vh] rounded"></iframe>
+            <div id="audioMotionAnalyzer" class="absolute bottom-[120px] max-w-full max-h-[70px]"> 
+            </div>
+            <div class="absolute bottom-[60px] flex"> 
+                <button id="microphoneBtn" class="bg-white w-10 h-10 rounded-full mr-2 flex justify-center items-center">
+                    <img hidden id="openedMicroIcon" class="w-3 h-3" src="{{ url_for('static', filename='img/icons/micro.svg') }}" alt="Micro Abierto">
+                    <img id="closedMicroIcon" class="w-3 h-3" src="{{ url_for('static', filename='img/icons/micro-slash.svg') }}" alt="Micro Cerrado">
+                </button>
+                <button id="infoBtn" class="bg-white w-10 h-10 rounded-full ml-2 flex justify-center items-center">
+                    <img class="w-4 h-4" src="{{ url_for('static', filename='img/icons/info.svg') }}" alt="Micro">
+                </button>
+            </div>
+        </aside>
+        <main class="p-3 w-full">
+            <section class="bg-white py-5 px-7 rounded">
+                <header class="flex flex-wrap justify-between font-bold text-2xl pb-5 border-b border-[#F4F4F4] rounded-t-sm">
+                    <span>
+                        Asistente de consumo energético
+                    </span>
+
+                    <button class="text-white text-sm font-medium bg-[#3E97FF] p-2 rounded flex items-center">
+                        <img class="w-4 h-4 mr-1" src="{{ url_for('static', filename='img/icons/zoom.svg') }}">
+                        Consultar datos
+                    </button>
+                </header>
+                <div>
+                    <p>Hola Mundo!</p>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

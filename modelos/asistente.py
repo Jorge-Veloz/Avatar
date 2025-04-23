@@ -100,6 +100,25 @@ class AsistenteModelo():
             return [self.run, None]
     
     def getRespuesta(self):
+        # /!\ Inicia Adaptacion para trabajo remoto sin apis /!\
+        class respuesta_msg:
+            # Crea una respuesta falsa que sea usable en el resto del sistema
+            role = 'User'
+            content = 'Hola esta es la respuesta generada por ollama'
+            actual = 1; max = 1
+            def __iter__(self): return self
+            def __next__(self):
+                if self.actual < self.max:
+                    self.actual += 1
+                    return [['role', self.role], ['content', self.content]]
+                else:
+                    raise StopIteration
+        return {
+            'respuesta': None,
+            'respuesta_msg': respuesta_msg(),
+            'asis_funciones': None
+        }
+        # /!\ Acaba Adaptacion para trabajo remoto sin apis /!\
         print(list(session.get('hilo')['mensajes']))
         response = self.cliente.chat(
             model = self.asistente,

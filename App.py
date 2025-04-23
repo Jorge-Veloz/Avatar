@@ -49,6 +49,10 @@ def serve_file(filename):
 def Index():
     return render_template('index.html')
 
+@app.get('/assistant')
+def assistant():
+    return render_template('assistant.html')
+
 @app.get('/pruebaAPI')
 def pruebaAPI():
     try:
@@ -116,24 +120,30 @@ def getConsumoEdificios():
 
 @app.post('/conversar')
 def getRespuesta():
-    mensaje = request.form['mensaje']
-    
-    print(session['hilo'])
-    if 'hilo' not in session:
-        hilo = controladorAsistente.crearHilo()
-        instrucciones = getMensajeSistema()
-        session['hilo'] = {"id": hilo, "mensajes": [
-            instrucciones, 
-            {"role":"user", "content": "Hola."}
-        ]}
+    if 'voice' in request.files:
+        print('Fue por la voz!')
+        return {
+            'text': "Hola Mundo"
+        }
     else:
-        session['hilo']['mensajes'].append({"role":"user", "content": mensaje})
-    respuesta = controladorAsistente.getRespuesta()
-    session['contenido'] = []
-    resultado = procesamientoConversacion(respuesta['datos'])
-    
-    #salida = controladorAsistente.conversar(respuesta)
-    return jsonify(resultado)
+        mensaje = request.form['mensaje']
+        
+        # print(session['hilo'])
+        if 'hilo' not in session:
+            hilo = controladorAsistente.crearHilo()
+            instrucciones = getMensajeSistema()
+            session['hilo'] = {"id": hilo, "mensajes": [
+                instrucciones, 
+                {"role":"user", "content": "Hola."}
+            ]}
+        else:
+            session['hilo']['mensajes'].append({"role":"user", "content": mensaje})
+        respuesta = controladorAsistente.getRespuesta()
+        session['contenido'] = []
+        resultado = procesamientoConversacion(respuesta['datos'])
+        
+        #salida = controladorAsistente.conversar(respuesta)
+        return jsonify(resultado)
 
 @app.post('/conversarGPT')
 def getRespuestaGPT():
