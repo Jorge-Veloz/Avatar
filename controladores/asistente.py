@@ -1,13 +1,21 @@
 from modelos.asistente import AsistenteModelo
+from controladores.chats import ChatsControlador
 from flask import session
 import json
 
 class AsistenteControlador():
-    def __init__(self):
+    def __init__(self, app):
         self.modelo = AsistenteModelo()
+        self.controladorChats = ChatsControlador(app)
+        print("Asistente Controlador inicializado")
 
     def crearHilo(self):
-        return self.modelo.crearHilo()
+        #Podria funcionar para crear el hilo con caracteres aleatorios
+        #idHilo = self.modelo.crearHilo()
+
+        #Identificador del hilo obtenido en la bd
+        idHilo = self.controladorChats.crearHilo()
+        return idHilo
 
     def getListaMensajes(self, idHilo):
         listaMensajes = self.modelo.getListaMensajes(idHilo)
@@ -21,47 +29,66 @@ class AsistenteControlador():
         return mensajes
         #x = [x if x==2 else 1 for x in listaMensajes]
 
-    def getRespuesta(self):
-        resultado = self.modelo.getRespuesta()
-        respuesta_msg = resultado['respuesta_msg']
-        funciones = resultado['asis_funciones']
-        
-        res = {
-            "respuesta_msg": "",
-            "asis_funciones": None
-        }
-        if respuesta_msg and respuesta_msg.content:
-            session['hilo']['mensajes'].append(dict(respuesta_msg))
-            res['respuesta_msg'] = respuesta_msg.content
-        
-        if funciones:
-            obj_funciones = []
-            for funcion in funciones:
-                #print(funcion.function.arguments)
-                argumentos = dict(funcion.function.arguments)
-                nombreFuncion = funcion.function.name
-                session['hilo']['mensajes'].append({"role": "tool", "name":nombreFuncion, "content": json.dumps(argumentos)})
-                #json_args = json.loads(argumentos)
-                #print(argumentos)
-                
-                obj_funciones.append({
-                    "funcion_name": nombreFuncion,
-                    "funcion_args": argumentos,
-                })
-            res["asis_funciones"] = obj_funciones
-        
-        if (respuesta_msg and res['respuesta_msg']) or (funciones and res["asis_funciones"]):
-            return {
-                "ok": True,
-                "observacion": None,
-                "datos": dict(res)
+    def probarResChat(self, hilo):
+        return self.controladorChats.getHistorialMensajes(hilo)
+    
+    def getRespuesta(self, hilo, mensaje):
+        res = self.controladorChats.enviarMensaje(hilo, mensaje)
+        if res['ok']:
+            historialMsgs = self.controladorChats.getHistorialMensajes(hilo)
+
+            resultado = self.modelo.getRespuesta(historialMsgs)
+            respuesta_msg = resultado['respuesta_msg']
+            funciones = resultado['asis_funciones']
+            
+            res = {
+                "respuesta_msg": "",
+                "asis_funciones": None
             }
+            if respuesta_msg and respuesta_msg.content:
+                #session['hilo']['mensajes'].append(dict(respuesta_msg))
+                self.controladorChats.enviarMensaje(hilo, dict(respuesta_msg))
+                res['respuesta_msg'] = respuesta_msg.content
+            
+            if funciones:
+                obj_funciones = []
+                for funcion in funciones:
+                    #print(funcion.function.arguments)
+                    argumentos = dict(funcion.function.arguments)
+                    nombreFuncion = funcion.function.name
+                    #session['hilo']['mensajes'].append({"role": "tool", "name":nombreFuncion, "content": json.dumps(argumentos)})
+                    msgTool = {"role": "tool", "name":nombreFuncion, "content": json.dumps(argumentos)}
+                    self.controladorChats.enviarMensaje(hilo, dict(msgTool))
+                    #json_args = json.loads(argumentos)
+                    #print(argumentos)
+                    
+                    obj_funciones.append({
+                        "funcion_name": nombreFuncion,
+                        "funcion_args": argumentos,
+                    })
+                res["asis_funciones"] = obj_funciones
+            
+            if (respuesta_msg and res['respuesta_msg']) or (funciones and res["asis_funciones"]):
+                return {
+                    "ok": True,
+                    "observacion": None,
+                    "datos": dict(res)
+                }
+            else:
+                return {
+                    "ok": False,
+                    "observacion": "No se obtuvo una respuesta del asistente.",
+                    "datos": dict(res)
+                }
         else:
+            print("Error al hablar con el asistente.")
             return {
                 "ok": False,
-                "observacion": "No se obtuvo una respuesta del asistente.",
+                "observacion": "Error al guardar el mensaje.",
                 "datos": dict(res)
             }
+
+        
         
     def getRespuestaGPT(self, threadId, mensaje):
         [run, messages] = self.modelo.getRespuestaGPT(threadId, mensaje)
@@ -133,10 +160,18 @@ class AsistenteControlador():
 
         return message_content.value
 
-    def enviarFunciones(self, tcFunciones):
-        self.modelo.enviarFunciones(tcFunciones)
+    def enviarFunciones(self, idHilo, tcFunciones):
+        if tcFunciones and len(tcFunciones) > 0:
+            for tf in tcFunciones:
+                #session['hilo']['mensajes'].append(tf)
+                self.controladorChats.enviarMensaje(idHilo, tf)
+            print("Las herramientas fueron enviadas correctamente.")
+        else:
+            print("No hay herramientas para subir.")
+        #self.modelo.enviarFunciones(tcFunciones)
+        historialMsgs = self.controladorChats.getHistorialMensajes(idHilo)
 
-        respuesta = self.modelo.getRespuesta()
+        respuesta = self.modelo.getRespuesta(historialMsgs)
 
         respuesta_msg = respuesta['respuesta_msg']
         funciones = respuesta['asis_funciones']
@@ -147,7 +182,8 @@ class AsistenteControlador():
         }
         #if respuesta_msg is not None:
         if respuesta_msg and respuesta_msg.content:
-            session['hilo']['mensajes'].append(dict(respuesta_msg))
+            #session['hilo']['mensajes'].append(dict(respuesta_msg))
+            self.controladorChats.enviarMensaje(idHilo, dict(respuesta_msg))
             res['respuesta_msg'] = respuesta_msg.content
         
         if funciones:
@@ -156,7 +192,9 @@ class AsistenteControlador():
                 #print(funcion.function.arguments)
                 argumentos = dict(funcion.function.arguments)
                 nombreFuncion = funcion.function.name
-                session['hilo']['mensajes'].append({"role": "tool", "name":nombreFuncion, "content": json.dumps(argumentos)})
+                #session['hilo']['mensajes'].append({"role": "tool", "name":nombreFuncion, "content": json.dumps(argumentos)})
+                msgTool = {"role": "tool", "name":nombreFuncion, "content": json.dumps(argumentos)}
+                self.controladorChats.enviarMensaje(idHilo, dict(msgTool))
                 #json_args = json.loads(argumentos)
                 #print(argumentos)
                 
@@ -166,7 +204,6 @@ class AsistenteControlador():
                     "funcion_args": argumentos,
                 })
             
-                
             res["asis_funciones"] = obj_funciones
         
         if (respuesta_msg and res['respuesta_msg']) or (funciones and res["asis_funciones"]):
@@ -181,54 +218,9 @@ class AsistenteControlador():
                 "observacion": "No se obtuvo una respuesta del asistente.",
                 "datos": dict(res)
             }
-        
-        print(respuesta)
-
-        obj_funciones = []
-        resultado = {
-            'asis_funciones': None,
-            'respuesta_msg': None
-        }
-
-        funciones = respuesta["asis_funciones"]
-        if funciones and len(funciones) > 0:
-            for funcion in funciones:
-                argumentos = dict(funcion.function.arguments)
-                obj_funciones.append(
-                    {
-                        "funcion_name": funcion.function.name,
-                        "funcion_args": argumentos,
-                    }
-                )
-            
-            resultado['asis_funciones'] = obj_funciones
-            resultado['id_run'] = run.id
-
-        mensajes = respuesta["respuesta_msg"]
-        if mensajes and len(mensajes) > 0:
-            print("Contenido mensaje:")
-            print(mensajes)
-            message_content = mensajes.content
-            #print(message_content.value)
-            respuesta["respuesta_msg"] = message_content
-        
-        
-        if respuesta['asis_funciones'] or respuesta["respuesta_msg"]:
-            return {
-                'ok': True,
-                'observacion': None,
-                'datos': respuesta
-            }
-        else:
-            return {
-                'ok': False,
-                'observacion': 'No se obtuvo respuesta',
-                'datos': respuesta
-            }
-        #return respuesta
 
     def enviarFuncionesGPT(self, tcFunciones, idRun, idHilo):
-        [run, messages] = respuesta = self.modelo.enviarFunciones(tcFunciones, idRun, idHilo)
+        [run, messages] = respuesta = self.modelo.enviarFuncionesGPT(tcFunciones, idRun, idHilo)
 
         obj_funciones = []
         respuesta = {

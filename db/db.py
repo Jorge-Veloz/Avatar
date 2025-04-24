@@ -82,6 +82,8 @@ class PostgresDB():
             port=os.getenv("PG_PORT")
         )
         self.connection.autocommit = True
+        conexion = self.probarConexion()
+        print(conexion)
 
     def probarConexion(self):
         try:
@@ -120,3 +122,9 @@ class PostgresDB():
             cursor.execute(sql, params)
             filasElim = cursor.rowcount
             return 1 if filasElim > 0 else 0
+    
+    def llamarFuncion(self, sql, params=None):
+        with self.connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            resultados = cursor.fetchall()
+            return resultados if resultados else None

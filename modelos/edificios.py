@@ -15,7 +15,16 @@ class EdificiosModelo:
     def getConsumoEdificiosAsis(self, edificio, piso, ambiente, fechaInicio, fechaFin):
         print("Envio de datos:")
         print(edificio, piso, ambiente, fechaInicio,fechaFin)
-        return {"res": 1, "data": "info obtenida"}
+        try:
+            respuesta = requests.get(self.API_DB + f'/datos?idificacion={edificio}&piso={piso}&ambiente={ambiente}&fechaInicio={fechaInicio}&fechaFin={fechaFin}')
+            print("Salida de datos:")
+            print(respuesta.json())
+            return {"res": 1, "data": respuesta.json()}
+        except Exception as e:
+            print("Error al consultar:")
+            print(e)
+            return {"res": 0, "data": str(e)}
+        #return {"res": 1, "data": "info obtenida"}
         
     def getConsumoEdificios(self, edificio, piso, ambiente, fechaInicio, fechaFin):
         print("Envio de datos:")

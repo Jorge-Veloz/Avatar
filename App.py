@@ -3,8 +3,8 @@ from flask_jwt_extended import JWTManager
 from controladores.asistente import AsistenteControlador
 from controladores.edificios import EdificiosControlador
 from controladores.ambientes import AmbientesControlador
-from controladores.consumo import ConsumoControlador
 from controladores.chats import ChatsControlador
+from controladores.consumo import ConsumoControlador
 from funciones.asistente import getMensajeSistema
 from funciones.algoritmos import getPrediccionConsumo
 #from config import Config
@@ -24,15 +24,16 @@ load_dotenv(os.path.join(os.getcwd(), '.env'))
 compMsgs = []
 API_DB = os.environ.get("API_DB")
 
-controladorAsistente = AsistenteControlador()
-controladorEdificios = EdificiosControlador()
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = b'secret_key'
 app.config['ASSETS_FOLDER'] = os.path.join(os.getcwd(), 'assets')
 
 #Descomentar para conectar a la base de datos
 #controladorChats = ChatsControlador(app)
+
+#print(controladorChats.enviarMensaje(1, {"role":"user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}))
+controladorAsistente = AsistenteControlador(app)
+controladorEdificios = EdificiosControlador()
 
 # Inicializacion del JWT
 jwt = JWTManager(app)
@@ -84,13 +85,15 @@ def inicializarAsistente():
     #print(session)
     
     hilo = controladorAsistente.crearHilo()
-    instrucciones = getMensajeSistema()
-    session['hilo'] = {"id": hilo, "mensajes": [
-        instrucciones, 
-        {"role":"user", "content": "Hola."}]
-    }
-
-    respuesta = controladorAsistente.getRespuesta() #enviar el identificador para obtener historial
+    #instrucciones = getMensajeSistema()
+    # session['hilo'] = {"id": hilo, "mensajes": [
+    #     instrucciones, 
+    #     {"role":"user", "content": "Hola."}]
+    # }
+    # Cambiar identificador de hilo a 1 para pruebas
+    session['hilo'] = hilo
+    mensajeInicial = {"role":"user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}
+    respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajeInicial) #enviar el identificador para obtener historial
     session['contenido'] = []
     resultado = procesamientoConversacion(respuesta['datos'])
     #print(resultado)
@@ -110,6 +113,12 @@ def getEdificios():
     estado = 200 if respuesta['ok'] else 500
     return jsonify(respuesta), estado
 
+@app.get('/pruebaChats')
+def pruebaChats():
+    mensaje = controladorAsistente.probarResChat(1)
+    #mensaje = {"res": 1}
+    return jsonify(mensaje)
+
 @app.get('/datos')
 def getConsumoEdificios():
     edificio = request.args.get('idEdificacion')
@@ -121,10 +130,6 @@ def getConsumoEdificios():
     respuesta = controladorEdificios.getConsumoEdificios(edificio, piso, ambiente, fechaInicio, fechaFin)
     return jsonify(respuesta)
 
-@app.get('/probarBaseDatos')
-def probarBaseDatos():
-    return jsonify(controladorChats.probarConexion())
-
 @app.post('/conversar')
 def getRespuesta():
     mensaje = request.form['mensaje']
@@ -132,14 +137,15 @@ def getRespuesta():
     print(session['hilo'])
     if 'hilo' not in session:
         hilo = controladorAsistente.crearHilo()
-        instrucciones = getMensajeSistema()
-        session['hilo'] = {"id": hilo, "mensajes": [
-            instrucciones, 
-            {"role":"user", "content": "Hola."}
-        ]}
-    else:
-        session['hilo']['mensajes'].append({"role":"user", "content": mensaje})
-    respuesta = controladorAsistente.getRespuesta()
+        session['hilo'] = hilo
+        # instrucciones = getMensajeSistema()
+        # session['hilo'] = {"id": hilo, "mensajes": [
+        #     instrucciones, 
+        #     {"role":"user", "content": "Hola."}
+        # ]}
+    
+    mensajeAsistente = {"role":"user", "content": mensaje}
+    respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajeAsistente)
     session['contenido'] = []
     resultado = procesamientoConversacion(respuesta['datos'])
     
@@ -183,7 +189,7 @@ def procesamientoConversacion(respuesta):
         print(session.get('contenido'))
         print("Envio de funciones:")
         print(resFunciones)
-        respuesta2 = controladorAsistente.enviarFunciones(resFunciones)
+        respuesta2 = controladorAsistente.enviarFunciones(session.get('hilo'), resFunciones)
         return procesamientoConversacion(respuesta2['datos'])
     elif ('respuesta_msg' in respuesta and respuesta['respuesta_msg']):
         return {
@@ -192,7 +198,8 @@ def procesamientoConversacion(respuesta):
             'datos': {"respuesta": respuesta['respuesta_msg'], "info": session.get('contenido')}
         }
     else:
-        respuesta2 = controladorAsistente.getRespuesta(session.get('idHilo'), "No hubo respuesta por parte del asistente a la peticion previamente mencionada. Da una respuesta al usuario.")
+        msgError = {"role": "user", "content": "No hubo respuesta por parte del asistente a la peticion previamente mencionada. Da una respuesta al usuario."}
+        respuesta2 = controladorAsistente.getRespuesta(session.get('hilo'), msgError)
         return {
             'ok': True,
             'observacion': None,

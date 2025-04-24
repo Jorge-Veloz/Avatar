@@ -71,12 +71,7 @@ class AsistenteModelo():
         return self.hilo
 
     def enviarFunciones(self, tcFunciones):
-        if tcFunciones and len(tcFunciones) > 0:
-            for tf in tcFunciones:
-                session['hilo']['mensajes'].append(tf)
-            print("Las herramientas fueron enviadas correctamente.")
-        else:
-            print("No hay herramientas para subir.")
+        pass
     
     def enviarFuncionesGPT(self, tcFunciones, idRun, idHilo):
         if tcFunciones and len(tcFunciones) > 0:
@@ -100,11 +95,12 @@ class AsistenteModelo():
             #ejecucion = self.run
             return [self.run, None]
     
-    def getRespuesta(self):
-        print(list(session.get('hilo')['mensajes']))
+    def getRespuesta(self, mensajes):
+        #print(list(session.get('hilo')['mensajes']))
         response = self.cliente.chat(
-            model = self.asistente,
-            messages = list(session.get('hilo')['mensajes']),
+            model = self.asistente, #self.asistente,
+            #messages = list(session.get('hilo')['mensajes']),
+            messages = mensajes,
             stream = False,
             tools = [{
                 "type": "function",
@@ -158,7 +154,42 @@ class AsistenteModelo():
                 }
             }]
         )
-        
+        """
+        {
+                "type": "function",
+                "function": {
+                    "name": "get_parametros_edificio_piso_ambiente_fechas",
+                    "description": "Solo cuando el usuario te pida el consumo energetico del edificio, extraeras el nombre del edificio, del piso, del ambiente que te mencione el usuario, la fecha de inicio y la fecha de fin del rango.",
+                    "strict": False,
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "edificio": {
+                                "type": "string",
+                                "description": "Nombre del edificio"
+                            }, 
+                            "piso": {
+                                "type": "string",
+                                "description": "Nombre del piso"
+                            }, 
+                            "ambiente": {
+                                "type": "string",
+                                "description": "Nombre del ambiente"
+                            }, 
+                            "fechaIni": {
+                                "type": "string",
+                                "description": "La fecha de inicio de la consulta en formato yyyy-mm-dd"
+                            }, 
+                            "fechaFin": {
+                                "type": "string",
+                                "description": "La fecha de fin de la consulta en formato yyyy-mm-dd"
+                            }, 
+                        },
+                        "required": []
+                    }
+                }
+            }, 
+        """
 
         x = {
             'respuesta': response,
