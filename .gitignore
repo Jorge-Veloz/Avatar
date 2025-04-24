@@ -6,3 +6,5 @@
 /db/__pycache__/
 /funciones/__pycache__/
 /.venv
+/speech-recognition/vosk-models/*
+/speech-recognition/records/*

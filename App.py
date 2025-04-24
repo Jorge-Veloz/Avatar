@@ -4,6 +4,7 @@ from controladores.asistente import AsistenteControlador
 from controladores.edificios import EdificiosControlador
 from controladores.ambientes import AmbientesControlador
 from controladores.consumo import ConsumoControlador
+from controladores.speech import SpeechController
 from funciones.asistente import getMensajeSistema
 from funciones.algoritmos import getPrediccionConsumo
 import json
@@ -22,6 +23,7 @@ API_DB = os.environ.get("API_DB")
 
 controladorAsistente = AsistenteControlador()
 controladorEdificios = EdificiosControlador()
+speechController = SpeechController()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = b'secret_key'
@@ -52,6 +54,28 @@ def Index():
 @app.get('/assistant')
 def assistant():
     return render_template('assistant.html')
+
+@app.post('/assistant/talk')
+def assistant_talk():
+    if 'hilo' not in session:
+        session['hilo'] = {
+            "id": controladorAsistente.crearHilo(),
+            "mensajes": [
+                getMensajeSistema(), 
+                {"role":"user", "content": "Hola."}
+            ]
+        }
+    # Speech to text
+    id = session['hilo']['id']
+    text = speechController.speechToText(request.files['voice'], id)
+    if not text.strip():
+        text = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
+    # Text to speech
+    encoded = speechController.textToSpeech(text, id)
+    return {
+        'text': text,
+        'audio': encoded
+    }
 
 @app.get('/pruebaAPI')
 def pruebaAPI():
@@ -120,30 +144,24 @@ def getConsumoEdificios():
 
 @app.post('/conversar')
 def getRespuesta():
-    if 'voice' in request.files:
-        print('Fue por la voz!')
-        return {
-            'text': "Hola Mundo"
-        }
+    mensaje = request.form['mensaje']
+    
+    print(session['hilo'])
+    if 'hilo' not in session:
+        hilo = controladorAsistente.crearHilo()
+        instrucciones = getMensajeSistema()
+        session['hilo'] = {"id": hilo, "mensajes": [
+            instrucciones, 
+            {"role":"user", "content": "Hola."}
+        ]}
     else:
-        mensaje = request.form['mensaje']
-        
-        # print(session['hilo'])
-        if 'hilo' not in session:
-            hilo = controladorAsistente.crearHilo()
-            instrucciones = getMensajeSistema()
-            session['hilo'] = {"id": hilo, "mensajes": [
-                instrucciones, 
-                {"role":"user", "content": "Hola."}
-            ]}
-        else:
-            session['hilo']['mensajes'].append({"role":"user", "content": mensaje})
-        respuesta = controladorAsistente.getRespuesta()
-        session['contenido'] = []
-        resultado = procesamientoConversacion(respuesta['datos'])
-        
-        #salida = controladorAsistente.conversar(respuesta)
-        return jsonify(resultado)
+        session['hilo']['mensajes'].append({"role":"user", "content": mensaje})
+    respuesta = controladorAsistente.getRespuesta()
+    session['contenido'] = []
+    resultado = procesamientoConversacion(respuesta['datos'])
+    
+    #salida = controladorAsistente.conversar(respuesta)
+    return jsonify(resultado)
 
 @app.post('/conversarGPT')
 def getRespuestaGPT():

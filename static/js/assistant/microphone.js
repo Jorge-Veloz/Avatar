@@ -1,11 +1,13 @@
 import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?min';
 
 export default () => {
+    let microphoneAviable = true;
     let microphoneOpen = false;
     const openedMicroIcon = document.getElementById('openedMicroIcon'),
           closedMicroIcon = document.getElementById('closedMicroIcon');
     let mediaRecorder;
     let audioChunks = [];
+    const assistantAudioPlayer = document.getElementById('assistantAudioPlayer');
 
     const audioMotion = new AudioMotionAnalyzer(document.getElementById('audioMotionAnalyzer'), {
         height: 70,
@@ -24,6 +26,8 @@ export default () => {
     let audioMotionStream;
 
     const openMicrophone = async () => {
+        if( ! microphoneAviable ) return;
+
         // Open mic
         openedMicroIcon.hidden = false;
         closedMicroIcon.hidden = true;
@@ -44,32 +48,30 @@ export default () => {
     };
 
     const closeMicrophone = () => {
+        // Block microphone
+        microphoneAviable = false;
         // Toggle Icon
         openedMicroIcon.hidden = true;
         closedMicroIcon.hidden = false;
-
         // Close stream for audio motion
         audioMotion.disconnectInput(audioMotionStream);
         audioMotionStream = null;
-
+        // Send audio
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         audioChunks = [];
-
         const formData = new FormData();
         formData.append('voice', audioBlob, 'voice.webm');
-        fetch('http://localhost:3005/conversar', {
+        fetch('http://localhost:3005/assistant/talk', {
             method: 'POST',
             body: formData
         }).then((response) => {
             return response.json();
         }).then((data) => {
-            console.log(data);
-            // textResult.textContent = data.text;
-            // timeUsed.textContent = data.time.total;
-            // sttTime.textContent = data.time.stt;
-            // ttsTime.textContent = data.time.tts;
-            // audioPlayer.src = `data:audio/wav;base64,${data.audio}`;
+            // TODO: show text response to user
+            // console.log(data.text);
+            assistantAudioPlayer.src = `data:audio/wav;base64,${data.audio}`;
         }).catch(error => {
+            microphoneAviable = true;
             console.error('Hubo un problema con la petición: ', error);
         });
     };
@@ -81,5 +83,14 @@ export default () => {
             mediaRecorder.stop();
         }
         microphoneOpen = ! microphoneOpen;
+    });
+
+    assistantAudioPlayer.addEventListener('ended', () => {
+        microphoneAviable = true;
+    });
+
+    document.getElementById('infoBtn').addEventListener('click', () => {
+        if( microphoneOpen ) return;
+        document.getElementById('assistantAudioPlayer').play();
     });
 };
