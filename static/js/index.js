@@ -205,9 +205,9 @@ import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?mi
       $('#combo_edificio').on('change', onEdificioChange);
       $('#combo_pisos').on('change', onPisoChange);
       $('#btnConsultarDatos').on('click', function() {
-        const idEdificio = $('#combo_edificio').val();
-        const idPiso = $('#combo_pisos').val();
-        const idAmbiente = $('#combo_ambientes').val();
+        const idEdificio = $('#combo_edificio option:selected').text();
+        const idPiso = $('#combo_pisos option:selected').text();
+        const idAmbiente = $('#combo_ambientes option:selected').text();
         if (idEdificio && idPiso && idAmbiente) {
           informacionConsumo({ idEdificio, idPiso, idAmbiente });
         } else {
@@ -401,71 +401,7 @@ import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?mi
       }
       $('#accordionFlushExample').html(htmlAcordion);
     }
-  
-    async function informacionConsumoAsistente(params) {
-      
-      let ops = '';
-      
-      if (!dataEdificios.length) return { success: false, reason: "Error de conexión con la base de datos." };
-      if (!params.idEdificio || !params.idPiso || !params.idAmbiente) return { success: false, reason: "No tienes la información completa para consultar el consumo energético" };
-      
-      console.log(params)
-      const edificio = dataEdificios.find(e => e.id == params.idEdificio);
-      console.log(edificio)
-      
-      if (edificio === undefined) {
-        return {"success": false, "reason": "La informacion que te han proporcionado es erronea. Identificador de edificio no corresponde a ninguno de los edificios del archivo."}
-        // return {"success": false, "reason": "Vuelve a analizar el archivo, has obtenido mal los identificadores"}
-      }else{
-        const piso = edificio.pisos.find(p => p.id == params.idPiso);
-        if (piso === undefined) {
-          return {"success": false, "reason": "La informacion que te han proporcionado es erronea. No existe este piso en el edificio mencionado."}
-        }else{
-
-          ops = "<option value='' selected disabled>Seleccionar</option>";
-          edificio.pisos.forEach(p => ops += `<option value='${p.id}'>${p.nombre}</option>`);
-          $('#combo_pisos').html(ops);
-
-          const ambiente = piso.ambientes.find(a => a.id == params.idAmbiente);
-          if (ambiente === undefined) {
-            return {"success": false, "reason": "La informacion que te han proporcionado es erronea. No existe este ambiente en el piso mencionado."}
-          }else{
-            ops = "<option value='' selected disabled>Seleccionar</option>";
-            groupBy(piso.ambientes, 'tipoAmbiente').forEach(group => {
-              ops += `<optgroup label="${group[0].tipoAmbiente}">`;
-              group.forEach(item => ops += `<option value="${item.id}">${item.nombre}</option>`);
-              ops += `</optgroup>`;
-            });
-            $('#combo_ambientes').html(ops);
-          }
-        }
-      }
-
-      $('#combo_edificio').val(params.idEdificio)
-      $('#combo_pisos').val(params.idPiso);
-      $('#combo_ambientes').val(params.idAmbiente);
-      initFechas({ start: moment(params.fechaInicio), end: moment(params.fechaFin) });
-      // $('#reportrange span').html(`${moment(params.fechaInicio).format('DD MMM YYYY')} - ${moment(params.fechaFin).format('DD MMM YYYY')}`);
-      
-      try {
-        
-        const response = await fetch(`/datos?idEdificacion=${params.idEdificio}&idPiso=${params.idPiso}&idAmbiente=${params.idAmbiente}&fechaInicio=${params.fechaInicio}&fechaFin=${params.fechaFin}`);
-        if (!response.ok) throw new Error('Error en la API');
-        const datos = await response.json();
-        
-        if (datos.ok) {
-          graficarInfoConsumo(datos);
-          return datos.datos.datos.length > 0
-            ? { success: true, reason: "Datos del consumo energético obtenidos. Se graficarán y se darán recomendaciones para optimizar." }
-            : { success: true, reason: "Consulta realizada correctamente, pero no se encontraron datos de consumo para el ambiente." };
-        } else {
-          return { success: true, reason: "Error en la consulta: " + datos.observacion };
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    }
-  
+    
     function informacionConsumo(params) {
       $('.text-btn-consultar-datos').html('Consultando datos... <span class="indicator-progress">Cargando... <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>');
       $('#btnConsultarDatos, select').addClass('disabled');
@@ -755,35 +691,39 @@ import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?mi
         return { success: false, reason: "Necesitas todos los datos para consultar el consumo energético" };
       }*/
       if(respuesta.ok){
-        // let ops = '';
-        // let params = respuesta.params;
-        // const edificio = dataEdificios.find(e => e.id == params.idEdificio);
-        // console.log(edificio)
+        let ops = '';
+        let params = respuesta.params;
+        const edificio = dataEdificios.find(e => e.nombre == params.idEdificio);
+        console.log(edificio)
 
-        // if(edificio){
-        //   const piso = edificio.pisos.find(p => p.id == params.idPiso);
-        //   if (piso) {
-        //     ops = "<option value='' selected disabled>Seleccionar</option>";
-        //     edificio.pisos.forEach(p => ops += `<option value='${p.id}'>${p.nombre}</option>`);
-        //     $('#combo_pisos').html(ops);
+        if(edificio){
+          const piso = edificio.pisos.find(p => p.nombre == params.idPiso);
+          if (piso) {
+            ops = "<option value='' selected disabled>Seleccionar</option>";
+            edificio.pisos.forEach(p => ops += `<option value='${p.id}'>${p.nombre}</option>`);
+            $('#combo_pisos').html(ops);
   
-        //     const ambiente = piso.ambientes.find(a => a.id == params.idAmbiente);
-        //     if (ambiente) {
-        //       ops = "<option value='' selected disabled>Seleccionar</option>";
-        //       groupBy(piso.ambientes, 'tipoAmbiente').forEach(group => {
-        //         ops += `<optgroup label="${group[0].tipoAmbiente}">`;
-        //         group.forEach(item => ops += `<option value="${item.id}">${item.nombre}</option>`);
-        //         ops += `</optgroup>`;
-        //       });
-        //       $('#combo_ambientes').html(ops);
-        //     }
-        //   }
-        // }
+            const ambiente = piso.ambientes.find(a => a.nombre == params.idAmbiente);
+            if (ambiente) {
+              ops = "<option value='' selected disabled>Seleccionar</option>";
+              groupBy(piso.ambientes, 'tipoAmbiente').forEach(group => {
+                ops += `<optgroup label="${group[0].tipoAmbiente}">`;
+                group.forEach(item => ops += `<option value="${item.id}">${item.nombre}</option>`);
+                ops += `</optgroup>`;
+              });
+              $('#combo_ambientes').html(ops);
+            }
+          }
+        }
 
-        // $('#combo_edificio').val(params.idEdificio)
-        // $('#combo_pisos').val(params.idPiso);
-        // $('#combo_ambientes').val(params.idAmbiente);
-        // initFechas({ start: moment(params.fechaInicio), end: moment(params.fechaFin) });
+        $('#combo_edificio option').filter(function() { return $(this).text() === params.idEdificio; }).prop('selected', true);
+        $('#combo_edificio').trigger('change');
+        $('#combo_pisos option').filter(function() { return $(this).text() === params.idPiso; }).prop('selected', true);
+        $('#combo_pisos').trigger('change');
+        $('#combo_ambientes option').filter(function() { return $(this).text() === params.idAmbiente; }).prop('selected', true);
+        $('#combo_ambientes').trigger('change');
+        
+        initFechas({ start: moment(params.fechaInicio), end: moment(params.fechaFin) });
         //console.log(respuesta);
       }
       graficarInfoConsumo(respuesta);
@@ -818,7 +758,7 @@ import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?mi
               $('#combo_edificio_v').val(args.edificio);
               $('#combo_ambientes_v').val(args.ambiente);
               $('#fecha_busqueda_v').val('2024-01-10');
-              informacionConsumo({ idEdificio: data.edificio, idAmbiente: data.ambiente, idPiso: '' });
+              informacionConsumo({ idEdificio: data.idEdificio, idAmbiente: data.idAmbiente, idPiso: '' });
               return "Se mostrará la información del consumo energético y se darán recomendaciones para optimizar.";
             } else {
               return "El ambiente no se encuentra registrado como parte del edificio.";
