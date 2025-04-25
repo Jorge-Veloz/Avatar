@@ -6,6 +6,16 @@ class EdificiosModelo:
         self.API_DB = os.environ.get('RUTA_API')
 
     def getEdificios(self):
+        # /!\ Inicia Adaptacion para trabajo remoto sin apis /!\
+        return {
+            'res': 1,
+            'data': {
+                'ok': False,
+                'observacion': 'Esta es una respuesta falsa generada para hacer pruebas', 
+                'datos': None
+            }
+        }
+        # /!\ Acaba Adaptacion para trabajo remoto sin apis /!\
         try:
             respuesta = requests.get(self.API_DB+'/edificios')
             return {"res": 1, "data": respuesta.json()}

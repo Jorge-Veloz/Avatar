@@ -5,7 +5,7 @@
  */
 
 import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?min';
- 
+
 (function() {
     'use strict';
   
@@ -61,7 +61,6 @@ import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?mi
       initGraficos();
       await bindUIEvents();
       await getEdificios();
-      //fetch('/prueba').then(res => res.json()).then(data => console.log(data))
     });
   
     // ------------------------------ Funciones de Inicialización ------------------------------
@@ -225,7 +224,6 @@ import AudioMotionAnalyzer from 'https://cdn.skypack.dev/audiomotion-analyzer?mi
     }
 
     $('#btnMicrofono').on('click', function() {
-      console.log(statusMicrofono)
       if (!statusMicrofono) {
         iniciarEscucha();
       } else {

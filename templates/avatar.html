@@ -19,6 +19,15 @@
     
     </div>
     <script>
+        // Silence the console
+        let quiet = true;
+        if(quiet){
+          console.log = function () {};
+          console.info = function () {};
+          console.warn = function () {};
+          console.error = function () {};
+        }
+
         var unityInstance = null;
   
         var container = document.querySelector("#unity-container");
