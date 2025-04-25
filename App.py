@@ -67,11 +67,28 @@ def assistant_talk():
         }
     # Speech to text
     id = session['hilo']['id']
-    text = speechController.speechToText(request.files['voice'], id)
+    # text = speechController.speechToText(request.files['voice'], id)
+
+    # With API
+    request.files['voice'].save(f'./speech-recognition/records/input-{id}.mp3')
+    response = requests.post(
+        url='http://192.168.100.53:3010/voz_texto',
+        files={'voice': ('voice.mp3', open(f'./speech-recognition/records/input-{id}.mp3', 'rb'))},
+        data={'id': id}
+    )
+    text = response.json()['datos']
     if not text.strip():
         text = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
+
     # Text to speech
-    encoded = speechController.textToSpeech(text, id)
+    # With Controller
+    # encoded = speechController.textToSpeech(text, id)
+    # With API
+    response = requests.post(
+        url='http://192.168.100.53:3010/texto_voz',
+        data={'texto': text, 'id': id}
+    )
+    encoded = response.json()['datos']['voice_encoded']
     return {
         'text': text,
         'audio': encoded
