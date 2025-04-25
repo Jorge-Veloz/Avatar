@@ -13,7 +13,13 @@ class EdificiosControlador:
             return {'ok': False, 'observacion': respuesta['data'], 'datos': None}
     
     def getInfoLugar(self, argumentos):
-        [idEdificio, idPiso, idAmbiente, fechaInicio, fechaFin] = argumentos.values()
+        idEdificio = argumentos['edificio']
+        idPiso = argumentos['piso']
+        idAmbiente = argumentos['ambiente']
+        fechaInicio = argumentos['fechaIni']
+        fechaFin = argumentos['fechaFin']
+
+        #[idEdificio, idPiso, idAmbiente, fechaInicio, fechaFin] = argumentos.values()
 
         res = self.modelo.getConsumoEdificiosAsis(idEdificio, idPiso, idAmbiente, fechaInicio, fechaFin)
 
