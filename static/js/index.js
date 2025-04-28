@@ -48,8 +48,15 @@ const Index = (function () {
 
   const openMicrophone = async () => {
     
-    if (!microphoneAviable) return;
+    // if (!microphoneAviable) return;
+    
+    if (!assistantAudioPlayer.paused) {
+      assistantAudioPlayer.pause();
+      assistantAudioPlayer.currentTime = 0;
+    }
 
+    
+    
     // Mostrar icono de grabando
     openedMicroIcon.hidden = false;
     closedMicroIcon.hidden = true;
@@ -106,11 +113,12 @@ const Index = (function () {
     };
 
     mediaRecorder.start();
-    microphoneOpen = true;
+    // microphoneOpen = true;
   };
 
-  const closeMicrophone = () => {
-    microphoneAviable = false;
+  const closeMicrophone = async () => {
+    // microphoneAviable = false;
+
     openedMicroIcon.hidden = true;
     closedMicroIcon.hidden = false;
 
@@ -121,42 +129,26 @@ const Index = (function () {
     // Preparar el blob y enviarlo
     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
     audioChunks = [];
-    const formData = new FormData();
-    formData.append('voice', audioBlob, 'voice.webm');
-
-    fetch('/conversar', {
-      method: 'POST',
-      body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-      // Reproducir la respuesta de audio
-      console.log(data.datos)
-      assistantAudioPlayer.src = `data:audio/wav;base64,${data.datos.audio}`;
-      if (microphoneOpen) return;
-      assistantAudioPlayer.play();
-      
-      // TODO: mostrar data.text si quieres el texto
-    })
-    .catch(error => {
-      microphoneAviable = true;
-      console.error('Hubo un problema con la petición:', error);
-    });
+    
+    await Conversar(audioBlob);
 
     microphoneOpen = false;
   };
 
   document.getElementById('btnMicrofono').addEventListener('click', () => {
-    if (!microphoneOpen) {
-      openMicrophone();
-    } else {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
       mediaRecorder.stop();
+    } else {
+      openMicrophone();
     }
+    // if (!microphoneOpen) {
+    // } else {
+    // }
   });
 
   assistantAudioPlayer.addEventListener('ended', () => {
     console.log("Audio finalizado");
-    microphoneAviable = true;
+    // microphoneAviable = true;
     openMicrophone();
     // document.querySelector('#btnIniciarRecorrido').classList.remove('disabled');
   });
@@ -185,6 +177,50 @@ const Index = (function () {
     // $('#guardar_voz').on('click', guardarVocesDefault);
     // $('#mostrarChat').on('click', mostrarChat);
   }
+
+  // Declaramos el controlador a nivel de módulo para poder abortar peticiones anteriores
+  let currentAbortController = null;
+
+  async function Conversar(audioBlob) {
+    // Si ya hay una petición en curso, la abortamos antes de lanzar la nueva
+    if (currentAbortController) {
+      currentAbortController.abort();
+    }
+    // Creamos un nuevo controller para esta petición
+    currentAbortController = new AbortController();
+    const { signal } = currentAbortController;
+
+    const formData = new FormData();
+    formData.append('voice', audioBlob, 'voice.webm');
+
+    try {
+      // Le pasamos el signal al fetch para poder abortarlo
+      const res = await fetch('/conversar', {
+        method: 'POST',
+        body: formData,
+        signal
+      });
+      const result = await res.json();
+      const respuesta = result.datos;
+
+      if (respuesta.info && respuesta.info.length > 0) {
+        console.log("Información adicional");
+        ejecutarFuncion(respuesta.info);
+      }
+
+      if (respuesta.respuesta) {
+        hablar(respuesta);
+      }
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        // Esta excepción es la esperada cuando abortamos la petición
+        console.log('Petición anterior cancelada.');
+      } else {
+        console.error('Hubo un problema con la petición:', error);
+      }
+    }
+  }
+
 
   // ============================== Funciones de Voz (Reconocimiento y Síntesis) ==============================
   async function iniciarRecorrido() {
@@ -230,9 +266,66 @@ const Index = (function () {
   }
 
   async function hablar(data) {
-    console.log("Texto a hablar: " + data.respuesta);
+    
     assistantAudioPlayer.src = `data:audio/wav;base64,${data.audio}`;
     assistantAudioPlayer.play();
+    
+  }
+
+  function ejecutarFuncion(aFunciones) {
+    const funciones = {
+      // 'get_usuario': getDatosUsuario,
+      // 'get_ambiente_edificio': getAmbienteEdificio,
+      // 'get_recomendaciones': getRecomendaciones,
+      'get_parametros_edificio_piso_ambiente_fechas': getInfoLugar,
+    };
+
+    for (const afuncion of aFunciones) {
+      const func = funciones[afuncion.nombre];
+      func(afuncion.valor);
+    }
+  }
+
+  function getInfoLugar(data) {
+    
+    if(data.ok){
+      let ops = '';
+      let params = data.params;
+      const edificio = dataEdificios.find(e => e.nombre == params.idEdificio);
+      console.log(edificio)
+
+      if(edificio){
+        const piso = edificio.pisos.find(p => p.nombre == params.idPiso);
+        if (piso) {
+          ops = "<option value='' selected disabled>Seleccionar</option>";
+          edificio.pisos.forEach(p => ops += `<option value='${p.id}'>${p.nombre}</option>`);
+          $('#combo_pisos').html(ops);
+
+          const ambiente = piso.ambientes.find(a => a.nombre == params.idAmbiente);
+          if (ambiente) {
+            ops = "<option value='' selected disabled>Seleccionar</option>";
+            groupBy(piso.ambientes, 'tipoAmbiente').forEach(group => {
+              ops += `<optgroup label="${group[0].tipoAmbiente}">`;
+              group.forEach(item => ops += `<option value="${item.id}">${item.nombre}</option>`);
+              ops += `</optgroup>`;
+            });
+            $('#combo_ambientes').html(ops);
+          }
+        }
+      }
+
+      $('#combo_edificio option').filter(function() { return $(this).text() === params.idEdificio; }).prop('selected', true);
+      $('#combo_edificio').trigger('change');
+      $('#combo_pisos option').filter(function() { return $(this).text() === params.idPiso; }).prop('selected', true);
+      $('#combo_pisos').trigger('change');
+      $('#combo_ambientes option').filter(function() { return $(this).text() === params.idAmbiente; }).prop('selected', true);
+      $('#combo_ambientes').trigger('change');
+      
+      initFechas({ start: moment(params.fechaInicio), end: moment(params.fechaFin) });
+      //console.log(respuesta);
+    }
+
+    graficarInfoConsumo(respuesta);
     
   }
   
@@ -255,6 +348,62 @@ const Index = (function () {
     } catch (error) {
       Swal.fire("Error en el servidor.", "Error: " + error.message, "error");
     }
+  }
+
+  function graficarInfoConsumo(result) {
+    console.log(result);
+    $('.consumo-actual-ambiente').html(
+      result.datos.consumoAmbiente.kilovatio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    );
+    $('.consumo-actual-edificio').html(
+      result.datos.consumoEdificio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    );
+
+    const resultConsumoActualAmbiente = result.datos.datos.map(e => ({ x: e.fecha, y: parseFloat(e.kilovatio) }));
+    const resultConsumoActualEdificio = result.datos.datos.map(e => ({ x: e.fecha, y: parseFloat(e.totalKilovatioEdificio) }));
+    const options = {
+      series: [{
+        name: 'Consumo actual del ambiente',
+        data: resultConsumoActualAmbiente
+      }, {
+        name: 'Consumo actual del edificio',
+        data: resultConsumoActualEdificio
+      }]
+    };
+    chart1.updateOptions(options);
+    predec
+    irConsumo(result.datos.datos);
+  }
+
+  function predecirConsumo(datos) {
+    fetch('/api/prediccion_datos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datos)
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (result.ok) {
+        const resultConsumoFuturoAmbiente = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_predicho.toFixed(2)) }));
+        const resultConsumoFuturoEdificio = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_total.toFixed(2)) }));
+        const consumoFuturoAmbiente = resultConsumoFuturoAmbiente.reduce((acc, item) => acc + item.y, 0);
+        const consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acc, item) => acc + item.y, 0);
+        $('.consumo-futuro-ambiente').html(consumoFuturoAmbiente.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        $('.consumo-futuro-edificio').html(consumoFuturoEdificio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        const options = {
+          series: [{
+            name: 'Consumo futuro del ambiente',
+            data: resultConsumoFuturoAmbiente
+          }, {
+            name: 'Consumo futuro del edificio',
+            data: resultConsumoFuturoEdificio
+          }]
+        };
+        chart2.updateOptions(options);
+      } else {
+        Swal.fire('Ocurrió un error al consultar la información.', '', 'error');
+      }
+    });
   }
 
   // ------------------------------ Funciones de Inicialización ------------------------------
