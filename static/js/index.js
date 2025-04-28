@@ -214,11 +214,11 @@ const Index = (function () {
       
       result.forEach(e => {
       
-        if(e.role == 'assistant'){
+        if(e.datos.role == 'assistant'){
           resultado += `
           <div class="message incoming">
-            <small class="text-muted">Asistente • ${moment(e.fecha).format('DD MMM YYY HH:Mmm')}</small>
-            <p class="mb-0">${e.content}</p>
+            <small class="text-muted">Asistente • ${moment(e.creado).format('DD MMM YYY HH:Mmm')}</small>
+            <p class="mb-0">${e.datos.content}</p>
             <div class="reactions">
               <button class="btn btn-sm btn-outline-success reaction-btn fs-2" id="${e.id}" data-reaction="1">👍</button>
               <button class="btn btn-sm btn-outline-danger reaction-btn fs-2" id="${e.id}" data-reaction="0">👎</button>
@@ -227,8 +227,8 @@ const Index = (function () {
         }else{
           resultado += `
           <div class="message outgoing">
-            <small class="text-light">Tú • ${moment(e.fecha).format('DD MMM YYY HH:Mmm')}</small>
-            <p class="mb-0">${e.content}</p>
+            <small class="text-light">Tú • ${moment(e.creado).format('DD MMM YYY HH:Mmm')}</small>
+            <p class="mb-0">${e.datos.content}</p>
           </div>`
 
         }
@@ -244,14 +244,14 @@ const Index = (function () {
       document.querySelector('#chat').scrollTop = document.querySelector('#chat').scrollHeight;
       
       $('.reaction-btn').off('click').on('click', function() {
-        const reaction = $(this).data('reaction');
-        const messageId = $(this).attr('id');
-        console.log(`Reacción ${reaction} para el mensaje ${messageId}`);
+        const reaccion = $(this).data('reaction');
+        const idMensaje = $(this).attr('id');
+        console.log(`Reacción ${reaccion} para el mensaje ${idMensaje}`);
         // Aquí puedes manejar la reacción, por ejemplo, enviarla al servidor
         fetch('/reaccionar-msg', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reaction, messageId })
+          body: JSON.stringify({ reaccion, idMensaje })
         })
         .then(response => response.json())
         .then(data => {
