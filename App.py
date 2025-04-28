@@ -178,9 +178,23 @@ def getEdificios():
 
 @app.get('/pruebaChats')
 def pruebaChats():
-    mensaje = controladorAsistente.probarResChat(1)
+    if 'hilo' not in session:
+        hilo = controladorAsistente.crearHilo()
+        session['hilo'] = hilo
+    mensaje = controladorAsistente.getListaMensajes(session.get('hilo'))
     #mensaje = {"res": 1}
     return jsonify(mensaje)
+
+@app.post('/reaccionar-msg')
+def reaccionarMsg():
+    if 'hilo' not in session:
+        hilo = controladorAsistente.crearHilo()
+        session['hilo'] = hilo
+    idMensaje = request.form['idMensaje']
+    reaccion = request.form['reaccion']
+    resultado = controladorAsistente.reaccionarMensaje(session.get('hilo'), idMensaje, reaccion)
+    #mensaje = {"res": 1}
+    return jsonify(resultado)
 
 @app.get('/datos')
 def getConsumoEdificios():

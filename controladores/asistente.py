@@ -29,8 +29,11 @@ class AsistenteControlador():
         return mensajes
         #x = [x if x==2 else 1 for x in listaMensajes]
 
+    def reaccionarMensaje(self, hilo, idMensaje, reaccion):
+        return self.controladorChats.reaccionarMensaje(hilo, idMensaje, reaccion)
+    
     def probarResChat(self, hilo):
-        return self.controladorChats.getHistorialMensajes(hilo)
+        return self.controladorChats.getListaMensajes(hilo)
     
     def getRespuesta(self, hilo, mensaje):
         res = self.controladorChats.enviarMensaje(hilo, mensaje)
