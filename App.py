@@ -24,6 +24,7 @@ load_dotenv(os.path.join(os.getcwd(), '.env'))
 # Esto evita que el asistente vuelva a repetir el envio de la funcion
 compMsgs = []
 API_DB = os.environ.get("API_DB")
+rutaGrabacion = "./static/media/records"
 
 #speechController = SpeechController()
 
@@ -71,26 +72,30 @@ def assistant_talk():
     # text = speechController.speechToText(request.files['voice'], id)
 
     # With API
-    rutaGrabacion = f'./static/media/records/input-{id}.mp3'
+    ruta = f'{rutaGrabacion}/input-{id}.mp3'
     
-    request.files['voice'].save(rutaGrabacion)
+    request.files['voice'].save(ruta)
     response = requests.post(
         url='http://192.168.100.53:3010/voz_texto',
-        files={'voice': ('voice.mp3', open(rutaGrabacion, 'rb'))},
+        files={'voice': ('voice.mp3', open(f'{rutaGrabacion}/input-{id}.mp3', 'rb'))},
         data={'id': id}
     )
     #response = requests.get(
     #    'http://192.168.100.53:3010/prueba'
-    #    #files={'voice': ('voice.mp3', open(rutaGrabacion, 'rb'))},
+    #    #files={'voice': ('voice.mp3', open(ruta, 'rb'))},
     #    #data={'id': id}
     #)
     text = response.json()['datos']
     #text = response.json()
     if not text.strip():
         text = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
-    
-    #print("Texto obtenido: " + text)
     print(text)
+    
+    mensajeAsistente = {"role":"user", "content": text}
+    respuesta = controladorAsistente.getRespuesta(id, mensajeAsistente)
+    session['contenido'] = []
+    resultado = procesamientoConversacion(respuesta['datos'])
+    #print("Texto obtenido: " + text)
     #return jsonify({'text': text})
 
     # Text to speech
@@ -99,7 +104,7 @@ def assistant_talk():
     # With API
     response1 = requests.post(
         url='http://192.168.100.53:3010/texto_voz',
-        data={'texto': text, 'id': id}
+        data={'texto': resultado['datos']['respuesta'], 'id': id}
     )
 
     # tts = response1.json()
@@ -127,9 +132,6 @@ def modeloAvatar():
 
 @app.get('/inicializar')
 def inicializarAsistente():
-    #if 'idHilo' in session:
-    #    session.pop('idHilo')
-
     if 'hilo' in session:
         session.pop('hilo')
 
@@ -139,17 +141,24 @@ def inicializarAsistente():
     #print(session)
     
     hilo = controladorAsistente.crearHilo()
-    #instrucciones = getMensajeSistema()
-    # session['hilo'] = {"id": hilo, "mensajes": [
-    #     instrucciones, 
-    #     {"role":"user", "content": "Hola."}]
-    # }
-    # Cambiar identificador de hilo a 1 para pruebas
+    
     session['hilo'] = hilo
     mensajeInicial = {"role":"user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}
     respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajeInicial) #enviar el identificador para obtener historial
     session['contenido'] = []
     resultado = procesamientoConversacion(respuesta['datos'])
+
+    # With API
+    response1 = requests.post(
+        url='http://192.168.100.53:3010/texto_voz',
+        data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
+    )
+
+    encoded = response1.json()['datos']['voice_encoded']
+    resultado['datos']['audio'] = encoded
+    
+    return jsonify(resultado)
+
     #print(resultado)
     return jsonify(resultado)
 
@@ -192,18 +201,35 @@ def getRespuesta():
     if 'hilo' not in session:
         hilo = controladorAsistente.crearHilo()
         session['hilo'] = hilo
-        # instrucciones = getMensajeSistema()
-        # session['hilo'] = {"id": hilo, "mensajes": [
-        #     instrucciones, 
-        #     {"role":"user", "content": "Hola."}
-        # ]}
     
-    mensajeAsistente = {"role":"user", "content": mensaje}
+    ruta = f'{rutaGrabacion}/input-{id}.mp3'
+    request.files['voice'].save(ruta)
+    response = requests.post(
+        url='http://192.168.100.53:3010/voz_texto',
+        files={'voice': ('voice.mp3', open(ruta, 'rb'))},
+        data={'id': session.get('hilo')} 
+    )
+    
+    text = response.json()['datos']
+    #text = response.json()
+    if not text.strip():
+        text = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
+    print(text)
+    
+    mensajeAsistente = {"role":"user", "content": text}
     respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajeAsistente)
     session['contenido'] = []
     resultado = procesamientoConversacion(respuesta['datos'])
     
-    #salida = controladorAsistente.conversar(respuesta)
+    # With API
+    response1 = requests.post(
+        url='http://192.168.100.53:3010/texto_voz',
+        data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
+    )
+
+    encoded = response1.json()['datos']['voice_encoded']
+    resultado['datos']['audio'] = encoded
+
     return jsonify(resultado)
 
 @app.post('/conversarGPT')
