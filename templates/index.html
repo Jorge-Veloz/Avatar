@@ -61,7 +61,7 @@
 								<div id="audioMotion"></div>
 								<div>
 									<a id="btnMicrofono" href="#" class="asistente-btn btn btn-lg btn-icon btn-light btn-active-secondary me-5 rounded-circle">
-										<i id="btnMicUp" class="bi bi-mic-fill fs-2 text-gray-800" style="display: none;"></i>
+										<i id="btnMicUp" class="bi bi-mic-fill fs-2 text-gray-800" hidden="true"></i>
 										<i id="btnMicStop" class="bi bi-mic-mute-fill fs-2 text-danger"></i>
 									</a>
 									<a href="#" id="btnIniciarRecorrido" class="btn btn-sm btn-icon btn-light me-5 rounded-circle p-2">
@@ -70,6 +70,9 @@
 										</div>
 										<i id="btnMicInit" class="bi bi-info-circle fs-2 text-info"></i>
 									</a>
+									<div>
+										<audio id="assistantAudioPlayer" hidden autoplay></audio>
+									</div>
 								</div>
 							</div>
 							<div class="card">

@@ -195,14 +195,14 @@ def getConsumoEdificios():
 
 @app.post('/conversar')
 def getRespuesta():
-    mensaje = request.form['mensaje']
+    #mensaje = request.form['mensaje']
     
     print(session['hilo'])
     if 'hilo' not in session:
         hilo = controladorAsistente.crearHilo()
         session['hilo'] = hilo
     
-    ruta = f'{rutaGrabacion}/input-{id}.mp3'
+    ruta = f'{rutaGrabacion}/input-{session.get('hilo')}.mp3'
     request.files['voice'].save(ruta)
     response = requests.post(
         url='http://192.168.100.53:3010/voz_texto',
