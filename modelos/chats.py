@@ -18,7 +18,7 @@ class ChatsModelo:
     
     def getHistorialMensajes(self, idHilo):
         # Aqui se obtendra el historial de mensajes de la bd
-        sql = f"SELECT datos FROM asistentes.vmostrarhistorialinteracciones_ia WHERE idusuario = {idHilo} ORDER BY id ASC"
+        sql = f"SELECT datos, creado, id FROM asistentes.vmostrarhistorialinteracciones_ia WHERE idusuario = {idHilo} ORDER BY id ASC"
         #resultado = self.db.llamarFuncion('SELECT * FROM asistentes.vmostrarhistorialiteracciones_ia (%s, %s, %s)', (accion, mensaje, idHilo))
         mensajes = self.db.consultarDatos(sql)
         return mensajes
@@ -31,6 +31,12 @@ class ChatsModelo:
         return resultado
         #sql = f"INSERT INTO asistentes.vmostrarhistorial (id_hilo, mensaje) VALUES ('{idHilo}', '{mensaje}')"
         #self.db.insertarDatos(sql)
+
+    def reaccionarMensaje(self, idHilo, idMensaje, reaccion):
+        # Se actualizara el mensaje con like o dislike en la bd
+        accion = "registrar"
+        resultado = self.db.llamarFuncion('SELECT * FROM asistentes.actualizarHistorialInteraccionesIA(%s, %s, %s)', (accion, mensaje, idHilo))
+        return resultado
 
     def probarConexion(self):
         return self.db.probarConexion()
