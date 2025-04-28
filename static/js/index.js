@@ -191,7 +191,90 @@ const Index = (function () {
     // $('#select_voz').on('change', verificarVoz);
     // $('#play_voz').on('click', reproducir);
     // $('#guardar_voz').on('click', guardarVocesDefault);
-    // $('#mostrarChat').on('click', mostrarChat);
+    $('#btnVerChat').on('click', mostrarChat);
+    $('#btnCerrarChat').on('click', cerrarChat)
+  }
+
+  async function mostrarChat() {
+    
+    document.querySelector('#btnVerChat').classList.add('disabled');
+    document.querySelector('.spinner-ver-chat').classList.remove('d-none');
+    document.querySelector('.spinner-ver-chat').classList.add('d-flex');
+
+    await fetch('/pruebaChats', { method: 'GET' })
+    .then(response => response.json())
+    .then(result => {
+      document.querySelector('#btnVerChat').classList.remove('disabled');
+      document.querySelector('.spinner-ver-chat').classList.remove('d-flex');
+      document.querySelector('.spinner-ver-chat').classList.add('d-none');
+      
+      let resultado = '';
+
+      console.log(resultado)
+      
+      result.forEach(e => {
+      
+        if(e.role == 'assistant'){
+          resultado += `
+          <div class="message incoming">
+            <small class="text-muted">Asistente • ${moment(e.fecha).format('DD MMM YYY HH:Mmm')}</small>
+            <p class="mb-0">${e.content}</p>
+            <div class="reactions">
+              <button class="btn btn-sm btn-outline-success reaction-btn fs-2" id="${e.id}" data-reaction="1">👍</button>
+              <button class="btn btn-sm btn-outline-danger reaction-btn fs-2" id="${e.id}" data-reaction="0">👎</button>
+            </div>
+          </div>`
+        }else{
+          resultado += `
+          <div class="message outgoing">
+            <small class="text-light">Tú • ${moment(e.fecha).format('DD MMM YYY HH:Mmm')}</small>
+            <p class="mb-0">${e.content}</p>
+          </div>`
+
+        }
+
+      });
+
+      document.querySelector('#chat').innerHTML = resultado;
+      
+      document.querySelector('#controles').style.display = 'none';
+      document.querySelector('.card-avatar').style.display = 'none';
+      document.querySelector('.card-chat').style.display = 'flex';
+
+      document.querySelector('#chat').scrollTop = document.querySelector('#chat').scrollHeight;
+      
+      $('.reaction-btn').off('click').on('click', function() {
+        const reaction = $(this).data('reaction');
+        const messageId = $(this).attr('id');
+        console.log(`Reacción ${reaction} para el mensaje ${messageId}`);
+        // Aquí puedes manejar la reacción, por ejemplo, enviarla al servidor
+        fetch('/reaccionar-msg', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reaction, messageId })
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Reacción guardada:', data);
+        })
+        .catch(error => {
+          console.error('Error al guardar la reacción:', error);
+        });
+      })
+      
+    }).catch(error => {
+      console.error('Error:', error);
+      document.querySelector('#btnVerChat').classList.remove('disabled');
+      document.querySelector('.spinner-ver-chat').classList.remove('d-flex');
+      document.querySelector('.spinner-ver-chat').classList.add('d-none');
+    });
+
+  }
+
+  function cerrarChat() {
+    document.querySelector('#controles').style.display = 'flex';
+    document.querySelector('.card-avatar').style.display = 'flex';
+    document.querySelector('.card-chat').style.display = 'none';
   }
 
   async function Conversar(audioBlob) {
@@ -242,37 +325,37 @@ const Index = (function () {
     document.querySelector('.spinner-iniciar-recorrido').classList.add('d-flex');
 
     await fetch('/inicializar', { method: 'GET' })
-      .then(response => response.json())
-      .then(result => {
+    .then(response => response.json())
+    .then(result => {
 
-        document.querySelector('#btnIniciarRecorrido').classList.remove('disabled');
-        document.querySelector('.spinner-iniciar-recorrido').classList.remove('d-flex');
-        document.querySelector('.spinner-iniciar-recorrido').classList.add('d-none');
+      document.querySelector('#btnIniciarRecorrido').classList.remove('disabled');
+      document.querySelector('.spinner-iniciar-recorrido').classList.remove('d-flex');
+      document.querySelector('.spinner-iniciar-recorrido').classList.add('d-none');
 
-        // asistenteFinalizo = false;
-        if (result.ok) {
-          
-          const respuesta = result.datos;
-          
-          if (!$('#contenedor-typing').hasClass('ct-appear')) {
-            $('#contenedor-typing').addClass('ct-appear');
-          }
-          
-          if(respuesta.info && respuesta.info.length > 0){
-            console.log("Informacion adicional");
-            ejecutarFuncion(respuesta.info)
-          }
-          
-          if (respuesta.respuesta) {
-            hablar(respuesta);
-          }
+      // asistenteFinalizo = false;
+      if (result.ok) {
+        
+        const respuesta = result.datos;
+        
+        if (!$('#contenedor-typing').hasClass('ct-appear')) {
+          $('#contenedor-typing').addClass('ct-appear');
         }
-      }).catch(error => {
-        console.error('Error:', error);
-        document.querySelector('#btnIniciarRecorrido').classList.remove('disabled');
-        document.querySelector('.spinner-iniciar-recorrido').classList.remove('d-flex');
-        document.querySelector('.spinner-iniciar-recorrido').classList.add('d-none');
-      });
+        
+        if(respuesta.info && respuesta.info.length > 0){
+          console.log("Informacion adicional");
+          ejecutarFuncion(respuesta.info)
+        }
+        
+        if (respuesta.respuesta) {
+          hablar(respuesta);
+        }
+      }
+    }).catch(error => {
+      console.error('Error:', error);
+      document.querySelector('#btnIniciarRecorrido').classList.remove('disabled');
+      document.querySelector('.spinner-iniciar-recorrido').classList.remove('d-flex');
+      document.querySelector('.spinner-iniciar-recorrido').classList.add('d-none');
+    });
   }
 
   async function hablar(data) {

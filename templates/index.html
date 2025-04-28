@@ -45,6 +45,42 @@
     			height: 50px;
 			}
 			
+			.chat-container {
+				height: 75vh;
+				overflow-y: auto;
+				padding: 1rem;
+				background-color: #f8f9fa;
+				border: 1px solid #dee2e6;
+				border-radius: .5rem;
+			}
+			.message {
+				max-width: 75%;
+				padding: .5rem 1rem;
+				border-radius: 1rem;
+				margin-bottom: .75rem;
+				position: relative;
+				word-wrap: break-word;
+			}
+			.incoming {
+				background-color: #fff;
+				border: 1px solid #dee2e6;
+				margin-right: auto;
+			}
+			.outgoing {
+				background-color: #0d6efd;
+				color: #fff;
+				margin-left: auto;
+			}
+			.reaction-btn {
+				font-size: .9rem;
+				line-height: 1;
+				padding: .2rem .5rem;
+				margin-right: .3rem;
+			}
+			.reactions {
+				margin-top: .5rem;
+				text-align: right;
+			}
 		</style>
 	</head>
 
@@ -57,7 +93,7 @@
 				<div class="row">
 					<div class="col-md-4">
 						<div class="fixed-card">
-							<div class="controles d-flex flex-column align-items-center position-absolute w-100" id="controles" style="z-index: 1;bottom: 5%;">
+							<div class="controles flex-column align-items-center position-absolute w-100" id="controles" style="z-index: 1;bottom: 5%;display: flex;">
 								<div id="audioMotion"></div>
 								<div>
 									<a id="btnMicrofono" href="#" class="asistente-btn btn btn-lg btn-icon btn-light btn-active-secondary me-5 rounded-circle">
@@ -70,15 +106,37 @@
 										</div>
 										<i id="btnMicInit" class="bi bi-info-circle fs-2 text-info"></i>
 									</a>
+									<a href="#" id="btnVerChat" class="btn btn-sm btn-icon btn-light me-5 rounded-circle p-2">
+										<div class="spinner-border spinner-ver-chat text-primary d-none position-absolute" role="status" style="display: none;">
+											<span class="sr-only">Loading...</span>
+										</div>
+										<i class="bi bi-chat-dots fs-2 text-info"></i>
+									</a>
 									<div>
 										<audio id="assistantAudioPlayer" hidden autoplay></audio>
 									</div>
 								</div>
 							</div>
-							<div class="card">
+							<div class="card card-avatar">
 								<div class="px-0">
 									<iframe src="/avatar" class="d-flex rounded w-100 justify-content-center align-items-center" style="height: 95vh;">
 									</iframe>
+								</div>
+							</div>
+							<div class="card card-chat" style="display: none;">
+								<div class="card-header d-flex align-items-center">
+									<div>
+										<h3>Chat de la conversación</h3>
+									</div>
+									<div class="btn btn-sm btn-icon btn-active-light-dark" id="btnCerrarChat">
+										<i class="ki-duotone ki-cross">
+											<i class="path1 fs-2x"></i>
+											<i class="path2 fs-2x"></i>
+										</i>
+									</div>
+								</div>
+								<div class="container py-4 d-flex flex-column">
+									<div id="chat" class="chat-container flex-grow-1"></div>
 								</div>
 							</div>
 						</div>
@@ -199,7 +257,6 @@
 								</div>
 							</div>
 						</div>
-						<button class="button-sm button-primary" id="mostrarChat">Mostrar chat</button>
 					</div>
 				</div>
 				
