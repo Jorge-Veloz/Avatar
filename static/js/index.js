@@ -13,7 +13,10 @@ const Index = (function () {
   let mediaRecorder;
   let audioChunks = [];
   const assistantAudioPlayer = document.getElementById('assistantAudioPlayer');
+  // Declaramos el controlador a nivel de módulo para poder abortar peticiones anteriores
+  let currentAbortController = null;
 
+    
   const audioMotion = new AudioMotionAnalyzer(document.getElementById('audioMotionAnalyzer'), {
     height: 70,
     ansiBands: false,
@@ -55,7 +58,10 @@ const Index = (function () {
       assistantAudioPlayer.currentTime = 0;
     }
 
-    
+    // Si ya hay una petición en curso, la abortamos antes de lanzar la nueva
+    if (currentAbortController) {
+      currentAbortController.abort();
+    }
     
     // Mostrar icono de grabando
     openedMicroIcon.hidden = false;
@@ -125,10 +131,20 @@ const Index = (function () {
     // Desconectar visualizador
     audioMotion.disconnectInput(audioMotionStream);
     audioMotionStream = null;
-
+    
     // Preparar el blob y enviarlo
     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
     audioChunks = [];
+
+    // --- VALIDACIÓN: si el blob es muy pequeño, asumimos que no hay voz ---
+    const MIN_AUDIO_SIZE = 25000; // bytes (ajusta según pruebas)
+    
+    if (audioBlob.size < MIN_AUDIO_SIZE) {
+      console.log('No se detectó voz (blob demasiado pequeño), no se envía petición.');
+      microphoneOpen = false;
+      microphoneAviable = true;  // reactivar el micrófono para la siguiente vez
+      return;
+    }
     
     await Conversar(audioBlob);
 
@@ -178,14 +194,8 @@ const Index = (function () {
     // $('#mostrarChat').on('click', mostrarChat);
   }
 
-  // Declaramos el controlador a nivel de módulo para poder abortar peticiones anteriores
-  let currentAbortController = null;
-
   async function Conversar(audioBlob) {
-    // Si ya hay una petición en curso, la abortamos antes de lanzar la nueva
-    if (currentAbortController) {
-      currentAbortController.abort();
-    }
+    
     // Creamos un nuevo controller para esta petición
     currentAbortController = new AbortController();
     const { signal } = currentAbortController;
@@ -287,7 +297,7 @@ const Index = (function () {
   }
 
   function getInfoLugar(data) {
-    
+    console.log(data)
     if(data.ok){
       let ops = '';
       let params = data.params;
@@ -325,7 +335,7 @@ const Index = (function () {
       //console.log(respuesta);
     }
 
-    graficarInfoConsumo(respuesta);
+    graficarInfoConsumo(data);
     
   }
   
