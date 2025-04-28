@@ -17,7 +17,7 @@ class AsistenteControlador():
         idHilo = self.controladorChats.crearHilo()
         return idHilo
 
-    def getListaMensajes(self, idHilo):
+    def getListaMensajesGPT(self, idHilo):
         listaMensajes = self.modelo.getListaMensajes(idHilo)
         print(listaMensajes)
         mensajes = [{
@@ -32,7 +32,7 @@ class AsistenteControlador():
     def reaccionarMensaje(self, hilo, idMensaje, reaccion):
         return self.controladorChats.reaccionarMensaje(hilo, idMensaje, reaccion)
     
-    def probarResChat(self, hilo):
+    def getListaMensajes(self, hilo):
         return self.controladorChats.getListaMensajes(hilo)
     
     def getRespuesta(self, hilo, mensaje):
