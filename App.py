@@ -5,7 +5,7 @@ from controladores.edificios import EdificiosControlador
 from controladores.ambientes import AmbientesControlador
 from controladores.chats import ChatsControlador
 from controladores.consumo import ConsumoControlador
-from controladores.speech import SpeechController
+#from controladores.speech import SpeechController
 from funciones.asistente import getMensajeSistema
 from funciones.algoritmos import getPrediccionConsumo
 #from config import Config
@@ -25,9 +25,7 @@ load_dotenv(os.path.join(os.getcwd(), '.env'))
 compMsgs = []
 API_DB = os.environ.get("API_DB")
 
-controladorAsistente = AsistenteControlador()
-controladorEdificios = EdificiosControlador()
-speechController = SpeechController()
+#speechController = SpeechController()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = b'secret_key'
@@ -68,38 +66,46 @@ def assistant():
 
 @app.post('/assistant/talk')
 def assistant_talk():
-    if 'hilo' not in session:
-        session['hilo'] = {
-            "id": controladorAsistente.crearHilo(),
-            "mensajes": [
-                getMensajeSistema(), 
-                {"role":"user", "content": "Hola."}
-            ]
-        }
     # Speech to text
-    id = session['hilo']['id']
+    id = controladorAsistente.crearHilo()
     # text = speechController.speechToText(request.files['voice'], id)
 
     # With API
-    request.files['voice'].save(f'./speech-recognition/records/input-{id}.mp3')
+    rutaGrabacion = f'./static/media/records/input-{id}.mp3'
+    
+    request.files['voice'].save(rutaGrabacion)
     response = requests.post(
         url='http://192.168.100.53:3010/voz_texto',
-        files={'voice': ('voice.mp3', open(f'./speech-recognition/records/input-{id}.mp3', 'rb'))},
+        files={'voice': ('voice.mp3', open(rutaGrabacion, 'rb'))},
         data={'id': id}
     )
+    #response = requests.get(
+    #    'http://192.168.100.53:3010/prueba'
+    #    #files={'voice': ('voice.mp3', open(rutaGrabacion, 'rb'))},
+    #    #data={'id': id}
+    #)
     text = response.json()['datos']
+    #text = response.json()
     if not text.strip():
         text = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
+    
+    #print("Texto obtenido: " + text)
+    print(text)
+    #return jsonify({'text': text})
 
     # Text to speech
     # With Controller
     # encoded = speechController.textToSpeech(text, id)
     # With API
-    response = requests.post(
+    response1 = requests.post(
         url='http://192.168.100.53:3010/texto_voz',
         data={'texto': text, 'id': id}
     )
-    encoded = response.json()['datos']['voice_encoded']
+
+    # tts = response1.json()
+    # print(tts)
+    # return jsonify({'tts': tts})
+    encoded = response1.json()['datos']['voice_encoded']
     return {
         'text': text,
         'audio': encoded
