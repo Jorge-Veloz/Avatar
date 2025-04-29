@@ -1,0 +1,33 @@
+[
+    {"role": "system", "content": "Eres un asistente de consumo energético y te encuentras operativo en el edificio de Humanística de la Universidad Técnica de Manabí. Tu trabajo será mostrar de manera gráfica el histórico del consumo energético tanto del ambiente como de todo el edificio en general."},
+    {"role": "user", "content": "Que puedes hacer por mi?"},
+    {"role": "assistant", "content": "Puedo consultar el registro de energia del edificio de Humanistica"},
+    {"role": "user", "content": "Dame recomendaciones para optimizar el consumo energetico"},
+    {
+        "role": "tool",
+        "name": "get_recomendaciones",
+        "content": "{\"recomendaciones\": \"Se recomienda utilizar iluminación LED, apagar los equipos electrónicos cuando no estén en uso, utilizar electrodomésticos de bajo consumo energético, regular la temperatura de los sistemas de calefacción y aire acondicionado, aprovechar la luz natural y utilizar sistemas de energía renovable.\"}"
+    },
+    {"role": "tool", "name": "get_recomendaciones", "content": "Diste correctamente las recomendaciones para optimizar el consumo energetico. Ahora mencionaselo al usuario."},
+    {"role": "assistant", "content": "Se recomienda utilizar iluminación LED, apagar los equipos electrónicos cuando no estén en uso, utilizar electrodomésticos de bajo consumo energético, regular la temperatura de los sistemas de calefacción y aire acondicionado, aprovechar la luz natural y utilizar sistemas de energía renovable."},
+    {"role": "user", "content": "Dame el consumo energetico del edificio de humanistica, piso planta baja, ambiente centro de datos del 1 de abril al 10 de abril del 2025"},
+    {
+        "role": "tool",
+        "name": "get_parametros_edificio_piso_ambiente_fechas",
+        "content": "{\"ambiente\": \"centro de datos\", \"edificio\": \"humanistica\", \"piso\": \"planta baja\", \"fechaFin\": \"2025-04-10\", \"fechaIni\": \"2025-04-01\"}"
+    },
+    {"role": "tool", "name": "get_parametros_edificio_piso_ambiente_fechas", "content": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Además dale unas recomendaciones para optimizar el consumo energetico del edificio y ambientes. Es importante que no menciones los identificadores al usuario."},
+    {"role": "assistant", "content": "A continuación te muestro el consumo energético en el edificio Humanística en el ambiente centro de datos ubicado en la planta baja.\n\nSe recomienda utilizar iluminación LED, apagar los equipos electrónicos cuando no estén en uso, utilizar electrodomésticos de bajo consumo energético, regular la temperatura de los sistemas de calefacción y aire acondicionado, aprovechar la luz natural y utilizar sistemas de energía renovable."},
+    {"role": "user", "content": "Aprenderas que el identificador del edificio de Humanistica tiene el identificador '335d5a5a5ba8792862257b449b6dc96e'."},
+    {"role": "assistant", "content": "Perfecto, he aprendido que el identificador del edificio de Humanistica es '335d5a5a5ba8792862257b449b6dc96e'. Agradezco tu ayuda."},
+    {"role": "user", "content": "Aprenderas que el identificador del edificio de MATEMÁTICAS tiene el identificador '60b5885911c791b7b2c7958cff801bdd'."},
+    {"role": "assistant", "content": "Perfecto, he aprendido que el identificador del edificio de MATEMÁTICAS es '60b5885911c791b7b2c7958cff801bdd'. Agradezco tu ayuda."},
+    {"role": "user", "content": "Aprenderas que el identificador del edificio de SALUD tiene el identificador 'c6935d8e6fce6909f604b363b2bb530e'."},
+    {"role": "assistant", "content": "Perfecto, he aprendido que el identificador del edificio de SALUD es 'c6935d8e6fce6909f604b363b2bb530e'. Agradezco tu ayuda."},
+    {"role": "user", "content": "Cual es el identificador del edificio de humanistica?"},
+    {"role": "assistant", "content": "El identificador del edificio de Humanistica es '335d5a5a5ba8792862257b449b6dc96e'."},
+    {"role": "user", "content": "Ahora te voy a enseñar que pisos tiene el edificio de salud."},
+    {"role": "user", "content": "El edificio de salud tiene 3 pisos, que son: Planta baja que tiene el identificador 'c6935d8e6fce6909f604b363b2bb530e', Primer Piso que tiene el identificador '951697a5a2bcf10b853f19df3fe1c76d' y Segundo Piso que tiene el identificador '60b5885911c791b7b2c7958cff801bdd'. No hay mas pisos que solo estos"},
+    {"role": "assistant", "content": "Perfecto, he aprendido que el edificio de SALUD tiene 3 pisos, que son: Planta baja que tiene el identificador 'c6935d8e6fce6909f604b363b2bb530e', Primer Piso que tiene el identificador '951697a5a2bcf10b853f19df3fe1c76d' y Segundo Piso que tiene el identificador '60b5885911c791b7b2c7958cff801bdd'. Agradezco tu ayuda."}
+    
+]

@@ -139,14 +139,14 @@ class AsistenteModelo():
                 "type": "function",
                 "function": {
                     "name": "get_recomendaciones",
-                    "description": "Cuando el usuario desee que le des recomendaciones, deberas expresarle las recomendaciones para optimizar el consumo energético.",
+                    "description": "Cuando el usuario pida recomendaciones para optimizar el consumo energetico, devolverás tus recomendaciones.",
                     "strict": False,
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "recomendaciones": {
                                 "type": "string",
-                                "description": "Recomendaciones de optimizacion de consumo energetico."
+                                "description": "Devolverás en texto las recomendaciones de optimizacion de consumo energetico."
                             }
                         },
                         "required": ["recomendaciones"]
