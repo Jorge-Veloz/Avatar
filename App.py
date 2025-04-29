@@ -190,8 +190,12 @@ def reaccionarMsg():
     if 'hilo' not in session:
         hilo = controladorAsistente.crearHilo()
         session['hilo'] = hilo
-    idMensaje = request.form['idMensaje']
-    reaccion = request.form['reaccion']
+    json_string = request.data.decode('utf-8')
+    data_dict = json.loads(json_string)
+
+    idMensaje = data_dict['idMensaje']
+    reaccion = data_dict['reaccion']
+    
     resultado = controladorAsistente.reaccionarMensaje(session.get('hilo'), idMensaje, reaccion)
     #mensaje = {"res": 1}
     return jsonify(resultado)
