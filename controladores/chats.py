@@ -19,7 +19,7 @@ class ChatsControlador():
         return resultado[0][0]
     
     def getListaMensajes(self, idHilo):
-        return self.modelo.getHistorialMensajes(idHilo)
+        return self.modelo.getListaMensajes(idHilo)
         #return json.load(mensajes)
         #hmensajes = [m['datos'] for m in mensajes]
         #return hmensajes

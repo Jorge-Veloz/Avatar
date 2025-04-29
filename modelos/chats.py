@@ -16,9 +16,16 @@ class ChatsModelo:
         mensajeSistema = getMensajeSistema()
         return mensajeSistema
     
+    def getListaMensajes(self, idHilo):
+        # Aqui se obtendra el historial de mensajes de la bd
+        sql = f"SELECT datos, creado, id, reaccion FROM asistentes.vmostrarhistorialinteracciones_ia WHERE idusuario = {idHilo} ORDER BY id ASC"
+        #resultado = self.db.llamarFuncion('SELECT * FROM asistentes.vmostrarhistorialiteracciones_ia (%s, %s, %s)', (accion, mensaje, idHilo))
+        mensajes = self.db.consultarDatos(sql)
+        return mensajes
+    
     def getHistorialMensajes(self, idHilo):
         # Aqui se obtendra el historial de mensajes de la bd
-        sql = f"SELECT datos, creado, id, reaccion FROM asistentes.vmostrarhistorialinteracciones_ia WHERE idusuario = {idHilo} AND (reaccion IS NULL OR reaccion = 1) ORDER BY id ASC"
+        sql = f"SELECT datos FROM asistentes.vmostrarhistorialinteracciones_ia WHERE idusuario = {idHilo} AND (reaccion IS NULL OR reaccion = 1) ORDER BY id ASC"
         #resultado = self.db.llamarFuncion('SELECT * FROM asistentes.vmostrarhistorialiteracciones_ia (%s, %s, %s)', (accion, mensaje, idHilo))
         mensajes = self.db.consultarDatos(sql)
         return mensajes
