@@ -16,7 +16,7 @@ class EdificiosModelo:
         print("Envio de datos:")
         print(edificio, piso, ambiente, fechaInicio,fechaFin)
         try:
-            respuesta = requests.get(self.API_DB + f'/datos?idificacion={edificio}&piso={piso}&ambiente={ambiente}&fechaInicio={fechaInicio}&fechaFin={fechaFin}')
+            respuesta = requests.get(self.API_DB + f'/datos?idEdificacion={edificio}&idPiso={piso}&idAmbiente={ambiente}&fechaInicio={fechaInicio}&fechaFin={fechaFin}')
             print("Salida de datos:")
             print(respuesta.json())
             return {"res": 1, "data": respuesta.json()}

@@ -209,31 +209,44 @@ const Index = (function () {
       document.querySelector('.spinner-ver-chat').classList.add('d-none');
       
       let resultado = '';
-
-      console.log(resultado)
       
-      result.forEach(e => {
-      
-        if(e.datos.role == 'assistant'){
-          resultado += `
-          <div class="message incoming">
-            <small class="text-muted">Asistente • ${moment(e.creado).format('DD MMM YYY HH:Mmm')}</small>
-            <p class="mb-0">${e.datos.content}</p>
-            <div class="reactions">
-              <button class="btn btn-sm btn-outline-success reaction-btn fs-2" id="${e.id}" data-reaction="1">👍</button>
-              <button class="btn btn-sm btn-outline-danger reaction-btn fs-2" id="${e.id}" data-reaction="0">👎</button>
+      if(result){
+        
+        result.forEach(e => {
+        
+          if(['assistant','tool'].includes(e.datos.role)){
+            resultado += `
+            <div class="message incoming">
+              <small class="text-muted">${(e.datos.role === 'assistant' ? 'Asistente' : 'Tool')} • ${moment(e.creado).format('DD MMM YYY HH:Mmm')}</small>
+              <pre class="mb-0">${e.datos.content}</pre>
+              <div class="reactions">
+                <button class="btn btn-sm btn-active-light-success ${e.reaccion === 1 ? `btn-light-success` : ``} reaction-btn" data-id="${e.id}" data-reaction="1">
+                  <i class="ki-duotone ki-like fs-1">
+                    <span class="path1"></span>
+                    <span class="path2"></span>
+                  </i>
+                </button>
+                <button class="btn btn-sm btn-active-light-danger  ${e.reaccion === 0 ? `btn-light-danger` : ``} reaction-btn fs-2" data-id="${e.id}" data-reaction="0">
+                  <i class="ki-duotone ki-dislike fs-1">
+                    <span class="path1"></span>
+                    <span class="path2"></span>
+                  </i>
+                </button>
+              </div>
+            </div>`
+          }else{
+            resultado += `
+            <div class="message outgoing">
+              <small class="text-light">Tú • ${moment(e.creado).format('DD MMM YYY HH:Mmm')}</small>
+              <pre class="mb-0">${e.datos.content}</pre>
             </div>
-          </div>`
-        }else{
-          resultado += `
-          <div class="message outgoing">
-            <small class="text-light">Tú • ${moment(e.creado).format('DD MMM YYY HH:Mmm')}</small>
-            <p class="mb-0">${e.datos.content}</p>
-          </div>`
+            `
+  
+          }
+  
+        });
 
-        }
-
-      });
+      }
 
       document.querySelector('#chat').innerHTML = resultado;
       
@@ -245,8 +258,8 @@ const Index = (function () {
       
       $('.reaction-btn').off('click').on('click', function() {
         const reaccion = $(this).data('reaction');
-        const idMensaje = $(this).attr('id');
-        console.log(`Reacción ${reaccion} para el mensaje ${idMensaje}`);
+        const idMensaje = $(this).attr('data-id');
+        
         // Aquí puedes manejar la reacción, por ejemplo, enviarla al servidor
         fetch('/reaccionar-msg', {
           method: 'POST',
@@ -255,7 +268,16 @@ const Index = (function () {
         })
         .then(response => response.json())
         .then(data => {
-          console.log('Reacción guardada:', data);
+          
+          $(`.reaction-btn[data-id="${idMensaje}"][data-reaction="1"]`).removeClass('btn-light-success');
+          $(`.reaction-btn[data-id="${idMensaje}"][data-reaction="0"]`).removeClass('btn-light-danger');
+          
+          if (reaccion === 1) {
+            $(`.reaction-btn[data-id="${idMensaje}"][data-reaction="1"]`).addClass('btn-light-success');
+          } else if (reaccion === 0) {
+            $(`.reaction-btn[data-id="${idMensaje}"][data-reaction="0"]`).addClass('btn-light-danger');
+          }
+          
         })
         .catch(error => {
           console.error('Error al guardar la reacción:', error);
@@ -464,8 +486,7 @@ const Index = (function () {
       }]
     };
     chart1.updateOptions(options);
-    predec
-    irConsumo(result.datos.datos);
+    predecirConsumo(result.datos.datos);
   }
 
   function predecirConsumo(datos) {
@@ -670,6 +691,22 @@ const Index = (function () {
     } else {
       location.href = "https://www.google.com/";
     }
+  }
+
+  // ============================== Funciones Utilitarias ==============================
+  function groupBy(arr, prop) {
+    const map = new Map();
+    arr.forEach(item => {
+      if (!map.has(item[prop])) {
+        map.set(item[prop], []);
+      }
+      map.get(item[prop]).push(item);
+    });
+    return Array.from(map.values());
+  }
+
+  function limpiarMensaje(mensaje) {
+    return mensaje.replaceAll('*', '').replaceAll('\n', '. ');
   }
 
 })();
