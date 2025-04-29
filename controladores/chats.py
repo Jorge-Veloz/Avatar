@@ -29,6 +29,12 @@ class ChatsControlador():
         #return json.load(mensajes)
         hmensajes = [m['datos'] for m in mensajes]
         return hmensajes
+    
+    def getHistorialMensajes2(self, idHilo):
+        mensajes = self.modelo.getHistorialMensajes2(idHilo)
+        #return json.load(mensajes)
+        hmensajes = [m['datos'] for m in mensajes]
+        return hmensajes
 
     def crearHilo(self):
         idHilo = self.modelo.getIdHilo()

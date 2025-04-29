@@ -29,6 +29,13 @@ class ChatsModelo:
         #resultado = self.db.llamarFuncion('SELECT * FROM asistentes.vmostrarhistorialiteracciones_ia (%s, %s, %s)', (accion, mensaje, idHilo))
         mensajes = self.db.consultarDatos(sql)
         return mensajes
+    
+    def getHistorialMensajes2(self, idHilo):
+        # Aqui se obtendra el historial de mensajes de la bd
+        sql = f"SELECT datos FROM asistentes.vmostrarhistorialinteracciones_ia2 WHERE idusuario = {idHilo} AND (reaccion IS NULL OR reaccion = 1) ORDER BY id ASC"
+        #resultado = self.db.llamarFuncion('SELECT * FROM asistentes.vmostrarhistorialiteracciones_ia (%s, %s, %s)', (accion, mensaje, idHilo))
+        mensajes = self.db.consultarDatos(sql)
+        return mensajes
 
     def enviarMensaje(self, idHilo, mensaje):
         # Aqui se guardara el mensaje en la bd
