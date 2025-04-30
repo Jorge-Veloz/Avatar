@@ -38,7 +38,7 @@ class AsistenteControlador():
     def getRespuesta(self, hilo, mensaje):
         res = self.controladorChats.enviarMensaje(hilo, mensaje)
         if res['ok']:
-            historialMsgs = self.controladorChats.getHistorialMensajes2(hilo)
+            historialMsgs = self.controladorChats.getHistorialMensajes(hilo)
 
             resultado = self.modelo.getRespuesta(historialMsgs)
             respuesta_msg = resultado['respuesta_msg']
@@ -60,7 +60,7 @@ class AsistenteControlador():
                     argumentos = dict(funcion.function.arguments)
                     nombreFuncion = funcion.function.name
                     #session['hilo']['mensajes'].append({"role": "tool", "name":nombreFuncion, "content": json.dumps(argumentos)})
-                    msgTool = {"role": "tool", "name":nombreFuncion, "content": json.dumps(argumentos)}
+                    msgTool = {"role": "assistant", "tool_call": {"name":nombreFuncion, "arguments": json.dumps(argumentos)}}
                     self.controladorChats.enviarMensaje(hilo, dict(msgTool))
                     #json_args = json.loads(argumentos)
                     #print(argumentos)
@@ -172,7 +172,7 @@ class AsistenteControlador():
         else:
             print("No hay herramientas para subir.")
         #self.modelo.enviarFunciones(tcFunciones)
-        historialMsgs = self.controladorChats.getHistorialMensajes2(idHilo)
+        historialMsgs = self.controladorChats.getHistorialMensajes(idHilo)
 
         respuesta = self.modelo.getRespuesta(historialMsgs)
 
