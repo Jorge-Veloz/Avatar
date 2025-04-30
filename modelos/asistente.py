@@ -132,7 +132,7 @@ class AsistenteModelo():
                                 "description": "La fecha de fin de la consulta en formato yyyy-mm-dd"
                             }, 
                         },
-                        "required": []
+                        "required": ["edificio", "piso", "ambiente", "fechaIni", "fechaFin"]
                     }
                 }
             }, {

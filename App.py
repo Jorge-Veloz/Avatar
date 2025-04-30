@@ -215,7 +215,7 @@ def getConsumoEdificios():
 def getRespuesta():
     #mensaje = request.form['mensaje']
     
-    print(session['hilo'])
+    #print(session['hilo'])
     if 'hilo' not in session:
         hilo = controladorAsistente.crearHilo()
         session['hilo'] = hilo
@@ -276,13 +276,14 @@ def procesamientoConversacion(respuesta):
 
         resFunciones = []
         for afuncion in asisFunciones: 
-            func = funciones[afuncion['funcion_name']]
-            rcontent = func(afuncion['funcion_args'])
+            if afuncion['funcion_name'] in funciones:
+                func = funciones[afuncion['funcion_name']]
+                rcontent = func(afuncion['funcion_args'])
 
-            if rcontent['info']:
-                session['contenido'].append({"nombre": afuncion['funcion_name'], "valor": rcontent['info']})
+                if rcontent['info']:
+                    session['contenido'].append({"nombre": afuncion['funcion_name'], "valor": rcontent['info']})
 
-            resFunciones.append({ "role": "tool", "name": afuncion['funcion_name'], "content": rcontent['reason'] })
+                resFunciones.append({ "role": "tool", "name": afuncion['funcion_name'], "content": rcontent['reason'] })
 
         print(session.get('contenido'))
         print("Envio de funciones:")

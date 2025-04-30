@@ -182,6 +182,7 @@ const Index = (function () {
       const idEdificio = $('#combo_edificio option:selected').text();
       const idPiso = $('#combo_pisos option:selected').text();
       const idAmbiente = $('#combo_ambientes option:selected').text();
+      console.log(idEdificio, idPiso, idAmbiente);
       if (idEdificio && idPiso && idAmbiente) {
         informacionConsumo({ idEdificio, idPiso, idAmbiente });
       } else {
@@ -193,6 +194,27 @@ const Index = (function () {
     // $('#guardar_voz').on('click', guardarVocesDefault);
     $('#btnVerChat').on('click', mostrarChat);
     $('#btnCerrarChat').on('click', cerrarChat)
+  }
+
+  function informacionConsumo(params) {
+    $('.text-btn-consultar-datos').html('Consultando datos... <span class="indicator-progress">Cargando... <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>');
+    $('#btnConsultarDatos, select').addClass('disabled');
+    fetch(`/datos?idEdificacion=${params.idEdificio}&idPiso=${params.idPiso}&idAmbiente=${params.idAmbiente}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`)
+      .then(response => response.json())
+      .then(result => {
+        $('.text-btn-consultar-datos').html('Consultar datos');
+        $('#btnConsultarDatos, select').removeClass('disabled');
+        if (result.ok) {
+          graficarInfoConsumo(result);
+        } else {
+          Swal.fire('Error', result.observacion, 'error');
+        }
+      })
+      .catch(error => {
+        $('.text-btn-consultar-datos').html('Consultar datos');
+        $('#btnConsultarDatos, select').removeClass('disabled');
+        Swal.fire("Error en el servidor.", "Error: " + error.message, "error");
+      });
   }
 
   async function mostrarChat() {
@@ -486,7 +508,9 @@ const Index = (function () {
       }]
     };
     chart1.updateOptions(options);
-    predecirConsumo(result.datos.datos);
+    if(result.datos.datos.length > 0){
+      predecirConsumo(result.datos.datos);
+    }
   }
 
   function predecirConsumo(datos) {
