@@ -413,7 +413,7 @@ const Index = (function () {
     const funciones = {
       // 'get_usuario': getDatosUsuario,
       // 'get_ambiente_edificio': getAmbienteEdificio,
-      // 'get_recomendaciones': getRecomendaciones,
+      'get_recomendaciones': getRecomendaciones,
       'get_parametros_edificio_piso_ambiente_fechas': getInfoLugar,
     };
 
@@ -464,6 +464,13 @@ const Index = (function () {
 
     graficarInfoConsumo(data);
     
+  }
+  
+  function getRecomendaciones(respuesta) {
+    //const args = respuesta;
+    $('.data-recomendaciones').html(`${respuesta}`);
+    $(".data-recomendaciones").get(0).scrollIntoView({ behavior: 'smooth' });
+    //return { success: false, reason: "Se han proporcionado las recomendaciones al usuario" };
   }
   
   // ============================== Funciones para Llamadas a la API y Gestión de Datos ==============================
