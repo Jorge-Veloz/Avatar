@@ -13,11 +13,50 @@ class EdificiosControlador:
             return {'ok': False, 'observacion': respuesta['data'], 'datos': None}
     
     def getInfoLugar(self, argumentos):
+        pObl = ['edificio', 'piso', 'ambiente', 'fechaIni', 'fechaFin']
+
+        for p in pObl:
+            if p not in argumentos.keys():
+                return { "success": False, "reason": "No tienes la información completa para consultar el consumo energético", "info": None}    
+        
         idEdificio = argumentos['edificio']
         idPiso = argumentos['piso']
         idAmbiente = argumentos['ambiente']
         fechaInicio = argumentos['fechaIni']
         fechaFin = argumentos['fechaFin']
+
+        if idEdificio and idPiso and idAmbiente and fechaInicio and fechaFin:
+            resEdificios = self.getEdificios()
+
+            if resEdificios['ok']:
+                dataEdificios = resEdificios['datos']
+
+                if not len(dataEdificios):
+                    return { "success": False, "reason": "Error de conexión con la base de datos." , "info": None}
+                
+                if not idEdificio or not idPiso or not idAmbiente: return { "success": False, "reason": "No tienes la información completa para consultar el consumo energético" , "info": None}
+
+                # falta revisar funcion de index.js de informacionConsumoAsistente()
+                edificio = next((e for e in dataEdificios if e['id'] == idEdificio), None)
+
+                if edificio == None:
+                    return {"success": False, "reason": "La informacion que te han proporcionado es erronea. Identificador de edificio no corresponde a ninguno de los edificios del archivo.", "info": None}
+                else:
+                    piso = next((p for p in edificio['pisos'] if p['id'] == idPiso), None)
+                    if piso == None:
+                        return {"success": False, "reason": "La informacion que te han proporcionado es erronea. No existe este piso en el edificio mencionado.", "info": None}
+                    else:
+                        ambiente = next((a for a in piso['ambientes'] if a['id'] == idAmbiente), None)
+                        if ambiente == None:
+                            return {"success": False, "reason": "La informacion que te han proporcionado es erronea. No existe este ambiente en el piso mencionado.", "info": None}
+                        
+            else:
+                return {"success": False, "reason": "No tienes los datos ya que no hubo conexion a la base de datos.", "info": None}
+
+        elif idEdificio or idPiso or idAmbiente or fechaInicio or fechaFin:
+            return {"success": False, "reason": "No tienes la información completa para consultar el consumo energético", "info": None}
+        else:
+            return {"success": False, "reason": "Necesitas todos los datos para consultar el consumo energético", "info": None}
 
         #[idEdificio, idPiso, idAmbiente, fechaInicio, fechaFin] = argumentos.values()
 
@@ -80,6 +119,9 @@ class EdificiosControlador:
             return { "success": False, "reason": "Hubo un error al consultar la informacion, no se pudo establecer una conexion con la API de consumo energetico.", "info": None}
         
     def getRecomendaciones(self, argumentos):
+        if "recomendaciones" not in argumentos:
+            return { "success": False, "reason": "No diste las recomendaciones al usuario. Vuelve a generar las recomendaciones.", "info": None}
+        
         [recomendaciones] = argumentos.values()
         print("Recomendaciones obtenidas:")
         print(recomendaciones)
