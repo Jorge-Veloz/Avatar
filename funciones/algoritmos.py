@@ -49,3 +49,8 @@ def getPrediccionConsumo(datos):
 
     resultado = forecast_df.to_dict(orient='records')
     return resultado
+
+
+    #Hacerlo por semana
+    #Que antes de hacer la prediccion el asistente pregunte a cuanto tiempo se quiere predecir
+    # Y que te pregunte si habra un evento especial en la semana
