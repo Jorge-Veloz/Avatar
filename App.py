@@ -76,12 +76,12 @@ def assistant_talk():
     
     request.files['voice'].save(ruta)
     response = requests.post(
-        url='http://192.168.100.53:3010/voz_texto',
+        url=os.environ.get("RUTA_VOZ")+'/voz_texto',
         files={'voice': ('voice.mp3', open(f'{rutaGrabacion}/input-{id}.mp3', 'rb'))},
         data={'id': id}
     )
     #response = requests.get(
-    #    'http://192.168.100.53:3010/prueba'
+    #    os.environ.get("RUTA_VOZ")+'/prueba'
     #    #files={'voice': ('voice.mp3', open(ruta, 'rb'))},
     #    #data={'id': id}
     #)
@@ -103,7 +103,7 @@ def assistant_talk():
     # encoded = speechController.textToSpeech(text, id)
     # With API
     response1 = requests.post(
-        url='http://192.168.100.53:3010/texto_voz',
+        url=os.environ.get("RUTA_VOZ")+'/texto_voz',
         data={'texto': resultado['datos']['respuesta'], 'id': id}
     )
 
@@ -150,7 +150,7 @@ def inicializarAsistente():
 
     # With API
     response1 = requests.post(
-        url='http://192.168.100.53:3010/texto_voz',
+        url=os.environ.get("RUTA_VOZ")+'/texto_voz',
         data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
     )
 
@@ -223,7 +223,7 @@ def getRespuesta():
     ruta = f'{rutaGrabacion}/input-{session.get('hilo')}.mp3'
     request.files['voice'].save(ruta)
     response = requests.post(
-        url='http://192.168.100.53:3010/voz_texto',
+        url=os.environ.get("RUTA_VOZ")+'/voz_texto',
         files={'voice': ('voice.mp3', open(ruta, 'rb'))},
         data={'id': session.get('hilo')} 
     )
@@ -241,7 +241,7 @@ def getRespuesta():
     
     # With API
     response1 = requests.post(
-        url='http://192.168.100.53:3010/texto_voz',
+        url=os.environ.get("RUTA_VOZ")+'/texto_voz',
         data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
     )
 
