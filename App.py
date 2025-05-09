@@ -5,6 +5,8 @@ from controladores.edificios import EdificiosControlador
 from controladores.ambientes import AmbientesControlador
 from controladores.chats import ChatsControlador
 from controladores.consumo import ConsumoControlador
+from controladores.tts import TTSControlador
+#from controladores.tts import TTSControlador
 #from controladores.speech import SpeechController
 from funciones.asistente import getMensajeSistema
 from funciones.algoritmos import getPrediccionConsumo
@@ -38,6 +40,8 @@ app.config['ASSETS_FOLDER'] = os.path.join(os.getcwd(), 'assets')
 #print(controladorChats.enviarMensaje(1, {"role":"user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}))
 controladorAsistente = AsistenteControlador(app)
 controladorEdificios = EdificiosControlador()
+controladorTTS = TTSControlador()
+#controladorGenIA = GenIAControlador()
 
 # Inicializacion del JWT
 jwt = JWTManager(app)
@@ -116,16 +120,6 @@ def assistant_talk():
         'audio': encoded
     }
 
-@app.get('/pruebaAPI')
-def pruebaAPI():
-    try:
-        response = requests.get('https://pokeapi.co/api/v2/berry-firmness/2/')
-        data = response.json()  # Si la respuesta es JSON
-        return jsonify(data)
-    except Exception as e:
-        return str(e), 500
-
-
 @app.get('/avatar')
 def modeloAvatar():
     return render_template('avatar.html')
@@ -149,12 +143,14 @@ def inicializarAsistente():
     resultado = procesamientoConversacion(respuesta['datos'])
 
     # With API
-    response1 = requests.post(
-        url=os.environ.get("RUTA_VOZ")+'/texto_voz',
-        data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
-    )
+    
+    response1 = controladorTTS.TextToSpeech(resultado['datos']['respuesta'], session.get('hilo'))
+    # response1 = requests.post(
+    #     url=os.environ.get("RUTA_VOZ")+'/texto_voz',
+    #     data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
+    # )
 
-    encoded = response1.json()['datos']['voice_encoded']
+    encoded = response1()['datos']['voice_encoded']
     resultado['datos']['audio'] = encoded
     
     return jsonify(resultado)
@@ -219,16 +215,19 @@ def getRespuesta():
     if 'hilo' not in session:
         hilo = controladorAsistente.crearHilo()
         session['hilo'] = hilo
+    codigo = session.get('hilo')
+    #ruta = f'{rutaGrabacion}/input-{codigo}.mp3'
+    #request.files['voice'].save(ruta)
+    voz = request.files['voice']
+    # response = requests.post(
+    #     url=os.environ.get("RUTA_VOZ")+'/voz_texto',
+    #     files={'voice': ('voice.mp3', open(ruta, 'rb'))},
+    #     data={'id': session.get('hilo')} 
+    # )
+    response = controladorTTS.SpeechToText(voz, codigo)
+
     
-    ruta = f'{rutaGrabacion}/input-{session.get('hilo')}.mp3'
-    request.files['voice'].save(ruta)
-    response = requests.post(
-        url=os.environ.get("RUTA_VOZ")+'/voz_texto',
-        files={'voice': ('voice.mp3', open(ruta, 'rb'))},
-        data={'id': session.get('hilo')} 
-    )
-    
-    text = response.json()['datos']
+    text = response['datos']
     #text = response.json()
     if not text.strip():
         text = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
@@ -240,12 +239,14 @@ def getRespuesta():
     resultado = procesamientoConversacion(respuesta['datos'])
     
     # With API
-    response1 = requests.post(
-        url=os.environ.get("RUTA_VOZ")+'/texto_voz',
-        data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
-    )
+    # response1 = requests.post(
+    #     url=os.environ.get("RUTA_VOZ")+'/texto_voz',
+    #     data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
+    # )
 
-    encoded = response1.json()['datos']['voice_encoded']
+    response1 = controladorTTS.TextToSpeech(resultado['datos']['respuesta'], codigo)
+
+    encoded = response1['datos']['voice_encoded']
     resultado['datos']['audio'] = encoded
 
     return jsonify(resultado)
