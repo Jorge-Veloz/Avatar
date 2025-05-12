@@ -37,8 +37,8 @@ class TTSModelo:
             tts.tts_to_file(
                 text=text,
                 file_path=self.output_path,
-                speaker_wav=f'./speech-recognition/records/input-{id}.wav',
-                #speaker='Filip Traverse',
+                #speaker_wav=f'./speech-recognition/records/input-{id}.wav',
+                speaker='Filip Traverse',
                 language='es'
             )
         else:
@@ -69,8 +69,9 @@ class TTSModelo:
             'powershell', '-Command',
             f'vosk-transcriber --model .\\modelosIA\\vosk-models\\es-{model_size} -i {self.input_path} -l es'], capture_output=True, text=True
         )
+        print(result)
         return result.stdout
 
     def __setId(self, id):
-        self.input_path = f'./speech-recognition/records/input-{id}.mp3'
-        self.output_path = f'./speech-recognition/records/output-{id}.wav'
+        self.input_path = f'./static/media/records/input-{id}.mp3'
+        self.output_path = f'./static/media/records/output-{id}.wav'

@@ -3,6 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
+import json
+import re
+from unidecode import unidecode
+from rapidfuzz import process, fuzz
+
 def getPrediccionConsumo(datos):
     df = pd.DataFrame(datos)
     
@@ -54,3 +60,29 @@ def getPrediccionConsumo(datos):
     #Hacerlo por semana
     #Que antes de hacer la prediccion el asistente pregunte a cuanto tiempo se quiere predecir
     # Y que te pregunte si habra un evento especial en la semana
+
+def detectar_intencion(consulta, etiquetas):
+    model_name = "Recognai/bert-base-spanish-wwm-cased-xnli"
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSequenceClassification.from_pretrained(model_name)
+    classifier = pipeline("zero-shot-classification", model=model, tokenizer=tokenizer)
+
+    resultado = classifier(consulta, etiquetas, hypothesis_template="Que es lo que el usuario quiso decir aqui: {}. Toma en consideracion siempre las primeras palabras para clasificar")
+
+    # Tomamos la etiqueta con mayor score
+    mejor_intencion = resultado["labels"][0]
+    print(mejor_intencion)
+    return {
+        "intencion": mejor_intencion,
+        "confianza": round(resultado["scores"][0], 3)
+    }
+
+def norm(s: str) -> str:
+    return unidecode(s.lower().strip())
+
+def fuzzy_lookup(name: str, items: list, key='nombre', threshold=80):
+    choices = [norm(item[key]) for item in items]
+    match = process.extractOne(name, choices, scorer=fuzz.partial_ratio)
+    if match and match[1] >= threshold:
+        return items[choices.index(match[0])]
+    return None

@@ -1,0 +1,1054 @@
+[
+  {
+    "id": "335d5a5a5ba8792862257b449b6dc96e",
+    "nombre": "HUMANÍSTICA",
+    "pisos": [
+      {
+        "id": "96ddd4fd96e2ca43cb2b7663010c9840",
+        "nombre": "PLANTA BAJA",
+        "ambientes": [
+          {
+            "id": "dd1c325f231117b2612f2d771f606075",
+            "nombre": "Oficina 06",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "95949059ce8980348bea9c8e79a01677",
+            "nombre": "Oficina 11",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "1b67c1ae54a95a6715059b866d39cb0e",
+            "nombre": "Oficina 12",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "7cbf915fe38ecfe2a2e02a38280992a1",
+            "nombre": "Oficina 13",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "8715eed003b79b4686dcd827fa188fdc",
+            "nombre": "Oficina 14",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "04e9a6266e23ed9f2699e86187492471",
+            "nombre": "Oficina Vicedecanato 1",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "d1b309964b61727b90fae9e39a4fd095",
+            "nombre": "Oficina 07",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "34d7972ced7a2c45cebf977d80b85ad3",
+            "nombre": "Oficina 08",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "982c373ac771e9f6ad5001b833d5b0a5",
+            "nombre": "Oficina 09",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "7784df60e14665293d55b787f706baca",
+            "nombre": "Oficina 10",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "658182f31a3990b331f78dc6a0b93d49",
+            "nombre": "Oficina Decanato",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "ed7b0bac8d4e7210a83f08e083f80ba8",
+            "nombre": "Oficina Vicedecanato 2",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "6808d0adc120320431eddb1de7f54696",
+            "nombre": "Oficina 04",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "2c439e734423f78f63793ac66ce22d51",
+            "nombre": "Oficina 05",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "b70b36178dc3ccac6a836521a27d5204",
+            "nombre": "Centro de datos 1",
+            "tipoAmbiente": "SALA DE COMUNICACIONES"
+          }
+        ]
+      },
+      {
+        "id": "7889c4e55e03eb449e93b4de9f19c66c",
+        "nombre": "PISO 1",
+        "ambientes": [
+          {
+            "id": "b140d6749146a756ca5bdac37f6fab1b",
+            "nombre": "Centro de datos 2",
+            "tipoAmbiente": "SALA DE COMUNICACIONES"
+          },
+          {
+            "id": "e5e3a26349ea6a7c6ca76ace7c68d0f2",
+            "nombre": "Aula 201",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "794594a9fcb4384486767a7c655fcc98",
+            "nombre": "Aula 202",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "bd92674a12f8c606becbbaae9edd3e10",
+            "nombre": "Aula 203",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "b4ddfde9be847137b3ae0ea6bcb6d62e",
+            "nombre": "Aula 204",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "7ebb45c4e5ee3024b4cacfc07dc77b20",
+            "nombre": "Aula 205",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "a789f10794ab575d9b18916000bcf65b",
+            "nombre": "Aula 206",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "4b4b49b8dcd69fc4a607736c022c1693",
+            "nombre": "Aula 207",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "99709324df0d2b0fe741cbfc5a064459",
+            "nombre": "Aula 208",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "3d480916116cfe572171ab7fcf5662f8",
+            "nombre": "Aula 209",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "e5814aebcd13820af8c8b6f21835631a",
+            "nombre": "Aula 210",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "33a7cd25a21168eee3cf651942658af1",
+            "nombre": "Aula 211",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "9efad62d8b9cf3b1c3bd5bc85ee6c2d9",
+            "nombre": "Aula 212",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "a16383b9eae3c9c516a08888ee04081f",
+            "nombre": "Aula 213",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "3d295a1a8c0d1514c23d5e13a40fbbcc",
+            "nombre": "Aula 214",
+            "tipoAmbiente": "AULA"
+          }
+        ]
+      },
+      {
+        "id": "43bf3c5505b9f855cd1470319d5ba79a",
+        "nombre": "PISO 2",
+        "ambientes": [
+          {
+            "id": "9d86e7e7975fdce19ca05e841bf347e2",
+            "nombre": "Centro de datos 3",
+            "tipoAmbiente": "SALA DE COMUNICACIONES"
+          },
+          {
+            "id": "a603d02c6c3c363547e472ce98b05e70",
+            "nombre": "Aula 301",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "120decd0971d953a301a6b474dcf763d",
+            "nombre": "Aula 302",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "d933211b96704258cbaa1f4617ef60d5",
+            "nombre": "Aula 303",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "f2b8e38c8bf996941f32943bb7f6a3d1",
+            "nombre": "Aula 304",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "4c843e40625081c1bd12cd2291ec6a54",
+            "nombre": "Aula 305",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "57dba7a95f79a91373cc7a068cdff6bc",
+            "nombre": "Aula 306",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "18ad137a8f25510722f3251947dce51e",
+            "nombre": "Aula 307",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "52224aee772faf144325380a885478b7",
+            "nombre": "Aula 308",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "bb09a498295fdfdf0f8e1567fa4fa7bc",
+            "nombre": "Aula 309",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "77fb8d8763222bb1bb83afd519c00053",
+            "nombre": "Aula 310",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "57589d94c1636d0ab699a5ebdb8ad467",
+            "nombre": "Aula 311",
+            "tipoAmbiente": "AULA"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "60b5885911c791b7b2c7958cff801bdd",
+    "nombre": "MATEMÁTICAS I",
+    "pisos": [
+      {
+        "id": "81ebd62d4bdfb495057a32e59bc59231",
+        "nombre": "Planta Baja",
+        "ambientes": [
+          {
+            "id": "4da27b133ff3cc000e16fde540a7b7f5",
+            "nombre": "M1-Oficina 1-01",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "88b69afa5a134d87f15c09cb8082bf35",
+            "nombre": "M1-Oficina 1-02",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "2e84fe6afaf6c036b53928303e112c08",
+            "nombre": "M1-Oficina 1-03",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "a96a5a7567b31936e9747cb0048fa360",
+            "nombre": "M1-Oficina 1-04",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "1a07230da6d95b57f6adeff01a9ab87d",
+            "nombre": "M1-Oficina 1-05",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "f8e2107037ec9f710c662e6cc031cfc9",
+            "nombre": "M1-Laboratorio 1-06",
+            "tipoAmbiente": "LABORATORIO"
+          },
+          {
+            "id": "dde7bc3293d2ce5c802e3ec9295fa30c",
+            "nombre": "M1-Oficina 1-07",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "bdde8d301fb1eca6038073498936b8a6",
+            "nombre": "M1-Oficina 1-08",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "a588eac5be8d2022db823d4e356604ba",
+            "nombre": "M1-Laboratorio 1-09",
+            "tipoAmbiente": "LABORATORIO"
+          },
+          {
+            "id": "851707b485e763c70f7b4930b11afb8a",
+            "nombre": "M1-Auditorio 1-10",
+            "tipoAmbiente": "AUDITORIO"
+          },
+          {
+            "id": "6343e4a3959bb753ef4add4a18e3b07b",
+            "nombre": "M1-Centro de Datos",
+            "tipoAmbiente": "SALA DE COMUNICACIONES"
+          },
+          {
+            "id": "c7a8f20e43392a74cc7bf5412df752bd",
+            "nombre": "M1-S.S.H.H.-Hombres 1",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "5b24d663fdfdb2dfc8f26d5fb41ec91d",
+            "nombre": "M1-S.S.H.H.-Mujeres 1",
+            "tipoAmbiente": "BAÑO"
+          }
+        ]
+      },
+      {
+        "id": "335d5a5a5ba8792862257b449b6dc96e",
+        "nombre": "Primer Piso",
+        "ambientes": [
+          {
+            "id": "a489aae915765ab7bbf5199326e1a06a",
+            "nombre": "M1-Oficina 2-01",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "ddadeab3fd0b1d55868d5758a92e130f",
+            "nombre": "M1-Oficina 2-02",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "286994260ae0093533073879c08e8eca",
+            "nombre": "M1-Oficina 2-03",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "8cb306ec0e5795011e89ca9199876046",
+            "nombre": "M1-Oficina 2-04",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "27abe1c9b1d14f0e76f0e9e057354231",
+            "nombre": "M1-Oficina 2-05",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "f722fd0ae84d78db7f31044c774a2462",
+            "nombre": "M1-Oficina 2-06",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "d766a17595bd07086ec25d06e7e265b2",
+            "nombre": "M1-Oficina 2-07",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "e5801997fca4295b08825c3c6ae3047e",
+            "nombre": "M1-Oficina 2-08",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "93ea160867ae26e1f51bade5ca7946e1",
+            "nombre": "M1-Oficina 2-09",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "afb649594622a2a8395063af132443f5",
+            "nombre": "M1-Oficina 2-10",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "01996315089ec8fd893840a651b91cbc",
+            "nombre": "M1-Oficina 2-11",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "a2c7436df77bd4e7c672ee7d405cdcc6",
+            "nombre": "M1-Oficina 2-12",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "4aed57ca749b0e30782e9a037696ad62",
+            "nombre": "M1-Aula 2-13",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "604d1f77097455f917f597c33a8055b7",
+            "nombre": "M1-Aula 2-14",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "feb29bbc1f41c093d0796a4952e2ca40",
+            "nombre": "M1-Aula 2-15",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "637798da927e0569ab0387cd4abd602d",
+            "nombre": "M1-Aula 2-16",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "17937a65d67b77f258311794c07840f2",
+            "nombre": "M1-Oficina 2-17",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "931ad1fbf8dd4cea096c82dda478b0b4",
+            "nombre": "M1-Bodega 1",
+            "tipoAmbiente": "BODEGA"
+          },
+          {
+            "id": "abf4be636083d2ea02591c8adeb52164",
+            "nombre": "M1-S.S.H.H.-Hombres 2",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "20ca8497b61dfc9030d55ecb9cfad07d",
+            "nombre": "M1-S.S.H.H.-Mujeres 2",
+            "tipoAmbiente": "BAÑO"
+          }
+        ]
+      },
+      {
+        "id": "47909bb12a4b6f1680c37be661b2fa9d",
+        "nombre": "Segundo Piso",
+        "ambientes": [
+          {
+            "id": "ecdf34de2bc443f0f85b686cda0d871e",
+            "nombre": "M1-Aula 3-01",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "04d8350e644c7cffc1b46c299b970ba7",
+            "nombre": "M1-Aula 3-02",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "875c664f26a725de277ab56436fe8521",
+            "nombre": "M1-Aula 3-03",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "65f81a3aa83a4542e2744d7ce6b504eb",
+            "nombre": "M1-Aula 3-04",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "3e47c185f0a7f4147a5ce1315cff5acb",
+            "nombre": "M1-Aula 3-05",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "a23a325f000ef74c1a9cd94ab5bedd0a",
+            "nombre": "M1-Aula 3-06",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "33829ea1be90d0ec1bfa3d14002c9de5",
+            "nombre": "M1-Aula 3-07",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "be8a4b076ca3a7a1610e3224a4cdcfcd",
+            "nombre": "M1-Aula 3-08",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "155920ca2cc96f1a8895a50a067864cd",
+            "nombre": "M1-Aula 3-09",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "725071f1bf41865a193ec3900fcf02b1",
+            "nombre": "M1-Aula 3-10",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "8ce57fd3e93471a0b6e1452838acb155",
+            "nombre": "M1-Aula 3-11",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "f21d8ac666ee9ea72f63005571a45ad7",
+            "nombre": "M1-Bodega 2",
+            "tipoAmbiente": "BODEGA"
+          },
+          {
+            "id": "54d24716a6932683d13737c49f78947b",
+            "nombre": "M1-S.S.H.H.-Hombres 3",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "d89c6bb051c11056abbf80af24a58372",
+            "nombre": "M1-S.S.H.H.-Mujeres 3",
+            "tipoAmbiente": "BAÑO"
+          }
+        ]
+      },
+      {
+        "id": "6f45cf1e6f8fe7b5afe07a147b455e11",
+        "nombre": "Tercer Piso",
+        "ambientes": [
+          {
+            "id": "f5c79441980cd0f4919c2a86b4785202",
+            "nombre": "M1-Aula 4-01",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "775e19b677dc0d7dfa2ba6a7282d76e4",
+            "nombre": "M1-Aula 4-02",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "c939b35e2d52cb2dafa32ecd231f5572",
+            "nombre": "M1-Aula 4-03",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "cf69d3831ecaca855e032a1e626f3a58",
+            "nombre": "M1-Aula 4-04",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "493b303e10902e3e9e0571f9bbc9cfc7",
+            "nombre": "M1-Aula 4-05",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "a23d01766e5e1c822206d199f2299e6a",
+            "nombre": "M1-Aula 4-06",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "b5633917d07ff9a3bf0010b542d22770",
+            "nombre": "M1-Aula 4-07",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "058f24bcf6a6007d6939892626254cc9",
+            "nombre": "M1-Aula 4-08",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "46944d02c904672da2da1905d54353ff",
+            "nombre": "M1-Bodega 3",
+            "tipoAmbiente": "BODEGA"
+          },
+          {
+            "id": "d9456beb621452bbb0a56070fc512ca8",
+            "nombre": "M1-S.S.H.H.-Hombres 4",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "fa9de2e014aabf5e37be02c91fc93493",
+            "nombre": "M1-S.S.H.H.-Mujeres 4",
+            "tipoAmbiente": "BAÑO"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "951697a5a2bcf10b853f19df3fe1c76d",
+    "nombre": "MATEMÁTICAS II",
+    "pisos": [
+      {
+        "id": "c7ac1a26ad315bcc9649b81cc525a0c5",
+        "nombre": "Planta baja",
+        "ambientes": [
+          {
+            "id": "48f453ee4ca95896fd33a6dc6d845555",
+            "nombre": "Auditorio",
+            "tipoAmbiente": "AUDITORIO"
+          },
+          {
+            "id": "716ee377610fe4f4318c646800f8255f",
+            "nombre": "M2-Archivo",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "b39b731222aa40500cff1f999249299b",
+            "nombre": "M2-Vicedecanato Coordinacion Secretaria Quimica 1-01",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "d22bb4f0bc29125472cef291b8ec0838",
+            "nombre": "M2-Sala Docentes Quimica 1-02",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "3d13c9765c20f6d9f608e198188e551a",
+            "nombre": "M2-Vicedecanato Coordinacion Secretaria Industrial 1-03",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "3da5c176d129acbb1f55d39a174fbeb4",
+            "nombre": "M2-Sala Docentes Industrial 1-04",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "6237221fc0e12b8180f4b135b4e83f11",
+            "nombre": "M2-Sala Docentes Industrial 1-05",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "d8e8538872c26e29b961dbdb21fd51b1",
+            "nombre": "M2-Oficina 1-06",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "2f9d74cc0a480c5d3ced824be3336c12",
+            "nombre": "M2-Baño Hombres 1",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "df205b104147e0c08b38a574ce947ab9",
+            "nombre": "M2-Baño Mujeres 1",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "d0a1d1523469919bb3318404bf45f10e",
+            "nombre": "M2-Laboratorio 1-02",
+            "tipoAmbiente": "LABORATORIO"
+          },
+          {
+            "id": "e08ee7ee9b81ba0365b448cd8c4f6d13",
+            "nombre": "M2-Laboratorio 1-01",
+            "tipoAmbiente": "LABORATORIO"
+          },
+          {
+            "id": "31fc96438ba30774c75c3c13b9147257",
+            "nombre": "M2-Decanato",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "91985ee24e622857dadfa968c6663d1d",
+            "nombre": "M2-Centro de Datos 01",
+            "tipoAmbiente": "SALA DE COMUNICACIONES"
+          }
+        ]
+      },
+      {
+        "id": "e24254a3b160e959d520ffe15cdaecde",
+        "nombre": "Primer Piso",
+        "ambientes": [
+          {
+            "id": "05349463167c88c8908d645a7a09c945",
+            "nombre": "M2-Laboratorio 2-01",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "0f6b9492501187ebc2548e2e4645417f",
+            "nombre": "M2-Aula 2-02",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "eda4bd5f67f1864682bf47b7bc8eec64",
+            "nombre": "M2-Aula 2-03",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "ff131fb810253db45e2cc586890523e5",
+            "nombre": "M2-Aula 2-04",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "ac98cbfa1554ce7dad676767c5fe0043",
+            "nombre": "M2-Laboratorio 2-06",
+            "tipoAmbiente": "LABORATORIO"
+          },
+          {
+            "id": "9a445b0441c46bacaa3a69358fb1b087",
+            "nombre": "M2-Aula 2-05",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "882e95504db1c96ad047065e27efa458",
+            "nombre": "M2-Aula 2-07",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "c4268df1ef3f513b24e4a79fded3fd9d",
+            "nombre": "M2-Aula 2-08",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "f4bb0974fa0d1d53d38cc3550c076faf",
+            "nombre": "M2-Aula 2-09",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "fe660a740fb395e1a7291caf06658eee",
+            "nombre": "M2-Aula 2-11",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "346b7d2dc2185e0b356aec617dafcf9b",
+            "nombre": "M2-Baño Hombres 2",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "88fda2b9d7a243d0323fbcff0b2d512b",
+            "nombre": "M2-Baño Mujeres 2",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "4cc9e11685640272226381ff60143fe9",
+            "nombre": "M2-Centro de Datos 02",
+            "tipoAmbiente": "SALA DE COMUNICACIONES"
+          }
+        ]
+      },
+      {
+        "id": "e4ff9d1c3f420ae6ae2b6edfcc1c1142",
+        "nombre": "Segundo Piso",
+        "ambientes": [
+          {
+            "id": "bd4a133c452be2f0c9e02f1deba53850",
+            "nombre": "M2-Aula 3-01",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "612d2d15dd34ccb07b7434c52a3a88c7",
+            "nombre": "M2-Aula 3-02",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "3770874251e5f5fc61f02c493d2398d1",
+            "nombre": "M2-Aula 3-03",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "7ea38955903e954461599d7db1c04a6f",
+            "nombre": "M2-Aula 3-04",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "32e0abb4ee83754e705a127e2f71bebb",
+            "nombre": "M2-Aula 3-05",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "18a72857ffeba20f7f0c6736e8bed384",
+            "nombre": "M2-Aula 3-06",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "f7add4c5ffae12d7f8da2e8abf9da3b5",
+            "nombre": "M2-Aula 3-07",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "9629c665f1b3a422e02905e9ba495e36",
+            "nombre": "M2-Aula 3-08",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "5650d4b1d98929992b0e66759ca07d38",
+            "nombre": "M2-Aula 3-09",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "07becbe3860cb8ff7b0143dc2a08f749",
+            "nombre": "M2-Aula 3-10",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "a337f4dab0a708fd4a153394da09c7e3",
+            "nombre": "M2-Aula 3-11",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "0d2d29dfd98d7dddd58b437d95c24c6c",
+            "nombre": "M2-Baño Hombres 3",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "2cef19e596a5e5c8a9724487bbfbd799",
+            "nombre": "M2-Baño Mujeres 3",
+            "tipoAmbiente": "BAÑO"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "c6935d8e6fce6909f604b363b2bb530e",
+    "nombre": "SALUD II",
+    "pisos": [
+      {
+        "id": "c6935d8e6fce6909f604b363b2bb530e",
+        "nombre": "Planta baja",
+        "ambientes": [
+          {
+            "id": "951697a5a2bcf10b853f19df3fe1c76d",
+            "nombre": "AULA 1-10",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "60b5885911c791b7b2c7958cff801bdd",
+            "nombre": "AULA 1-11",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "aea582f0d12b31e12f2b92c9575e7f51",
+            "nombre": "Pasillo planta baja",
+            "tipoAmbiente": "PASILLO"
+          },
+          {
+            "id": "c7ac1a26ad315bcc9649b81cc525a0c5",
+            "nombre": "AULA 1-12",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "e24254a3b160e959d520ffe15cdaecde",
+            "nombre": "AULA 1-13",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "e4ff9d1c3f420ae6ae2b6edfcc1c1142",
+            "nombre": "Cuarto de comunicaciones 1",
+            "tipoAmbiente": "SALA DE COMUNICACIONES"
+          },
+          {
+            "id": "81ebd62d4bdfb495057a32e59bc59231",
+            "nombre": "Baño Hombres 1",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "335d5a5a5ba8792862257b449b6dc96e",
+            "nombre": "Baño Mujeres 1",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "870c495c225ecc8cd6041dde6254ee31",
+            "nombre": "OFICINA 1-01",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "ca123e1dcf7ebd630d51acffb1a965f9",
+            "nombre": "OFICINA 1-02",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "7a21412a7f913f603b1322de332e77f1",
+            "nombre": "OFICINA 1-03",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "5052a9231535e89a3ec0e31b111fdf9f",
+            "nombre": "OFICINA 1-04",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "e9c025f943c2be66f9bebd2a37b8f1e3",
+            "nombre": "OFICINA 1-05",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "8ca9222423b47303909ea21033beac40",
+            "nombre": "OFICINA 1-06",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "1235326aa3dc60ab0e19f5302240c250",
+            "nombre": "OFICINA 1-07",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "c79103ba5dc124494da84d2bed871b0f",
+            "nombre": "OFICINA 1-08",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "421d478bcb715023d14b7786dd769036",
+            "nombre": "AULA 1-09",
+            "tipoAmbiente": "AULA"
+          }
+        ]
+      },
+      {
+        "id": "951697a5a2bcf10b853f19df3fe1c76d",
+        "nombre": "Primer piso",
+        "ambientes": [
+          {
+            "id": "47909bb12a4b6f1680c37be661b2fa9d",
+            "nombre": "OFICINA 2-01",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "6f45cf1e6f8fe7b5afe07a147b455e11",
+            "nombre": "OFICINA 2-02",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "388cd9210c48be2150b1cd8537238607",
+            "nombre": "OFICINA 2-03",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "e838f1903226c1b773477768bdc74f44",
+            "nombre": "OFICINA 2-04",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "ca786dca672eea29894c43863eefb792",
+            "nombre": "OFICINA 2-05",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "1e9443859d71fad5e92bfc136aab12a2",
+            "nombre": "OFICINA 2-06",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "5327689594f86161366499977f163ef3",
+            "nombre": "OFICINA 2-07",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "96ddd4fd96e2ca43cb2b7663010c9840",
+            "nombre": "OFICINA 2-08",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "43bf3c5505b9f855cd1470319d5ba79a",
+            "nombre": "OFICINA 2-09",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "fda6f5093c22c15eaf1b3709ac62f9fd",
+            "nombre": "OFICINA 2-10",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "ac1470287e94938f1d6e2545331e648f",
+            "nombre": "OFICINA 2-11",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "04c2db95f2ff45d8ff21ef0ef0675e32",
+            "nombre": "OFICINA 2-12",
+            "tipoAmbiente": "OFICINA"
+          },
+          {
+            "id": "eae9aa0ce6097097aea17b5e7737d7b0",
+            "nombre": "AULA 2-13",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "c4096bfa78e8f355b00de45cc93db52c",
+            "nombre": "AULA 2-14",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "f9d2523b72bf7cc42ec61a96f20cdea7",
+            "nombre": "AULA 2-15",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "c615d77dc3ad917bc160d4802a0929da",
+            "nombre": "AULA 2-16",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "d820d9c969b1ca73e40b49aa20d5a68f",
+            "nombre": "AULA 2-17",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "74675e6908ed47c871f31db7b17c67fd",
+            "nombre": "Cuarto de comunicaciones 2",
+            "tipoAmbiente": "SALA DE COMUNICACIONES"
+          },
+          {
+            "id": "d76dc6b30c6e91919382608c9f1930ea",
+            "nombre": "Baño hombres 2",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "4604fe7026e59423804c47eed8196a8f",
+            "nombre": "Baño mujeres 2",
+            "tipoAmbiente": "BAÑO"
+          }
+        ]
+      },
+      {
+        "id": "60b5885911c791b7b2c7958cff801bdd",
+        "nombre": "Segundo piso",
+        "ambientes": [
+          {
+            "id": "7889c4e55e03eb449e93b4de9f19c66c",
+            "nombre": "Pasillo piso 2",
+            "tipoAmbiente": "PASILLO"
+          },
+          {
+            "id": "26b3ae35fb2a2f0c0ae09b75730e7334",
+            "nombre": "AULA 3-01",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "7ccc5c6ba10946f5fb874750457c4cb6",
+            "nombre": "AULA 3-02",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "85aae3fae4db433bc426915d71a07688",
+            "nombre": "AULA 3-03",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "f8cc505dedab7169fd949e874fb7c4b3",
+            "nombre": "AULA 3-04",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "815a43aa18a56ec0f4ddce0b374e92d8",
+            "nombre": "AULA 3-05",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "36d8106430da93114b337f5eae69b630",
+            "nombre": "AULA 3-06",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "1f038f46a066d116f904f6cff0e25430",
+            "nombre": "AULA 3-07",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "416c0caf48e9127ef3b49ffbeadcded3",
+            "nombre": "AULA 3-08",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "27561321c3971c3a51d933f5bd3c8f53",
+            "nombre": "AULA 3-09",
+            "tipoAmbiente": "AULA"
+          },
+          {
+            "id": "18650ce158b9d66d45efb440d23112d1",
+            "nombre": "Cuarto de comunicaciones 3",
+            "tipoAmbiente": "SALA DE COMUNICACIONES"
+          },
+          {
+            "id": "e274f4c41cd3208c30dbee99534404c9",
+            "nombre": "Baño hombres 3",
+            "tipoAmbiente": "BAÑO"
+          },
+          {
+            "id": "f57b6097d7306ff01152e5f9e0249136",
+            "nombre": "Baño mujeres 3",
+            "tipoAmbiente": "BAÑO"
+          }
+        ]
+      }
+    ]
+  }
+]

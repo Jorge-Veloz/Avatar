@@ -413,8 +413,8 @@ const Index = (function () {
     const funciones = {
       // 'get_usuario': getDatosUsuario,
       // 'get_ambiente_edificio': getAmbienteEdificio,
-      'get_recomendaciones': getRecomendaciones,
-      'get_parametros_edificio_piso_ambiente_fechas': getInfoLugar,
+      'solicita_recomendaciones': getRecomendaciones,
+      'solicita_datos_consumo': getInfoLugar,
     };
 
     for (const afuncion of aFunciones) {

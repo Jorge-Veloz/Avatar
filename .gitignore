@@ -10,3 +10,5 @@
 /speech-recognition/records/*
 static/media/records/*
 /modelosIA/
+cert.pem
+key.pem

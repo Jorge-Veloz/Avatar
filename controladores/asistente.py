@@ -42,18 +42,15 @@ class AsistenteControlador():
 
             resultado = self.modelo.getRespuesta(historialMsgs)
             respuesta_msg = resultado['respuesta_msg']
-            funciones = resultado['asis_funciones']
+            #funciones = resultado['asis_funciones']
             
-            res = {
-                "respuesta_msg": "",
-                "asis_funciones": None
-            }
+            res = ""
             if respuesta_msg and respuesta_msg.content:
                 #session['hilo']['mensajes'].append(dict(respuesta_msg))
-                self.controladorChats.enviarMensaje(hilo, dict(respuesta_msg))
-                res['respuesta_msg'] = respuesta_msg.content
+                self.controladorChats.enviarMensaje(hilo, [dict(respuesta_msg)])
+                res = respuesta_msg.content
             
-            if funciones:
+            """if funciones:
                 obj_funciones = []
                 for funcion in funciones:
                     #print(funcion.function.arguments)
@@ -69,26 +66,28 @@ class AsistenteControlador():
                         "funcion_name": nombreFuncion,
                         "funcion_args": argumentos,
                     })
-                res["asis_funciones"] = obj_funciones
+                res["asis_funciones"] = obj_funciones"""
             
-            if (respuesta_msg and res['respuesta_msg']) or (funciones and res["asis_funciones"]):
+            print("RESpuses aflsakfs")
+            print(respuesta_msg)
+            if (res != ""):
                 return {
                     "ok": True,
                     "observacion": None,
-                    "datos": dict(res)
+                    "datos": str(res)
                 }
             else:
                 return {
                     "ok": False,
                     "observacion": "No se obtuvo una respuesta del asistente.",
-                    "datos": dict(res)
+                    "datos": str(res)
                 }
         else:
             print("Error al hablar con el asistente.")
             return {
                 "ok": False,
                 "observacion": "Error al guardar el mensaje.",
-                "datos": dict(res)
+                "datos": None
             }
 
         

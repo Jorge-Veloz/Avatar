@@ -6,10 +6,11 @@ from controladores.ambientes import AmbientesControlador
 from controladores.chats import ChatsControlador
 from controladores.consumo import ConsumoControlador
 from controladores.tts import TTSControlador
+#from controladores.modelosia import IAControlador
 #from controladores.tts import TTSControlador
 #from controladores.speech import SpeechController
 from funciones.asistente import getMensajeSistema
-from funciones.algoritmos import getPrediccionConsumo
+from funciones.algoritmos import getPrediccionConsumo, detectar_intencion
 #from config import Config
 #from flask_sqlalchemy import SQLAlchemy
 #from sqlalchemy.sql import text
@@ -41,7 +42,7 @@ app.config['ASSETS_FOLDER'] = os.path.join(os.getcwd(), 'assets')
 controladorAsistente = AsistenteControlador(app)
 controladorEdificios = EdificiosControlador()
 controladorTTS = TTSControlador()
-#controladorGenIA = GenIAControlador()
+#controladorIA = IAControlador()
 
 # Inicializacion del JWT
 jwt = JWTManager(app)
@@ -124,48 +125,6 @@ def assistant_talk():
 def modeloAvatar():
     return render_template('avatar.html')
 
-@app.get('/inicializar')
-def inicializarAsistente():
-    if 'hilo' in session:
-        session.pop('hilo')
-
-    if 'contenido' in session:
-        session.pop('contenido')
-    
-    #print(session)
-    
-    hilo = controladorAsistente.crearHilo()
-    
-    session['hilo'] = hilo
-    mensajeInicial = {"role":"user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}
-    respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajeInicial) #enviar el identificador para obtener historial
-    session['contenido'] = []
-    resultado = procesamientoConversacion(respuesta['datos'])
-
-    # With API
-    
-    response1 = controladorTTS.TextToSpeech(resultado['datos']['respuesta'], session.get('hilo'))
-    # response1 = requests.post(
-    #     url=os.environ.get("RUTA_VOZ")+'/texto_voz',
-    #     data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
-    # )
-
-    encoded = response1()['datos']['voice_encoded']
-    resultado['datos']['audio'] = encoded
-    
-    return jsonify(resultado)
-
-    #print(resultado)
-    return jsonify(resultado)
-
-    """
-    if hilo:
-        session['idHilo'] = hilo.id
-        return jsonify(controladorAsistente.getRespuesta(hilo.id, "Hola."))
-    else: 
-        return jsonify({'ok': False, 'observacion': "Ocurrio un error al crear el hilo.", 'datos': None})
-    """
-
 @app.get('/edificios')
 def getEdificios():
     respuesta = controladorEdificios.getEdificios()
@@ -207,6 +166,43 @@ def getConsumoEdificios():
     respuesta = controladorEdificios.getConsumoEdificios(edificio, piso, ambiente, fechaInicio, fechaFin)
     return jsonify(respuesta)
 
+@app.get('/inicializar')
+def inicializarAsistente():
+    if 'hilo' in session:
+        session.pop('hilo')
+
+    if 'contenido' in session:
+        session.pop('contenido')
+    
+    #print(session)
+    
+    hilo = controladorAsistente.crearHilo()
+    
+    session['hilo'] = hilo
+    mensajeInicial = {"role":"user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}
+    respuesta = controladorAsistente.getRespuesta(session.get('hilo'), [mensajeInicial]) #enviar el identificador para obtener historial
+    session['contenido'] = []
+    #resultado = procesamientoConversacion(respuesta['datos'])
+
+    # With API
+    
+    response1 = controladorTTS.TextToSpeech(respuesta['datos'], session.get('hilo'))
+    # response1 = requests.post(
+    #     url=os.environ.get("RUTA_VOZ")+'/texto_voz',
+    #     data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
+    # )
+
+    resultado = {
+        'ok': True,
+        'observacion': None,
+        'datos': {"respuesta": respuesta['datos'], "info": session.get('contenido')}
+    }
+
+    encoded = response1['datos']['voice_encoded']
+    resultado['datos']['audio'] = encoded
+    
+    return jsonify(resultado)
+
 @app.post('/conversar')
 def getRespuesta():
     #mensaje = request.form['mensaje']
@@ -232,11 +228,17 @@ def getRespuesta():
     if not text.strip():
         text = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
     print(text)
-    
+
     mensajeAsistente = {"role":"user", "content": text}
-    respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajeAsistente)
-    session['contenido'] = []
-    resultado = procesamientoConversacion(respuesta['datos'])
+    datos = procesamientoConversacion(text)
+
+    mensajesAsis = []
+    mensajesAsis.append(mensajeAsistente)
+    if datos: mensajesAsis.append(datos)
+    
+    respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajesAsis)
+    #session['contenido'] = []
+    #resultado = procesamientoConversacion(respuesta['datos'])
     
     # With API
     # response1 = requests.post(
@@ -244,7 +246,13 @@ def getRespuesta():
     #     data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
     # )
 
-    response1 = controladorTTS.TextToSpeech(resultado['datos']['respuesta'], codigo)
+    resultado = {
+        'ok': True,
+        'observacion': None,
+        'datos': {"respuesta": respuesta['datos'], "info": session.get('contenido')}
+    }
+
+    response1 = controladorTTS.TextToSpeech(respuesta['datos'], codigo)
 
     encoded = response1['datos']['voice_encoded']
     resultado['datos']['audio'] = encoded
@@ -264,7 +272,28 @@ def getRespuestaGPT():
     #salida = controladorAsistente.conversar(respuesta)
     return jsonify(resultado)
 
-def procesamientoConversacion(respuesta):
+def procesamientoConversacion(texto):
+    session['contenido'] = []
+    funciones = {
+        'solicita_recomendaciones': controladorEdificios.getRecomendaciones,
+        'solicita_datos_consumo': controladorEdificios.consultarConsumo
+    }
+    etiquetas = list(funciones.keys())
+    etiquetas.append('pregunta_respuesta_general')
+    resultado = detectar_intencion(texto, etiquetas)
+    intencion =  'pregunta_respuesta_general' if resultado['intencion'] not in etiquetas else resultado['intencion']
+
+    if intencion != 'pregunta_respuesta_general':
+        funcionIA = funciones[intencion]
+        respuesta = funcionIA(texto)
+        if respuesta['info']:
+            session['contenido'].append({"nombre": intencion, "valor": respuesta['info']})
+        return {"role": "user", "content": respuesta['reason']}
+    else:
+        return None
+        
+
+def procesamientoConversacionModelo(respuesta):
     print("Salida de la respuesta:")
     print(respuesta)
     if ('asis_funciones' in respuesta and respuesta['asis_funciones']):
@@ -472,4 +501,4 @@ def validarParametros():
     return jsonify({'res': res, 'edificio': d_edificio['ID'], 'ambiente': d_ambiente['Codigo']})
 
 if __name__ == '__main__':
-    app.run(port=3005, debug=True)
+    app.run(port=3005, debug=True, host='0.0.0.0', ssl_context=("cert.pem", "key.pem"))

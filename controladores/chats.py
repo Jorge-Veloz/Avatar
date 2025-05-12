@@ -5,12 +5,15 @@ class ChatsControlador():
     def __init__(self, app):
         self.modelo = ChatsModelo(app)
 
-    def enviarMensaje(self, idHilo, mensaje):
+    def enviarMensaje(self, idHilo, mensajes):
         # if mensaje['role'] == 'tool' and 'content' in mensaje and mensaje['content']:
         #     mensaje['content'] = json.load(mensaje['content'])
-        mensajeJson = json.dumps(mensaje)
-        resultado = self.modelo.enviarMensaje(idHilo, mensajeJson)
-        return resultado[0][0]
+        respuesta = {"ok": False}
+        for msg in mensajes:
+            mensajeJson = json.dumps(msg)
+            resultado = self.modelo.enviarMensaje(idHilo, mensajeJson)
+            respuesta = resultado[0][0]
+        return respuesta
     
     def reaccionarMensaje(self, idHilo, idMensaje, reaccion):
         # if mensaje['role'] == 'tool' and 'content' in mensaje and mensaje['content']:
