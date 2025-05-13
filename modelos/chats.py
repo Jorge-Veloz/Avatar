@@ -25,7 +25,14 @@ class ChatsModelo:
     
     def getHistorialMensajes(self, idHilo):
         # Aqui se obtendra el historial de mensajes de la bd
-        sql = f"SELECT datos FROM asistentes.vmostrarhistorialinteracciones_ia WHERE idusuario = {idHilo} AND (reaccion IS NULL OR reaccion = 1) ORDER BY id ASC"
+        sql = f"SELECT datos FROM asistentes.vmostrarhistorialinteracciones_ia WHERE idusuario = {idHilo} AND (reaccion IS NULL OR reaccion = 1) AND id NOT IN (SELECT id FROM asistentes.vmostrarhistorialinteracciones_ia WHERE datos->>'role' = 'system' AND categoria = 'consumo' ORDER BY id ASC) ORDER BY id ASC"
+        #resultado = self.db.llamarFuncion('SELECT * FROM asistentes.vmostrarhistorialiteracciones_ia (%s, %s, %s)', (accion, mensaje, idHilo))
+        mensajes = self.db.consultarDatos(sql)
+        return mensajes
+    
+    def getHistorialMensajesConsumo(self, idHilo):
+        # Aqui se obtendra el historial de mensajes de la bd
+        sql = f"SELECT datos FROM asistentes.vmostrarhistorialinteracciones_ia WHERE idusuario = {idHilo} AND categoria = 'consumo' ORDER BY id ASC"
         #resultado = self.db.llamarFuncion('SELECT * FROM asistentes.vmostrarhistorialiteracciones_ia (%s, %s, %s)', (accion, mensaje, idHilo))
         mensajes = self.db.consultarDatos(sql)
         return mensajes
@@ -37,10 +44,10 @@ class ChatsModelo:
         mensajes = self.db.consultarDatos(sql)
         return mensajes
 
-    def enviarMensaje(self, idHilo, mensaje):
+    def enviarMensaje(self, idHilo, mensaje, categoria):
         # Aqui se guardara el mensaje en la bd
         accion = "registrar"
-        resultado = self.db.llamarFuncion('SELECT * FROM asistentes.actualizarHistorialInteraccionesIA(%s, %s, %s)', (accion, mensaje, str(idHilo)))
+        resultado = self.db.llamarFuncion('SELECT * FROM asistentes.actualizarHistorialInteraccionesIA(%s, %s, %s, %s)', (accion, str(categoria), mensaje, str(idHilo)))
         #resultado = self.db.llamarFuncion('asistentes.actualizarHistorialInteraccionesIA', (accion, mensaje, idHilo))
         return resultado
         #sql = f"INSERT INTO asistentes.vmostrarhistorial (id_hilo, mensaje) VALUES ('{idHilo}', '{mensaje}')"

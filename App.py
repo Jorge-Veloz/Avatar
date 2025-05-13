@@ -36,11 +36,11 @@ app.config['SECRET_KEY'] = b'secret_key'
 app.config['ASSETS_FOLDER'] = os.path.join(os.getcwd(), 'assets')
 
 #Descomentar para conectar a la base de datos
-#controladorChats = ChatsControlador(app)
+controladorChats = ChatsControlador(app)
 
 #print(controladorChats.enviarMensaje(1, {"role":"user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}))
 controladorAsistente = AsistenteControlador(app)
-controladorEdificios = EdificiosControlador()
+controladorEdificios = EdificiosControlador(app)
 controladorTTS = TTSControlador()
 #controladorIA = IAControlador()
 
@@ -154,6 +154,11 @@ def reaccionarMsg():
     resultado = controladorAsistente.reaccionarMensaje(session.get('hilo'), idMensaje, reaccion)
     #mensaje = {"res": 1}
     return jsonify(resultado)
+
+@app.get('/pruebachat')
+def pruebaChat():
+    respuesta = controladorChats.getHistorialMensajesConsumo(1)
+    return jsonify(respuesta)
 
 @app.get('/datos')
 def getConsumoEdificios():
@@ -501,4 +506,5 @@ def validarParametros():
     return jsonify({'res': res, 'edificio': d_edificio['ID'], 'ambiente': d_ambiente['Codigo']})
 
 if __name__ == '__main__':
-    app.run(port=3005, debug=True, host='0.0.0.0', ssl_context=("cert.pem", "key.pem"))
+    #app.run(port=3005, debug=True, host='0.0.0.0', ssl_context=("cert.pem", "key.pem"))
+    app.run(port=3005, debug=True, host='0.0.0.0')

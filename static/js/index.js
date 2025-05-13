@@ -179,9 +179,9 @@ const Index = (function () {
     $('#combo_edificio').on('change', onEdificioChange);
     $('#combo_pisos').on('change', onPisoChange);
     $('#btnConsultarDatos').on('click', function() {
-      const idEdificio = $('#combo_edificio option:selected').text();
-      const idPiso = $('#combo_pisos option:selected').text();
-      const idAmbiente = $('#combo_ambientes option:selected').text();
+      const idEdificio = $('#combo_edificio option:selected').val();
+      const idPiso = $('#combo_pisos option:selected').val();
+      const idAmbiente = $('#combo_ambientes option:selected').val();
       console.log(idEdificio, idPiso, idAmbiente);
       if (idEdificio && idPiso && idAmbiente) {
         informacionConsumo({ idEdificio, idPiso, idAmbiente });

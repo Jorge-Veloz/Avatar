@@ -5,13 +5,14 @@ class ChatsControlador():
     def __init__(self, app):
         self.modelo = ChatsModelo(app)
 
-    def enviarMensaje(self, idHilo, mensajes):
+    def enviarMensaje(self, idHilo, mensajes, categoria='general'):
         # if mensaje['role'] == 'tool' and 'content' in mensaje and mensaje['content']:
         #     mensaje['content'] = json.load(mensaje['content'])
         respuesta = {"ok": False}
         for msg in mensajes:
             mensajeJson = json.dumps(msg)
-            resultado = self.modelo.enviarMensaje(idHilo, mensajeJson)
+            resultado = self.modelo.enviarMensaje(idHilo, mensajeJson, categoria)
+            print(resultado)
             respuesta = resultado[0][0]
         return respuesta
     
@@ -29,6 +30,12 @@ class ChatsControlador():
     
     def getHistorialMensajes(self, idHilo):
         mensajes = self.modelo.getHistorialMensajes(idHilo)
+        #return json.load(mensajes)
+        hmensajes = [m['datos'] for m in mensajes]
+        return hmensajes
+    
+    def getHistorialMensajesConsumo(self, idHilo):
+        mensajes = self.modelo.getHistorialMensajesConsumo(idHilo)
         #return json.load(mensajes)
         hmensajes = [m['datos'] for m in mensajes]
         return hmensajes

@@ -97,6 +97,8 @@ class AsistenteModelo():
     
     def getRespuesta(self, mensajes):
         #print(list(session.get('hilo')['mensajes']))
+        print("Historial asistente:")
+        print(mensajes)
         response = self.cliente.chat(
             model = self.asistente, #self.asistente,
             #messages = list(session.get('hilo')['mensajes']),

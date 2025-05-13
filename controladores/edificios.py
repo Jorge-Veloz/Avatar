@@ -1,5 +1,7 @@
 from modelos.edificios import EdificiosModelo
+from modelos.chats import ChatsModelo
 from funciones.algoritmos import fuzzy_lookup, norm
+from flask import session
 import json
 import re
 from unidecode import unidecode
@@ -7,8 +9,9 @@ from ollama import Client
 import os
 
 class EdificiosControlador:
-    def __init__(self):
+    def __init__(self, app):
         self.modelo = EdificiosModelo()
+        self.modeloChats = ChatsModelo(app)
         self.data = self.leerJSONEdificios()
         self.cliente = Client(
             host=os.environ.get("RUTA_IA"),
@@ -124,8 +127,12 @@ class EdificiosControlador:
     
     def consultarConsumo(self, query):
         # Almacenar query al historial de consulta de nuevo prompt para consulta consumo
-        mensajes = [{"role":"system", "content": "Eres un asistente capaz de generar prompts que incluya entidades claves de nombre de edificio, piso y ambiente, ademas del rango de fechas en base a lo que haya mencionado el usuario a lo largo de todo el historial de conversacion. Formato del prompt: 'Dame el consumo energetico del edificio de <nombre_edificio>, piso <nombre_piso>, ambiente <nombre_ambiente>'. Al final de la cadena iran agregadas las fechas mencionadas por el usuario (puede haber fecha de inicio y fecha fin, como solo puede haber una de las dos o ninguna). Dependiendo si no se ha mencionado alguno de estos parametros, no se incluiran dentro del prompt, mas el formato debe mantenerse. En el caso de que no se mencionen las fechas a lo largo del historial, no se añadira nada referente al prompt. No menciones nada mas adicional a esto"}]
+        mensaje = {"role": "user", "content": str(query)}
+        self.modeloChats.enviarMensaje(session.get('hilo'), [mensaje], 'consumo')
+        #mensajes = [{"role":"system", "content": "Eres un asistente capaz de generar prompts que incluya entidades claves de nombre de edificio, piso y ambiente, ademas del rango de fechas en base a lo que haya mencionado el usuario a lo largo de todo el historial de conversacion. Formato del prompt: 'Dame el consumo energetico del edificio de <nombre_edificio>, piso <nombre_piso>, ambiente <nombre_ambiente>'. Al final de la cadena iran agregadas las fechas mencionadas por el usuario (puede haber fecha de inicio y fecha fin, como solo puede haber una de las dos o ninguna). Dependiendo si no se ha mencionado alguno de estos parametros, no se incluiran dentro del prompt, mas el formato debe mantenerse. En el caso de que no se mencionen las fechas a lo largo del historial, no se añadira nada referente al prompt. No menciones nada mas adicional a esto"}]
         # Recuperacion del historial de consulta para nuevo prompt
+        mensajes = []
+        mensajes = self.modeloChats.getHistorialMensajesConsumo(session.get('hilo'))
         # append a mensajes con nuevos mensajes
         nuevoquery = ""
         
@@ -136,6 +143,7 @@ class EdificiosControlador:
         )
 
         nuevoquery = response.message.content
+        print("Nuevo query: ", nuevoquery)
 
         info = self.getInfoLugar(nuevoquery)
         datos = None
