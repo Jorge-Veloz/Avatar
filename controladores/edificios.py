@@ -122,7 +122,21 @@ class EdificiosControlador:
         return {"ok": True, "datos": results}
     
     def consultarConsumo(self, query):
-        info = self.getInfoLugar(query)
+        # Almacenar query al historial de consulta de nuevo prompt para consulta consumo
+        mensajes = [{"role":"system", "content": "Eres un asistente capaz de generar prompts que incluya entidades claves de nombre de edificio, piso y ambiente, ademas del rango de fechas en base a lo que haya mencionado el usuario a lo largo de todo el historial de conversacion. Formato del prompt: 'Dame el consumo energetico del edificio de <nombre_edificio>, piso <nombre_piso>, ambiente <nombre_ambiente>'. Al final de la cadena iran agregadas las fechas mencionadas por el usuario (puede haber fecha de inicio y fecha fin, como solo puede haber una de las dos o ninguna). Dependiendo si no se ha mencionado alguno de estos parametros, no se incluiran dentro del prompt, mas el formato debe mantenerse. En el caso de que no se mencionen las fechas a lo largo del historial, no se añadira nada referente al prompt. No menciones nada mas adicional a esto"}]
+        # Recuperacion del historial de consulta para nuevo prompt
+        # append a mensajes con nuevos mensajes
+        nuevoquery = ""
+        
+        response = self.cliente.chat(
+            model = self.asistente, #self.asistente,
+            messages = mensajes,
+            stream = False
+        )
+
+        nuevoquery = response.message.content
+
+        info = self.getInfoLugar(nuevoquery)
         datos = None
 
         if info['ok']:
