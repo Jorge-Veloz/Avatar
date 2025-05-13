@@ -50,20 +50,21 @@ class EdificiosControlador:
         comps = self.extract_components(query)
         # Validación de extracción
         if not comps:
-            return {"ok": False, "datos": "No pude extraer edificio, piso ni ambiente de la consulta."}
+            #return {"ok": False, "datos": "No pude extraer edificio, piso ni ambiente de la consulta."}
+            return {"ok": False, "datos": "No pudiste reconocer el edificio, piso ni ambiente de la peticion del usuario."}
 
         # Validaciones de contexto
         #  - Si pide solo piso sin edificio → error
         if 'piso' in comps and 'edificio' not in comps:
             return {
                 "ok": False,
-                "datos": "Se solicitó un piso sin especificar edificio; al haber varios pisos en distintos edificios, no puedo filtrar. Por favor incluya el edificio."
+                "datos": "Te solicitaron un piso pero no especificaron edificio; al haber varios pisos en distintos edificios, no puedes filtrar. Dile al usuario que te diga el edificio que desea consultar."
             }
         #  - Si pide solo ambiente sin piso ni edificio → error
         if 'ambiente' in comps and ('piso' not in comps or 'edificio' not in comps):
             return {
                 "ok": False,
-                "datos": "Se solicitó un ambiente sin especificar piso y edificio; al haber múltiples ambientes en distintos pisos y edificios, no puedo filtrar. Por favor incluya piso y edificio."
+                "datos": "Te solicitaron un ambiente pero no especificaron piso y edificio; al haber múltiples ambientes en distintos pisos y edificios, no puedes filtrar. Dile al usuario que te diga el edificio y el piso que desea consultar."
             }
 
         # — 5.1 Filtrar edificios
@@ -87,7 +88,7 @@ class EdificiosControlador:
                 if p:
                     pisos_matches.append({"edificio": b, "piso": p})
             if not pisos_matches:
-                return {"ok": False, "datos": f"Piso '{comps['piso']}' no encontrado en los edificios filtrados."}
+                return {"ok": False, "datos": f"El piso '{comps['piso']}' solicitado no fue encontrado en el edificio solicitado."}
         else:
             # si no pide piso, tomo todos los pisos de los edificios filtrados
             for b in edificios:
@@ -109,7 +110,7 @@ class EdificiosControlador:
                         "ambiente":  {"id": a['id'],   "nombre": a['nombre']}
                     })
             if not results:
-                return {"ok": False, "datos": f"Ambiente '{comps['ambiente']}' no encontrado en los pisos filtrados."}
+                return {"ok": False, "datos": f"El ambiente '{comps['ambiente']}' solicitado no fue encontrado en el piso solicitado."}
         else:
             # si no pide ambiente, retorno cada piso (con su edificio)
             for item in pisos_matches:
