@@ -158,7 +158,11 @@ class AsistenteControlador():
 
     def eliminarPensamiento(self, mensaje):
         #message_content = messages[0].content[0].text
-        cleaned = re.sub(r'<think>.*?</think>', '', mensaje['content'], flags=re.DOTALL)
+        cleaned = ''
+        if '<think>' in mensaje['content']:
+            cleaned = re.sub(r'<think>.*?</think>', '', mensaje['content'], flags=re.DOTALL)
+        else:
+            cleaned = mensaje['content']
         mensajeC = {'role': mensaje['role'], 'content': cleaned}
         return mensajeC
     
