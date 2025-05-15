@@ -2,6 +2,7 @@ from modelos.asistente import AsistenteModelo
 from controladores.chats import ChatsControlador
 from flask import session
 import json
+import re
 
 class AsistenteControlador():
     def __init__(self, app):
@@ -46,8 +47,9 @@ class AsistenteControlador():
             
             res = ""
             if respuesta_msg and respuesta_msg.content:
+                mensajeLimpio = self.eliminarPensamiento(dict(respuesta_msg))
                 #session['hilo']['mensajes'].append(dict(respuesta_msg))
-                self.controladorChats.enviarMensaje(hilo, [dict(respuesta_msg)])
+                self.controladorChats.enviarMensaje(hilo, [mensajeLimpio])
                 res = respuesta_msg.content
             
             """if funciones:
@@ -154,6 +156,12 @@ class AsistenteControlador():
     def conversar(self, respuesta):
         pass
 
+    def eliminarPensamiento(self, mensaje):
+        #message_content = messages[0].content[0].text
+        cleaned = re.sub(r'<think>.*?</think>', '', mensaje['content'], flags=re.DOTALL)
+        mensajeC = {'role': mensaje['role'], 'content': cleaned}
+        return mensajeC
+    
     def limpiarMensajes(self, message_content):
         #message_content = messages[0].content[0].text
         annotations = message_content.annotations
