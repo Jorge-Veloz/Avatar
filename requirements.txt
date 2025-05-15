@@ -7,7 +7,10 @@ requests
 flask_jwt_extended
 matplotlib
 statsmodels
-psycopg2
+#psycopg2
+psycopg2-binary
+torch
+TTS
 ollama
 Flask-SQLAlchemy
 vosk
