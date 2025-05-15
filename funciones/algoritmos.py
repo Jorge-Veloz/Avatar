@@ -67,7 +67,7 @@ def detectar_intencion(consulta, etiquetas):
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
     classifier = pipeline("zero-shot-classification", model=model, tokenizer=tokenizer)
 
-    resultado = classifier(consulta, etiquetas, hypothesis_template="Que es lo que el usuario quiso decir aqui: {}. Toma en consideracion siempre las primeras palabras para clasificar")
+    resultado = classifier(consulta, etiquetas, hypothesis_template="Que accion desea realizar el usuario con esta consulta: {}.")
 
     # Tomamos la etiqueta con mayor score
     mejor_intencion = resultado["labels"][0]
