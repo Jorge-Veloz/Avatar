@@ -12,3 +12,4 @@ static/media/records/*
 /modelosIA/
 cert.pem
 key.pem
+.DS_Store
