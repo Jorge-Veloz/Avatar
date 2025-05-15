@@ -11,6 +11,7 @@ os
 torch
 TTS
 ollama
+ffmpeg
 Flask-SQLAlchemy
 vosk
 transformers
