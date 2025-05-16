@@ -62,7 +62,7 @@ class TTSModelo:
         self.__setId(id)
         file.save(self.input_path)
 
-        model_size = 'small'  # 'small' | 'big'
+        model_size = 'big'  # 'small' | 'big'
 
         # Construye la ruta al modelo de forma portátil
         model_path = os.path.join('.', 'modelosIA', 'vosk-models', f'es-{model_size}')
