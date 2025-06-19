@@ -5,6 +5,7 @@ from flask import session
 import json
 import re
 from unidecode import unidecode
+from datetime import date
 from ollama import Client
 import os
 
@@ -18,12 +19,29 @@ class EdificiosControlador:
             headers={'x-some-header': 'some-value'}
         )
         self.asistente = os.environ.get("MODELO_IA")
+
         self.regexpr = (
             re.compile(r"edificio\s+de\s+(?P<edificio>[\wáéíóúñ ]+)", re.IGNORECASE),
             re.compile(r"piso\s+(?P<piso>[\wáéíóúñ\d ]+)",       re.IGNORECASE),
             re.compile(r"ambiente\s+(?P<ambiente>[\wáéíóúñ\-\d ]+)", re.IGNORECASE)
         )
+
     
+    def extraer_fechas_iso(query: str):
+        
+        # ——————————————————————————————————————————
+        # Extracción de fechas en formato ISO YYYY-MM-DD
+        # ——————————————————————————————————————————
+        ISO_DATE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})")
+
+        found = ISO_DATE_RE.findall(query)
+
+        if not found:
+            return None, None
+        fi = date.fromisoformat(found[0])
+        ff = date.fromisoformat(found[1]) if len(found) > 1 else fi
+        return fi, ff
+        
     def leerJSONEdificios(self):
         ruta = 'data_edificios.json'
         with open(ruta, 'r', encoding='utf-8') as f:
@@ -50,6 +68,12 @@ class EdificiosControlador:
         return comps
     
     def getInfoLugar(self, query):
+        
+        # 1) Extraer fechas ISO
+        fecha_inicio, fecha_fin = self.extraer_fechas_iso(query)
+        if not fecha_inicio:
+            return {"ok": False, "datos": "No encontré fechas en formato YYYY-MM-DD en la consulta."}
+        
         comps = self.extract_components(query)
         # Validación de extracción
         if not comps:
@@ -108,9 +132,11 @@ class EdificiosControlador:
                     a = fuzzy_lookup(comps['ambiente'], p['ambientes'])
                 if a:
                     results.append({
-                        "edificio": {"id": b['id'],   "nombre": b['nombre']},
-                        "piso":      {"id": p['id'],   "nombre": p['nombre']},
-                        "ambiente":  {"id": a['id'],   "nombre": a['nombre']}
+                        "edificio":     {"id": b['id'],   "nombre": b['nombre']},
+                        "piso":         {"id": p['id'],   "nombre": p['nombre']},
+                        "ambiente":     {"id": a['id'],   "nombre": a['nombre']},
+                        "fecha_inicio": fecha_inicio.isoformat(),
+                        "fecha_fin":    fecha_fin.isoformat()
                     })
             if not results:
                 return {"ok": False, "datos": f"El ambiente '{comps['ambiente']}' solicitado no fue encontrado en el piso solicitado."}
@@ -119,8 +145,10 @@ class EdificiosControlador:
             for item in pisos_matches:
                 b, p = item['edificio'], item['piso']
                 results.append({
-                    "edificio": {"id": b['id'],   "nombre": b['nombre']},
-                    "piso":      {"id": p['id'],   "nombre": p['nombre']}
+                    "edificio":     {"id": b['id'],   "nombre": b['nombre']},
+                    "piso":         {"id": p['id'],   "nombre": p['nombre']},
+                    "fecha_inicio": fecha_inicio.isoformat(),
+                    "fecha_fin":    fecha_fin.isoformat(),
                 })
 
         return {"ok": True, "datos": results}
