@@ -6,6 +6,8 @@
 /db/__pycache__/
 /funciones/__pycache__/
 /.venv
+/.venv311
+/.venv313
 /speech-recognition/vosk-models/*
 /speech-recognition/records/*
 static/media/records/*
@@ -13,3 +15,4 @@ static/media/records/*
 cert.pem
 key.pem
 .DS_Store
+/notebook/

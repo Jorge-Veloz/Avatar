@@ -173,13 +173,9 @@ def getConsumoEdificios():
 
 @app.get('/inicializar')
 def inicializarAsistente():
-    if 'hilo' in session:
-        session.pop('hilo')
-
-    if 'contenido' in session:
-        session.pop('contenido')
-    
-    #print(session)
+    if 'hilo' in session: session.pop('hilo')
+    if 'contenido' in session: session.pop('contenido')
+    if 'memoria' in session: session.pop('memoria')
     
     hilo = controladorAsistente.crearHilo()
     
@@ -191,11 +187,7 @@ def inicializarAsistente():
 
     # With API
     
-    response1 = controladorTTS.TextToSpeech(respuesta['datos'], session.get('hilo'))
-    # response1 = requests.post(
-    #     url=os.environ.get("RUTA_VOZ")+'/texto_voz',
-    #     data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
-    # )
+    #response1 = controladorTTS.TextToSpeech(respuesta['datos'], session.get('hilo'))
 
     resultado = {
         'ok': True,
@@ -203,7 +195,13 @@ def inicializarAsistente():
         'datos': {"respuesta": respuesta['datos'], "info": session.get('contenido')}
     }
 
-    encoded = response1['datos']['voice_encoded']
+    response1 = requests.post(
+        url=os.environ.get("RUTA_VOZ")+'/texto_voz',
+        data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
+    )
+
+    #encoded = response1['datos']['voice_encoded']
+    encoded = response1.json()['datos']['voice_encoded']
     resultado['datos']['audio'] = encoded
     
     return jsonify(resultado)
@@ -216,20 +214,21 @@ def getRespuesta():
     if 'hilo' not in session:
         hilo = controladorAsistente.crearHilo()
         session['hilo'] = hilo
+
     codigo = session.get('hilo')
-    #ruta = f'{rutaGrabacion}/input-{codigo}.mp3'
+    ruta = f'{rutaGrabacion}/input-{codigo}.mp3'
     #request.files['voice'].save(ruta)
-    voz = request.files['voice']
-    # response = requests.post(
-    #     url=os.environ.get("RUTA_VOZ")+'/voz_texto',
-    #     files={'voice': ('voice.mp3', open(ruta, 'rb'))},
-    #     data={'id': session.get('hilo')} 
-    # )
-    response = controladorTTS.SpeechToText(voz, codigo)
+    #voz = request.files['voice']
+    response = requests.post(
+        url=os.environ.get("RUTA_VOZ")+'/voz_texto',
+        files={'voice': ('voice.mp3', open(ruta, 'rb'))},
+        data={'id': session.get('hilo')} 
+    )
+    #response = controladorTTS.SpeechToText(voz, codigo)
 
     
-    text = response['datos']
-    #text = response.json()
+    #text = response['datos']
+    text = response.json()['datos']
     if not text.strip():
         text = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
     print(text)
@@ -257,9 +256,14 @@ def getRespuesta():
         'datos': {"respuesta": respuesta['datos'], "info": session.get('contenido')}
     }
 
-    response1 = controladorTTS.TextToSpeech(respuesta['datos'], codigo)
+    #response1 = controladorTTS.TextToSpeech(respuesta['datos'], codigo)
+    response1 = requests.post(
+        url=os.environ.get("RUTA_VOZ")+'/texto_voz',
+        data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
+    )
 
-    encoded = response1['datos']['voice_encoded']
+    #encoded = response1['datos']['voice_encoded']
+    encoded = response1.json()['datos']['voice_encoded']
     resultado['datos']['audio'] = encoded
 
     return jsonify(resultado)

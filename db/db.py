@@ -72,10 +72,10 @@ class db():
         return respuesta
     
 class PostgresDB():
-    def __init__(self, app):
+    def __init__(self, app, dbname):
         self.app = app
         self.connection = psycopg2.connect(
-            dbname=os.getenv("PG_DB"),
+            dbname=dbname,
             user=os.getenv("PG_USER"),
             password=os.getenv("PG_PASSWORD"),
             host=os.getenv("PG_HOST"),

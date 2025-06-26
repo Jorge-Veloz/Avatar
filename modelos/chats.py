@@ -1,9 +1,10 @@
 from funciones.asistente import getMensajeSistema
 from db.db import PostgresDB
+import os
 
 class ChatsModelo:
     def __init__(self, app):
-        self.db = PostgresDB(app)
+        self.db = PostgresDB(app, os.getenv("PG_DB"))
         #self.db.app = None  # Asignar la aplicación a la instancia de PostgresDB
     
     def getIdHilo(self):

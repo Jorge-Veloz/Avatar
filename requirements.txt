@@ -8,11 +8,8 @@ statsmodels
 #psycopg2
 psycopg2-binary
 torch
-TTS
 ollama
-ffmpeg
 Flask-SQLAlchemy
-vosk
 transformers
 unidecode
 rapidfuzz

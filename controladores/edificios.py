@@ -1,6 +1,7 @@
 from modelos.edificios import EdificiosModelo
 from controladores.chats import ChatsControlador
 from funciones.algoritmos import fuzzy_lookup, norm
+from funciones.asistente import getPromptAsistentes
 from flask import session
 import json
 import re
@@ -11,7 +12,7 @@ import os
 
 class EdificiosControlador:
     def __init__(self, app):
-        self.modelo = EdificiosModelo()
+        self.modelo = EdificiosModelo(app)
         self.controladorChats = ChatsControlador(app)
         self.data = self.leerJSONEdificios()
         self.cliente = Client(
@@ -153,6 +154,19 @@ class EdificiosControlador:
 
         return {"ok": True, "datos": results}
     
+    def preguntarAsistente(self, asistente, mensajes):
+        nuevoquery = ""
+        response = self.cliente.chat(
+            model = asistente, #self.asistente,
+            messages = mensajes,
+            stream = False
+        )
+
+        if ("message" in response) and ("content" in response.message):
+            nuevoquery = response.message.content
+
+        return nuevoquery
+    
     def consultarConsumo(self, query):
         # Almacenar query al historial de consulta de nuevo prompt para consulta consumo
         mensaje = {"role": "user", "content": str(query)}
@@ -162,15 +176,7 @@ class EdificiosControlador:
         mensajes = []
         mensajes = self.controladorChats.getHistorialMensajesConsumo(session.get('hilo'))
         # append a mensajes con nuevos mensajes
-        nuevoquery = ""
-        
-        response = self.cliente.chat(
-            model = self.asistente, #self.asistente,
-            messages = mensajes,
-            stream = False
-        )
-
-        nuevoquery = response.message.content
+        nuevoquery = self.preguntarAsistente(self.asistente, mensajes)
         print("Nuevo query: ", nuevoquery)
 
         info = self.getInfoLugar(nuevoquery)
@@ -178,10 +184,26 @@ class EdificiosControlador:
 
         if info['ok']:
             params = info['datos'][0]
-            datos = self.modelo.getConsumoEdificiosAsis(params['edificio']['id'], params['piso']['id'], params['ambiente']['id'], '2025-04-01', '2025-04-30')
+            prompt_traduccion = getPromptAsistentes('traduccion_entidades', params)
+            mensajeTraduccion = [{'role': 'system', 'content': prompt_traduccion}, {'role': 'user', 'content': nuevoquery}]
+            respuestaTraduccion = self.preguntarAsistente(self.asistente, mensajeTraduccion)
+            print(respuestaTraduccion)
+
+            prompt_sql = getPromptAsistentes('codigo_sql')
+            mensajeSQL = [{'role': 'system', 'content': prompt_sql}, {'role': 'user', 'content': respuestaTraduccion}]
+            respuestaSQL = self.preguntarAsistente(self.asistente, mensajeSQL)
+            print(respuestaSQL)
+
+            #datos = self.modelo.getConsumoEdificiosAsis(params['edificio']['id'], params['piso']['id'], params['ambiente']['id'], '2025-04-01', '2025-04-30')
+            if '\n' in respuestaSQL: respuestaSQL = respuestaSQL.replace('\n', '')
+
+            datos = self.modelo.getConsumoEdificiosAsisSQL(respuestaSQL)
             if datos['res']:
+                print("\nDatos de consulta:")
+                print(datos)
                 datos['data']['params'] = {'idEdificio': params['edificio']['nombre'], 'idPiso': params['piso']['nombre'], 'idAmbiente': params['ambiente']['nombre'], 'fechaInicio': '2025-04-01', 'fechaFin': '2025-04-30'}
-                return { "success": True, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Es importante que no menciones los identificadores al usuario.", "info": datos['data']}
+                session['memoria']['consumo'] = datos['data']['params']
+                return { "success": True, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Es importante que no menciones los identificadores al usuario. Dile al usuario que necesitas saber si habra algun evento especial la siguiente semana, ya que requieres saber ese dato para poder realizar una predicción del consumo energético de la siguiente semana.", "info": datos['data']}
             else:
                 return { "success": True, "reason": "No hay datos de consumo energetico asociados a los parametros especificados.", "info": None}
         else:
