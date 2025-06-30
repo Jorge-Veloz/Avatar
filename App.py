@@ -82,7 +82,8 @@ def assistant_talk():
     response = requests.post(
         url=os.environ.get("RUTA_VOZ")+'/voz_texto',
         files={'voice': ('voice.mp3', open(f'{rutaGrabacion}/input-{id}.mp3', 'rb'))},
-        data={'id': id}
+        data={'id': id},
+        verify=False
     )
     #response = requests.get(
     #    os.environ.get("RUTA_VOZ")+'/prueba'
@@ -108,7 +109,8 @@ def assistant_talk():
     # With API
     response1 = requests.post(
         url=os.environ.get("RUTA_VOZ")+'/texto_voz',
-        data={'texto': resultado['datos']['respuesta'], 'id': id}
+        data={'texto': resultado['datos']['respuesta'], 'id': id},
+        verify=False
     )
 
     # tts = response1.json()
@@ -196,7 +198,8 @@ def inicializarAsistente():
 
     response1 = requests.post(
         url=os.environ.get("RUTA_VOZ")+'/texto_voz',
-        data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
+        data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')},
+        verify=False
     )
 
     #encoded = response1['datos']['voice_encoded']
@@ -221,7 +224,8 @@ def getRespuesta():
     response = requests.post(
         url=os.environ.get("RUTA_VOZ")+'/voz_texto',
         files={'voice': ('voice.mp3', open(ruta, 'rb'))},
-        data={'id': session.get('hilo')} 
+        data={'id': session.get('hilo')},
+        verify=False
     )
     #response = controladorTTS.SpeechToText(voz, codigo)
 
@@ -258,7 +262,8 @@ def getRespuesta():
     #response1 = controladorTTS.TextToSpeech(respuesta['datos'], codigo)
     response1 = requests.post(
         url=os.environ.get("RUTA_VOZ")+'/texto_voz',
-        data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
+        data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')},
+        verify=False
     )
 
     #encoded = response1['datos']['voice_encoded']
