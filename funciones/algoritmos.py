@@ -1,11 +1,11 @@
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+#import numpy as np
+#import matplotlib.pyplot as plt
 from statsmodels.tsa.arima.model import ARIMA
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+#from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
-import json
-import re
+#import json
+#import re
 from unidecode import unidecode
 from rapidfuzz import process, fuzz
 

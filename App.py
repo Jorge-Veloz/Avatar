@@ -5,9 +5,8 @@ from controladores.edificios import EdificiosControlador
 from controladores.ambientes import AmbientesControlador
 from controladores.chats import ChatsControlador
 from controladores.consumo import ConsumoControlador
-from controladores.tts import TTSControlador
-#from controladores.modelosia import IAControlador
 #from controladores.tts import TTSControlador
+#from controladores.modelosia import IAControlador
 #from controladores.speech import SpeechController
 from funciones.asistente import getMensajeSistema
 from funciones.algoritmos import getPrediccionConsumo, detectar_intencion
@@ -41,7 +40,7 @@ controladorChats = ChatsControlador(app)
 #print(controladorChats.enviarMensaje(1, {"role":"user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}))
 controladorAsistente = AsistenteControlador(app)
 controladorEdificios = EdificiosControlador(app)
-controladorTTS = TTSControlador()
+#controladorTTS = TTSControlador()
 #controladorIA = IAControlador()
 
 # Inicializacion del JWT

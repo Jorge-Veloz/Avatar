@@ -1,16 +1,17 @@
-from openai import OpenAI
+#from openai import OpenAI
 from ollama import Client
-from flask import session
-from funciones.asistente import getFuncionesAsistente, getMensajeSistema
+#from flask import session
+from funciones.asistente import getFuncionesAsistente
 import os
 import random
 import string
 
 class AsistenteModelo():
     def __init__(self):
-        self.client = OpenAI(
-            api_key=os.environ.get("API_GPT")
-        )
+        self.client = None
+        # self.client = OpenAI(
+        #     api_key=os.environ.get("API_GPT")
+        # )
         self.cliente = Client(
             host=os.environ.get("RUTA_IA"),
             headers={'x-some-header': 'some-value'}

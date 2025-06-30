@@ -1,6 +1,6 @@
 from modelos.asistente import AsistenteModelo
 from controladores.chats import ChatsControlador
-from flask import session
+#from flask import session
 import json
 import re
 

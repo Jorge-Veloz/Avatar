@@ -5,7 +5,7 @@ from funciones.asistente import getPromptAsistentes
 from flask import session
 import json
 import re
-from unidecode import unidecode
+#from unidecode import unidecode
 from datetime import date
 from ollama import Client
 import os

@@ -1,4 +1,4 @@
-import mysql.connector
+#import mysql.connector
 import os
 from dotenv import load_dotenv
 import psycopg2
@@ -15,7 +15,8 @@ class db():
             'port': int(os.getenv("MYSQL_PORT")),
             'database': os.getenv("MYSQL_DB")
         }
-        self.mysql = mysql.connector.connect(**config)
+        self.mysql = None
+        #self.mysql = mysql.connector.connect(**config)
     
     def consultarDato(self, sql):
         cursor = self.mysql.cursor(dictionary=True)
