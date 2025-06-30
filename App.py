@@ -216,7 +216,7 @@ def getRespuesta():
 
     codigo = session.get('hilo')
     ruta = f'{rutaGrabacion}/input-{codigo}.mp3'
-    #request.files['voice'].save(ruta)
+    request.files['voice'].save(ruta)
     #voz = request.files['voice']
     response = requests.post(
         url=os.environ.get("RUTA_VOZ")+'/voz_texto',
