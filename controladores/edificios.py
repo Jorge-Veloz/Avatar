@@ -22,13 +22,13 @@ class EdificiosControlador:
         self.asistente = os.environ.get("MODELO_IA")
 
         self.regexpr = (
-            re.compile(r"edificio\s+de\s+(?P<edificio>[\wáéíóúñ ]+)", re.IGNORECASE),
+            re.compile(r"edificio\s+(de\s+)*(?P<edificio>[\wáéíóúñ ]+)", re.IGNORECASE),
             re.compile(r"piso\s+(?P<piso>[\wáéíóúñ\d ]+)",       re.IGNORECASE),
             re.compile(r"ambiente\s+(?P<ambiente>[\wáéíóúñ\-\d ]+)", re.IGNORECASE)
         )
 
     
-    def extraer_fechas_iso(query: str):
+    def extraer_fechas_iso(self, query: str):
         
         # ——————————————————————————————————————————
         # Extracción de fechas en formato ISO YYYY-MM-DD
@@ -71,9 +71,9 @@ class EdificiosControlador:
     def getInfoLugar(self, query):
         
         # 1) Extraer fechas ISO
-        fecha_inicio, fecha_fin = self.extraer_fechas_iso(query)
-        if not fecha_inicio:
-            return {"ok": False, "datos": "No encontré fechas en formato YYYY-MM-DD en la consulta."}
+        # fecha_inicio, fecha_fin = self.extraer_fechas_iso(query)
+        # if not fecha_inicio:
+        #     return {"ok": False, "datos": "No encontré fechas en formato YYYY-MM-DD en la consulta."}
         
         comps = self.extract_components(query)
         # Validación de extracción
@@ -136,8 +136,8 @@ class EdificiosControlador:
                         "edificio":     {"id": b['id'],   "nombre": b['nombre']},
                         "piso":         {"id": p['id'],   "nombre": p['nombre']},
                         "ambiente":     {"id": a['id'],   "nombre": a['nombre']},
-                        "fecha_inicio": fecha_inicio.isoformat(),
-                        "fecha_fin":    fecha_fin.isoformat()
+                        # "fecha_inicio": fecha_inicio.isoformat(),
+                        # "fecha_fin":    fecha_fin.isoformat()
                     })
             if not results:
                 return {"ok": False, "datos": f"El ambiente '{comps['ambiente']}' solicitado no fue encontrado en el piso solicitado."}
@@ -148,8 +148,8 @@ class EdificiosControlador:
                 results.append({
                     "edificio":     {"id": b['id'],   "nombre": b['nombre']},
                     "piso":         {"id": p['id'],   "nombre": p['nombre']},
-                    "fecha_inicio": fecha_inicio.isoformat(),
-                    "fecha_fin":    fecha_fin.isoformat(),
+                    # "fecha_inicio": fecha_inicio.isoformat(),
+                    # "fecha_fin":    fecha_fin.isoformat(),
                 })
 
         return {"ok": True, "datos": results}
@@ -175,6 +175,8 @@ class EdificiosControlador:
         # Recuperacion del historial de consulta para nuevo prompt
         mensajes = []
         mensajes = self.controladorChats.getHistorialMensajesConsumo(session.get('hilo'))
+        print("Mensajes asistente:")
+        print(mensajes)
         # append a mensajes con nuevos mensajes
         nuevoquery = self.preguntarAsistente(self.asistente, mensajes)
         print("Nuevo query: ", nuevoquery)

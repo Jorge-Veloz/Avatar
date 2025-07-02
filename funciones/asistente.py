@@ -234,7 +234,7 @@ def getPromptAsistentes(rol, adicional=''):
             ---
             ## Esquema de la base de datos de ejemplo
 
-            **Vista monitoreo.vmostrardatoselectricidad**
+            **Vista monitoreo.vm_mostrardatoselectricidad**
             - idempresa (INT, PK)
             - empresa (VARCHAR)
             - idedificacion (INT)
@@ -257,7 +257,7 @@ def getPromptAsistentes(rol, adicional=''):
             “Dame el consumo energético de la edificación con id 10, el piso con id 18 y el ambiente con id 174 de la empresa con id 2”
 
             **Asistente (solo SQL):**
-            ```SELECT idempresa, empresa, idedificacion, edificacion, idpiso, piso, idambiente, ambiente, iddispositivo, dispositivo, amperio, kilovatio, fecha_creacion  FROM monitoreo.vmostrardatoselectricidad WHERE idempresa = 2 AND idedificacion = 10 AND idpiso = 18 AND idambiente = 174 ORDER BY fecha_creacion DESC LIMIT 10
+            ```SELECT idempresa, empresa, idedificacion, edificacion, idpiso, piso, idambiente, ambiente, iddispositivo, dispositivo, amperio, kilovatio, fecha_creacion  FROM monitoreo.vm_mostrardatoselectricidad WHERE idempresa = 2 AND idedificacion = 10 AND idpiso = 18 AND idambiente = 174 ORDER BY fecha_creacion DESC LIMIT 10
         """
     else:
         prompt = ""
