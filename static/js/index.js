@@ -424,12 +424,12 @@ const Index = (function () {
   }
 
   function getInfoLugar(data) {
-    console.log(data)
+    console.debug(data)
     if(data.ok){
       let ops = '';
       let params = data.params;
       const edificio = dataEdificios.find(e => e.nombre == params.idEdificio);
-      console.log(edificio)
+      console.debug(edificio)
 
       if(edificio){
         const piso = edificio.pisos.find(p => p.nombre == params.idPiso);
@@ -483,7 +483,7 @@ const Index = (function () {
       if (result.ok) {
         dataEdificios = result.datos;
         let ops = "<option value='' selected disabled>Seleccione el edificio</option>";
-        result.datos.forEach(element => ops += `<option value='${element.id}'>${element.nombre}</option>`);
+        result.datos.forEach(element => ops += `<option value='${element.id}'>${element.edificacion}</option>`);
         $('#combo_edificio').html(ops);
         // llenarModalInfoEdificios();
       } else {

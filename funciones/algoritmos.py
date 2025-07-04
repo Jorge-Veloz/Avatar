@@ -134,7 +134,7 @@ def norm(s: str) -> str:
 
 def fuzzy_lookup(name: str, items: list, key='nombre', threshold=80):
     choices = [norm(item[key]) for item in items]
-    match = process.extractOne(name, choices, scorer=fuzz.partial_ratio)
+    match = process.extractOne(name, choices, scorer=fuzz.QRatio) #.partial_ratio
     if match and match[1] >= threshold:
         return items[choices.index(match[0])]
     return None

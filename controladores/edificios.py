@@ -44,7 +44,7 @@ class EdificiosControlador:
         return fi, ff
         
     def leerJSONEdificios(self):
-        ruta = 'data_edificios.json'
+        ruta = 'data_edificios2.json'
         with open(ruta, 'r', encoding='utf-8') as f:
             return json.load(f)  # data es una lista de dicts
 
@@ -155,15 +155,16 @@ class EdificiosControlador:
         return {"ok": True, "datos": results}
     
     def preguntarAsistente(self, asistente, mensajes):
-        nuevoquery = ""
+        #nuevoquery = ""
         response = self.cliente.chat(
             model = asistente, #self.asistente,
             messages = mensajes,
             stream = False
         )
+        #print(response)
 
-        if ("message" in response) and ("content" in response.message):
-            nuevoquery = response.message.content
+        #if ("message" in response) and ("content" in response.message):
+        nuevoquery = response.message.content
 
         return nuevoquery
     
@@ -174,14 +175,19 @@ class EdificiosControlador:
         #mensajes = [{"role":"system", "content": "Eres un asistente capaz de generar prompts que incluya entidades claves de nombre de edificio, piso y ambiente, ademas del rango de fechas en base a lo que haya mencionado el usuario a lo largo de todo el historial de conversacion. Formato del prompt: 'Dame el consumo energetico del edificio de <nombre_edificio>, piso <nombre_piso>, ambiente <nombre_ambiente>'. Al final de la cadena iran agregadas las fechas mencionadas por el usuario (puede haber fecha de inicio y fecha fin, como solo puede haber una de las dos o ninguna). Dependiendo si no se ha mencionado alguno de estos parametros, no se incluiran dentro del prompt, mas el formato debe mantenerse. En el caso de que no se mencionen las fechas a lo largo del historial, no se añadira nada referente al prompt. No menciones nada mas adicional a esto"}]
         # Recuperacion del historial de consulta para nuevo prompt
         mensajes = []
-        mensajes = self.controladorChats.getHistorialMensajesConsumo(session.get('hilo'))
+        hmensajes = self.controladorChats.getHistorialMensajesConsumo(session.get('hilo'))
         print("Mensajes asistente:")
+        
+        mensajes.append(hmensajes[0])  # El primer mensaje es el del usuario
+        mensajes.append(hmensajes[-1]) # El ultimo mensaje es el del asistente
         print(mensajes)
         # append a mensajes con nuevos mensajes
         nuevoquery = self.preguntarAsistente(self.asistente, mensajes)
         print("Nuevo query: ", nuevoquery)
 
         info = self.getInfoLugar(nuevoquery)
+        print("Info obtenida:")
+        print(info)
         datos = None
 
         if info['ok']:
@@ -189,22 +195,24 @@ class EdificiosControlador:
             prompt_traduccion = getPromptAsistentes('traduccion_entidades', params)
             mensajeTraduccion = [{'role': 'system', 'content': prompt_traduccion}, {'role': 'user', 'content': nuevoquery}]
             respuestaTraduccion = self.preguntarAsistente(self.asistente, mensajeTraduccion)
+            print("Respuesta de traducción:")
             print(respuestaTraduccion)
 
             prompt_sql = getPromptAsistentes('codigo_sql')
             mensajeSQL = [{'role': 'system', 'content': prompt_sql}, {'role': 'user', 'content': respuestaTraduccion}]
-            respuestaSQL = self.preguntarAsistente(self.asistente, mensajeSQL)
-            print(respuestaSQL)
+            respuestaSQL = self.preguntarAsistente(self.asistente, mensajeSQL) #pensabamos usar codellama, pero mistral da mejores resultados
 
             #datos = self.modelo.getConsumoEdificiosAsis(params['edificio']['id'], params['piso']['id'], params['ambiente']['id'], '2025-04-01', '2025-04-30')
-            if '\n' in respuestaSQL: respuestaSQL = respuestaSQL.replace('\n', '')
+            print("Consulta SQL generada:")
+            print(respuestaSQL)
+            respuestaSQL = respuestaSQL.replace('```', '').replace('\n',' ').strip()
 
             datos = self.modelo.getConsumoEdificiosAsisSQL(respuestaSQL)
             if datos['res']:
                 print("\nDatos de consulta:")
                 print(datos)
                 datos['data']['params'] = {'idEdificio': params['edificio']['nombre'], 'idPiso': params['piso']['nombre'], 'idAmbiente': params['ambiente']['nombre'], 'fechaInicio': '2025-04-01', 'fechaFin': '2025-04-30'}
-                session['memoria']['consumo'] = datos['data']['params']
+                #session['memoria']['consumo'] = datos['data']['params']
                 return { "success": True, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Es importante que no menciones los identificadores al usuario. Dile al usuario que necesitas saber si habra algun evento especial la siguiente semana, ya que requieres saber ese dato para poder realizar una predicción del consumo energético de la siguiente semana.", "info": datos['data']}
             else:
                 return { "success": True, "reason": "No hay datos de consumo energetico asociados a los parametros especificados.", "info": None}

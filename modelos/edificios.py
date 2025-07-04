@@ -8,9 +8,28 @@ class EdificiosModelo:
         self.db = PostgresDB(app, os.getenv("PG_DBSB"))
 
     def getEdificios(self):
+        resultado = {
+            'ok': True,
+            'datos': None,
+            'observacion': None
+        }
+        sql = """
+            SELECT id, idempresa, empresa, edificacion, (
+                SELECT json_agg(json_build_object(
+                    'id', X.id,
+                    'nombre',X.piso,
+                    'ambientes', (SELECT json_agg(json_build_object(
+                        'id', Y.id,
+                        'nombre',Y.ambiente,
+                        'tipoAmbiente',Y.tipo_ambiente
+                    ) ORDER BY id ASC) FROM administracion.vmostrarambientes Y WHERE Y.idpiso = X.id AND Y.estado)
+                ) ORDER BY id ASC) FROM administracion.vmostrarpisos X WHERE X.idedificacion = A.id AND X.estado
+            ) AS pisos FROM administracion.vmostraredificaciones AS A WHERE idempresa = 2 AND estado ORDER BY id DESC
+        """
         try:
-            respuesta = requests.get(self.API_DB+'/edificios')
-            return {"res": 1, "data": respuesta.json()}
+            #respuesta = requests.get(self.API_DB+'/edificios')
+            resultado['datos'] = self.db.consultarDatos(sql)
+            return {"res": 1, "data": resultado}
         except Exception as e:
             return {"res": 0, "data": str(e)}
     
@@ -33,7 +52,7 @@ class EdificiosModelo:
         print(sql)
         try:
             datos = self.db.consultarDatos(sql)
-            return {"res": 1, "data": datos}
+            return {"res": 1, "data": {'ok':True, 'datos':datos}}
         except Exception as e:
             print("Error al consultar:")
             print(e)

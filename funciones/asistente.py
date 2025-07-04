@@ -200,25 +200,25 @@ def getPromptAsistentes(rol, adicional=''):
         prompt = f"""
             Eres un asistente que convierte los nombres de edificio, piso y ambiente en su id dentro de la peticion del usuario.
             Sigue estas indicaciones:
-
+            
             1. **Lee** la petición del usuario y reemplaza **solo** el nombre por su identificador.
             2. No agregues ni elimines nada de la peticion del usuario.
             3. Para el reemplazo de los nombres te guiaras con el diccionario de entidades que te proporcionare.
-
+            
             ---
             ## Diccionario de Entidades
-
+            
             {adicional}
-
+            
             ---
-
+            
             ## Ejemplo de interacción:
-
+            
             **Usuario:**
             “Dame el consumo energetico del edificio de humanistica, piso planta baja, ambiente centro de datos”
-
+            
             **Asistente:**
-            "Dame el consumo energetico del edificio 335d5a5a5ba8792862257b449b6dc96e, piso 96ddd4fd96e2ca43cb2b7663010c9840, ambiente b70b36178dc3ccac6a836521a27d5204"
+            "Dame el consumo energetico del edificio 10, piso 18, ambiente 174"
         """
     elif rol == 'codigo_sql':
         prompt = f"""
@@ -230,11 +230,14 @@ def getPromptAsistentes(rol, adicional=''):
             3. Adáptate al dialecto SQL estándar (compatible con MySQL/PostgreSQL).
             4. Usa nombres de columnas y tablas exactamente como aparecen en el esquema.
             5. Ordename siempre por fecha de creación de forma descendente y limita los resultados a 10
+            6. En el WHERE del SQL siempre estaran: idempresa, idedificacion, idpiso e idambiente. Por lo que estos parametros son obligatorios
+            7. El idempresa siempre será 2
+            8. Agrega siempre un punto y coma (;) al final de la cadena SQL
 
             ---
             ## Esquema de la base de datos de ejemplo
 
-            **Vista monitoreo.vm_mostrardatoselectricidad**
+            **Vista monitoreo.vm_vmostrardatoselectricidad**
             - idempresa (INT, PK)
             - empresa (VARCHAR)
             - idedificacion (INT)
@@ -257,7 +260,7 @@ def getPromptAsistentes(rol, adicional=''):
             “Dame el consumo energético de la edificación con id 10, el piso con id 18 y el ambiente con id 174 de la empresa con id 2”
 
             **Asistente (solo SQL):**
-            ```SELECT idempresa, empresa, idedificacion, edificacion, idpiso, piso, idambiente, ambiente, iddispositivo, dispositivo, amperio, kilovatio, fecha_creacion  FROM monitoreo.vm_mostrardatoselectricidad WHERE idempresa = 2 AND idedificacion = 10 AND idpiso = 18 AND idambiente = 174 ORDER BY fecha_creacion DESC LIMIT 10
+            ```WITH agrupados AS (SELECT DATE(fecha_creacion) AS fecha, SUM(amperio) AS total_amperio, SUM(kilovatio) AS total_kilovatio FROM monitoreo.vm_vmostrardatoselectricidad WHERE idempresa = 2 AND idedificacion = 10 AND idpiso = 18 AND idambiente = 174 AND DATE(fecha_creacion) >= '2025-06-01' AND DATE(fecha_creacion) <= '2025-06-05' GROUP BY DATE(fecha_creacion)) SELECT g.fecha::TEXT, g.total_amperio, g.total_kilovatio, (SELECT SUM(B.kilovatio) FROM monitoreo.vm_vmostrardatoselectricidad AS B WHERE B.idedificacion = 10 AND DATE(B.fecha_creacion) = g.fecha) AS total_kilovatio_edificio FROM agrupados g ORDER BY g.fecha;
         """
     else:
         prompt = ""
