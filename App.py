@@ -236,23 +236,15 @@ def getRespuesta():
         text = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
     print(text)
 
-    mensajeAsistente = {"role":"user", "content": text}
-    datos = procesamientoConversacion(text)
+    #mensajeAsistente = {"role":"user", "content": text}
+    respuesta = procesamientoConversacion(text)
 
-    mensajesAsis = []
-    mensajesAsis.append(mensajeAsistente)
-    if datos: mensajesAsis.append(datos)
+    # mensajesAsis = []
+    # mensajesAsis.append(mensajeAsistente)
+    # if datos: mensajesAsis.append(datos)
     
-    respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajesAsis)
-    #session['contenido'] = []
-    #resultado = procesamientoConversacion(respuesta['datos'])
+    #respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajesAsis)
     
-    # With API
-    # response1 = requests.post(
-    #     url=os.environ.get("RUTA_VOZ")+'/texto_voz',
-    #     data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')}
-    # )
-
     resultado = {
         'ok': True,
         'observacion': None,
@@ -301,9 +293,16 @@ def procesamientoConversacion(texto):
         respuesta = funcionIA(texto)
         if respuesta['info']:
             session['contenido'].append({"nombre": intencion, "valor": respuesta['info']})
-        return {"role": "user", "content": respuesta['reason']}
-    else:
-        return None
+    #    return {"role": "user", "content": respuesta['reason']}
+    #else:
+    #    return None
+    
+    mensajeAsistente = {"role": "user", "content": texto}
+    mensajesAsis = [mensajeAsistente]
+    #if datos: mensajesAsis.append(datos)
+    
+    respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajesAsis, intencion)
+    return respuesta
         
 
 def procesamientoConversacionModelo(respuesta):

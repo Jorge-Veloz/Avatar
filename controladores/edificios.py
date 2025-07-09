@@ -175,11 +175,18 @@ class EdificiosControlador:
         #mensajes = [{"role":"system", "content": "Eres un asistente capaz de generar prompts que incluya entidades claves de nombre de edificio, piso y ambiente, ademas del rango de fechas en base a lo que haya mencionado el usuario a lo largo de todo el historial de conversacion. Formato del prompt: 'Dame el consumo energetico del edificio de <nombre_edificio>, piso <nombre_piso>, ambiente <nombre_ambiente>'. Al final de la cadena iran agregadas las fechas mencionadas por el usuario (puede haber fecha de inicio y fecha fin, como solo puede haber una de las dos o ninguna). Dependiendo si no se ha mencionado alguno de estos parametros, no se incluiran dentro del prompt, mas el formato debe mantenerse. En el caso de que no se mencionen las fechas a lo largo del historial, no se añadira nada referente al prompt. No menciones nada mas adicional a esto"}]
         # Recuperacion del historial de consulta para nuevo prompt
         mensajes = []
-        hmensajes = self.controladorChats.getHistorialMensajesConsumo(session.get('hilo'))
+        #hmensajes = self.controladorChats.getHistorialMensajesConsumo(session.get('hilo'))
         print("Mensajes asistente:")
         
+        """
         mensajes.append(hmensajes[0])  # El primer mensaje es el del usuario
         mensajes.append(hmensajes[-1]) # El ultimo mensaje es el del asistente
+        """
+
+        mensajes = [
+            {'role': 'system', 'content': getPromptAsistentes('recordar')},
+            mensaje
+        ]
         print(mensajes)
         # append a mensajes con nuevos mensajes
         nuevoquery = self.preguntarAsistente(self.asistente, mensajes)

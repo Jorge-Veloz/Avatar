@@ -36,21 +36,21 @@ class AsistenteControlador():
     def getListaMensajes(self, hilo):
         return self.controladorChats.getListaMensajes(hilo)
     
-    def getRespuesta(self, hilo, mensaje):
+    def getRespuesta(self, hilo, mensaje, intencion="pregunta_respuesta_general"):
         res = self.controladorChats.enviarMensaje(hilo, mensaje)
         if res['ok']:
             historialMsgs = self.controladorChats.getHistorialMensajes(hilo)
 
-            resultado = self.modelo.getRespuesta(historialMsgs)
-            respuesta_msg = resultado['respuesta_msg']
+            resultado = self.modelo.getRespuesta(historialMsgs, intencion)
+            respuesta_msg = resultado
             #funciones = resultado['asis_funciones']
             
             res = ""
-            if respuesta_msg and respuesta_msg.content:
-                mensajeLimpio = self.eliminarPensamiento(dict(respuesta_msg))
+            if respuesta_msg:
+                mensajeLimpio = self.eliminarPensamiento(respuesta_msg)
                 #session['hilo']['mensajes'].append(dict(respuesta_msg))
                 self.controladorChats.enviarMensaje(hilo, [mensajeLimpio])
-                res = respuesta_msg.content
+                res = respuesta_msg
             
             """if funciones:
                 obj_funciones = []
@@ -70,8 +70,8 @@ class AsistenteControlador():
                     })
                 res["asis_funciones"] = obj_funciones"""
             
-            print("RESpuses aflsakfs")
-            print(respuesta_msg)
+            print("Respuesta del asistente:")
+            print(res)
             if (res != ""):
                 return {
                     "ok": True,
@@ -159,11 +159,11 @@ class AsistenteControlador():
     def eliminarPensamiento(self, mensaje):
         #message_content = messages[0].content[0].text
         cleaned = ''
-        if '<think>' in mensaje['content']:
-            cleaned = re.sub(r'<think>.*?</think>', '', mensaje['content'], flags=re.DOTALL)
+        if '<think>' in mensaje:
+            cleaned = re.sub(r'<think>.*?</think>', '', mensaje, flags=re.DOTALL)
         else:
-            cleaned = mensaje['content']
-        mensajeC = {'role': mensaje['role'], 'content': cleaned}
+            cleaned = mensaje
+        mensajeC = {'role': 'assistant', 'content': cleaned}
         return mensajeC
     
     def limpiarMensajes(self, message_content):

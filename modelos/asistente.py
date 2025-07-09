@@ -1,7 +1,7 @@
 #from openai import OpenAI
 from ollama import Client
 #from flask import session
-from funciones.asistente import getFuncionesAsistente
+from funciones.asistente import getFuncionesAsistente, getPromptAsistentes
 import os
 import random
 import string
@@ -96,76 +96,39 @@ class AsistenteModelo():
             #ejecucion = self.run
             return [self.run, None]
     
-    def getRespuesta(self, mensajes):
+    def getRespuesta(self, mensajes, intencion="pregunta_respuesta_general"):
         #print(list(session.get('hilo')['mensajes']))
-        response = self.cliente.chat(
-            model = self.asistente, #self.asistente,
-            #messages = list(session.get('hilo')['mensajes']),
-            messages = mensajes,
-            stream = False
-        )
-        """
-        tools = [{
-                "type": "function",
-                "function": {
-                    "name": "get_parametros_edificio_piso_ambiente_fechas",
-                    "description": "Solo cuando el usuario te pida el consumo energetico del edificio, extraeras el nombre del edificio, del piso, del ambiente que te mencione el usuario, la fecha de inicio y la fecha de fin del rango.",
-                    "strict": False,
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "edificio": {
-                                "type": "string",
-                                "description": "Nombre del edificio"
-                            }, 
-                            "piso": {
-                                "type": "string",
-                                "description": "Nombre del piso"
-                            }, 
-                            "ambiente": {
-                                "type": "string",
-                                "description": "Nombre del ambiente"
-                            }, 
-                            "fechaIni": {
-                                "type": "string",
-                                "description": "La fecha de inicio de la consulta en formato yyyy-mm-dd"
-                            }, 
-                            "fechaFin": {
-                                "type": "string",
-                                "description": "La fecha de fin de la consulta en formato yyyy-mm-dd"
-                            }, 
-                        },
-                        "required": ["edificio", "piso", "ambiente", "fechaIni", "fechaFin"]
-                    }
-                }
-            }, {
-                "type": "function",
-                "function": {
-                    "name": "get_recomendaciones",
-                    "description": "Cuando el usuario pida recomendaciones para optimizar el consumo energetico, devolverás tus recomendaciones.",
-                    "strict": False,
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "recomendaciones": {
-                                "type": "string",
-                                "description": "Devolverás en texto las recomendaciones de optimizacion de consumo energetico."
-                            }
-                        },
-                        "required": ["recomendaciones"]
-                    }
-                }
-            }]
-        """
 
-        x = {
-            'respuesta': response,
-            'respuesta_msg': response.message if response and response.message else None,
-            #'asis_funciones': response.message.tool_calls if response and response.message.tool_calls else None
-        }
+        respuesta = None
+        if intencion == "pregunta_respuesta_general":
+            response = self.cliente.chat(
+                model = self.asistente, #self.asistente,
+                #messages = list(session.get('hilo')['mensajes']),
+                messages = mensajes,
+                stream = False
+            )
+            respuesta = response.message.content
+        else:
+            parametros = [item for item in session.get('contenido') if item["nombre"] == intencion]
+            prompt = getPromptAsistentes(intencion, parametros[-1]['valor'])
+            print("Prompt enviado:")
+            print(prompt)
+            response = self.cliente.generate(
+                model = self.asistente, #self.asistente,
+                prompt = prompt,
+                stream = False
+            )
+            respuesta = response.response
         print("Respuesta obtenida:")
-        print(x)
-        return x
+        print(respuesta)
+        # x = {
+        #     'respuesta': response,
+        #     'respuesta_msg': response.message if response and response.message else None,
+        #     #'asis_funciones': response.message.tool_calls if response and response.message.tool_calls else None
+        # }
+        # print("Respuesta obtenida:")
+        # print(x)
+        return respuesta
     
     def getRespuestaGPT(self, threadId, mensaje):
         message = self.client.beta.threads.messages.create(
