@@ -1,6 +1,6 @@
 #from openai import OpenAI
 from ollama import Client
-#from flask import session
+from flask import session
 from funciones.asistente import getFuncionesAsistente, getPromptAsistentes
 import os
 import random
@@ -110,6 +110,8 @@ class AsistenteModelo():
             respuesta = response.message.content
         else:
             parametros = [item for item in session.get('contenido') if item["nombre"] == intencion]
+            print("Parametros de contenido en sesion:")
+            print(parametros)
             prompt = getPromptAsistentes(intencion, parametros[-1]['valor'])
             print("Prompt enviado:")
             print(prompt)
