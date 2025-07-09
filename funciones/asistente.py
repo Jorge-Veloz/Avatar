@@ -264,31 +264,25 @@ def getPromptAsistentes(rol, adicional=None):
         """
     elif rol == 'recordar':
         prompt = f"""
-            Eres un asistente experto en generar prompts con el siguiente **formato obligatorio y exacto:**
+            Eres un asistente experto en generar una sola línea de consulta energética, combinando únicamente información que el usuario haya mencionado a lo largo de toda la conversación.
 
-            **Formato:**
-
+            Formato obligatorio:
             Dame el consumo energetico del edificio <nombre_edificio>, piso <nombre_piso>, ambiente <nombre_ambiente> | <fechas>
 
-            ⸻
+            Reglas:
+            1. Usa solo los datos que el usuario haya mencionado. No completes, infieras ni inventes nada.
+            2. Si la información está incompleta, responde con una cadena incompleta, manteniendo el formato.
+            3. Convierte a números romanos solo los números en el nombre del edificio (ej: Central 2 → Central II).
+            4. No encierres los nombres en comillas.
+            5. Respeta exactamente la puntuación: comas entre secciones y línea vertical `|` antes de la fecha.
+            6. Si no hay fechas, deja la línea vertical y el espacio en blanco después. Ejemplo: `|`
+            7. No agregues ningún comentario ni explicación. Solo responde con la cadena en el formato solicitado.
+            8. No agregues numeros romanos si no se especifica en los edificios.
 
-            **Instrucciones estrictas:**
-                1.	**Debes respetar al 100% este formato.** No omitas comas ni la línea vertical | antes de la fecha.
-                2.	Si no se menciona fecha, **deja el prompt sin fechas, pero la línea vertical debe mantenerse.**
-                3.	Si solo se menciona fecha de inicio o fecha de fin, colócala como se haya dicho. Si no se menciona ninguna, no escribas nada después de la línea vertical.
-                4.	No agregues ningún texto adicional, justificación ni explicación. Solo responde con el prompt en el formato exacto.
-                5.	No encierres en comillas los nombres de edificio, piso ni ambiente.
-                6.	Si el nombre del edificio incluye un número, **solo convierte ese número a romano.** Si no hay número, no agregues nada.
-                7.	**Verifica cuidadosamente** que la respuesta tenga las comas, la línea vertical y el orden correcto, exactamente como el formato lo requiere.
-                8.	**No cambies los números de día ni los años de las fechas.** Los años no se convierten a números romanos.
-                9.	Genera únicamente la respuesta solicitada. No agregues saludos ni comentarios.
-
-            ⸻
-
-            **Ejemplo**:
-
-            Usuario: Quiero saber el consumo del edificio Central 2, piso 3, ambiente Auditorio entre el 1 de julio y el 7 de julio.
-            Asistente: Dame el consumo energetico del edificio Central II, piso 3, ambiente Auditorio | 1 de julio al 7 de julio
+            Ejemplos:
+            - Solo ambiente: Dame el consumo energetico del ambiente Centro de Datos |
+            - Ambiente + piso: Dame el consumo energetico del piso Planta baja, ambiente Centro de Datos |
+            - Completo con fechas: Dame el consumo energetico del edificio Humanistica, piso Planta baja, ambiente Centro de Datos | 1 al 5 de junio del 2025
         """
     elif rol == 'solicita_datos_consumo':
         datosConsumoStr = "\n".join([f"{dc['fecha']} | {adicional['params']['idAmbiente']} | {dc['kilovatio']}" for dc in adicional['datos']['datos']]) ## Cambiar el ambiente por el que se necesite
