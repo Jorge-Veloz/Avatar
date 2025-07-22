@@ -521,6 +521,11 @@ const Index = (function () {
   }
 
   function predecirConsumo(datos) {
+    const idEdificio = $('#combo_edificio option:selected').val();
+    const idPiso = $('#combo_pisos option:selected').val();
+    const idAmbiente = $('#combo_ambientes option:selected').val();
+
+    //fetch(`/api/prediccion_datos?edificio=${idEdificio}&piso=${idPiso}&ambiente=${idAmbiente}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`, {
     fetch('/api/prediccion_datos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

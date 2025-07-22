@@ -62,17 +62,17 @@ class EdificiosModelo:
     def construirObjetoConsumo(self, datos):
         consumoAmbiente = {
             'amperio': sum(d['total_amperio'] for d in datos if d['total_amperio']),
-            'kilovatio': sum(d['total_kilovatio'] for d in datos if d['total_amperio'])
+            'kilovatio': sum(d['total_kilovatio'] for d in datos if d['total_kilovatio'])
         }
 
-        consumoEdificio = sum(d['total_kilovatio_edificio'] for d in datos if d['total_amperio'])
+        consumoEdificio = sum(d['total_kilovatio_edificio'] for d in datos if d['total_kilovatio_edificio'])
 
         datosConsumo = [
             {
-                'amperio': d['total_amperio'] if d['total_amperio'] else 0.00,
-                'kilovatio': d['total_kilovatio'] if d['total_kilovatio'] else 0.00,
+                'amperio': d['total_amperio'] or 0.00,
+                'kilovatio': d['total_kilovatio'] or 0.00,
                 'fecha': d['fecha'],
-                'totalKilovatioEdificio': d['total_kilovatio_edificio'] if d['total_kilovatio_edificio'] else 0.00,
+                'totalKilovatioEdificio': d['total_kilovatio_edificio'] or 0.00,
             } for d in datos
         ]
 
@@ -83,19 +83,43 @@ class EdificiosModelo:
         }
 
         return objetoConsumo
-        
-    def getConsumoEdificios(self, edificio, piso, ambiente, fechaInicio, fechaFin):
+    
+    def consumoSemana(self, edificio, piso, ambiente, fechaInicio, fechaFin):
         print("Envio de datos:")
         print(edificio, piso, ambiente, fechaInicio,fechaFin)
+        sql = f""
         try:
-            respuesta = requests.get(self.API_DB + f'/datos?idEdificacion={edificio}&idPiso={piso}&idAmbiente={ambiente}&fechaInicio={fechaInicio}&fechaFin={fechaFin}')
-            print("Salida de datos:")
-            print(respuesta.json())
-            return {"res": 1, "data": respuesta.json()}
+            datos = self.db.consultarDatos(sql)
+            return {"res": 1, "data": {'ok':True, 'datos':datos}}
         except Exception as e:
             print("Error al consultar:")
             print(e)
             return {"res": 0, "data": str(e)}
+
+    def getConsumoEdificios(self, edificio, piso, ambiente, fechaInicio, fechaFin):
+        print("Envio de datos:")
+        print(edificio, piso, ambiente, fechaInicio,fechaFin)
+        sql = f"WITH agrupados AS (SELECT DATE(fecha_creacion) AS fecha, SUM(amperio) AS total_amperio, SUM(kilovatio) AS total_kilovatio FROM monitoreo.vmostrardatoselectricidad WHERE idempresa = 2 AND idedificacion = {edificio} AND idpiso = {piso} AND idambiente = {ambiente} AND DATE(fecha_creacion) >= '{fechaInicio}' AND DATE(fecha_creacion) <= '{fechaFin}' GROUP BY DATE(fecha_creacion)) SELECT g.fecha::TEXT, g.total_amperio, g.total_kilovatio, (SELECT SUM(B.kilovatio) FROM monitoreo.vmostrardatoselectricidad AS B WHERE B.idedificacion = {edificio} AND DATE(B.fecha_creacion) = g.fecha) AS total_kilovatio_edificio FROM agrupados g ORDER BY g.fecha ASC;"
+        try:
+            datos = self.db.consultarDatos(sql)
+            return {"res": 1, "data": {'ok':True, 'datos':self.construirObjetoConsumo(datos)}}
+        except Exception as e:
+            print("Error al consultar:")
+            print(e)
+            return {"res": 0, "data": str(e)}
+        
+    # def getConsumoEdificios(self, edificio, piso, ambiente, fechaInicio, fechaFin):
+    #     print("Envio de datos:")
+    #     print(edificio, piso, ambiente, fechaInicio,fechaFin)
+    #     try:
+    #         respuesta = requests.get(self.API_DB + f'/datos?idEdificacion={edificio}&idPiso={piso}&idAmbiente={ambiente}&fechaInicio={fechaInicio}&fechaFin={fechaFin}')
+    #         print("Salida de datos:")
+    #         print(respuesta.json())
+    #         return {"res": 1, "data": respuesta.json()}
+    #     except Exception as e:
+    #         print("Error al consultar:")
+    #         print(e)
+    #         return {"res": 0, "data": str(e)}
         
     def validarEdificio(self, edificio):
         sql = f"SELECT ID FROM edificio WHERE LOWER(Nombre) = '{edificio}'"

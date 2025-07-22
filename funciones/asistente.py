@@ -204,7 +204,8 @@ def getPromptAsistentes(rol, adicional=None):
             1. **Lee** la petición del usuario y reemplaza **solo** el nombre por su identificador.
             2. No agregues ni elimines nada de la peticion del usuario.
             3. Para el reemplazo de los nombres te guiaras con el diccionario de entidades que te proporcionare.
-            
+            4. Deja las fechas tal como estan.
+
             ---
             ## Diccionario de Entidades
             
@@ -215,74 +216,80 @@ def getPromptAsistentes(rol, adicional=None):
             ## Ejemplo de interacción:
             
             **Usuario:**
-            “Dame el consumo energetico del edificio de humanistica, piso planta baja, ambiente centro de datos”
+            “Dame el consumo energetico del edificio de humanistica, piso planta baja, ambiente centro de datos | inicio: 2025-08-01, fin: 2025-08-15”
             
             **Asistente:**
-            "Dame el consumo energetico del edificio 10, piso 18, ambiente 174"
+            "Dame el consumo energetico del edificio 10, piso 18, ambiente 174 | inicio: 2025-08-01, fin: 2025-08-15"
         """
     elif rol == 'codigo_sql':
         prompt = f"""
-            Eres un asistente que traduce peticiones en lenguaje natural a consultas SQL válidas.
-            Sigue estas indicaciones:
+            Eres un asistente experto en SQL. Tu única tarea es generar una consulta SQL precisa basándote en la siguiente estructura fija.
 
-            1. **Lee** la petición del usuario y genera **solo** la sentencia SQL correspondiente.
-            2. **No** incluyas explicaciones, solo el SQL.
-            3. Adáptate al dialecto SQL estándar (compatible con MySQL/PostgreSQL).
-            4. Usa nombres de columnas y tablas exactamente como aparecen en el esquema.
-            5. Ordename siempre por fecha de creación de forma descendente y limita los resultados a 10
-            6. En el WHERE del SQL siempre estaran: idempresa, idedificacion, idpiso e idambiente. Por lo que estos parametros son obligatorios
-            7. El idempresa siempre será 2
-            8. Agrega siempre un punto y coma (;) al final de la cadena SQL
-
-            ---
-            ## Esquema de la base de datos de ejemplo
-
-            **Vista monitoreo.vm_vmostrardatoselectricidad**
-            - idempresa (INT, PK)
-            - empresa (VARCHAR)
-            - idedificacion (INT)
-            - edificacion (VARCHAR)
-            - idpiso (INT)
-            - piso (VARCHAR)
-            - idambiente (INT)
-            - ambiente (VARCHAR)
-            - iddispositivo (INT)
-            - dispositivo (VARCHAR)
-            - amperio (DECIMAL)
-            - kilovatio (DECIMAL)
-            - fecha_creacion (DATE)
-
-            ---
-
-            ## Ejemplo de interacción
-
-            **Usuario:**
-            “Dame el consumo energético de la edificación con id 10, el piso con id 18 y el ambiente con id 174 de la empresa con id 2”
-
-            **Asistente (solo SQL):**
-            ```WITH agrupados AS (SELECT DATE(fecha_creacion) AS fecha, SUM(amperio) AS total_amperio, SUM(kilovatio) AS total_kilovatio FROM monitoreo.vm_vmostrardatoselectricidad WHERE idempresa = 2 AND idedificacion = 10 AND idpiso = 18 AND idambiente = 174 AND DATE(fecha_creacion) >= '2025-06-01' AND DATE(fecha_creacion) <= '2025-06-05' GROUP BY DATE(fecha_creacion)) SELECT g.fecha::TEXT, g.total_amperio, g.total_kilovatio, (SELECT SUM(B.kilovatio) FROM monitoreo.vm_vmostrardatoselectricidad AS B WHERE B.idedificacion = 10 AND DATE(B.fecha_creacion) = g.fecha) AS total_kilovatio_edificio FROM agrupados g ORDER BY g.fecha;
+            Ten en cuenta las fechas de consulta, entiendelas bien y agregalas a la plantilla de consulta (si te solicitan un rango de fechas, interpretalas y colocalas en fecha_inicio y fecha_fin en la plantilla de consulta)
+            
+            Usa esta plantilla de consulta:
+            
+            WITH agrupados AS (
+            SELECT DATE(fecha_creacion) AS fecha,
+                    SUM(amperio) AS total_amperio,
+                    SUM(kilovatio) AS total_kilovatio
+            FROM monitoreo.vmostrardatoselectricidad
+            WHERE idempresa = 2
+                AND idedificacion = <idedificacion>
+                AND idpiso = <idpiso>
+                AND idambiente = <idambiente>
+                AND DATE(fecha_creacion) >= '<fecha_inicio>'
+                AND DATE(fecha_creacion) <= '<fecha_fin>'
+            GROUP BY DATE(fecha_creacion)
+            )
+            SELECT g.fecha::TEXT,
+                g.total_amperio,
+                g.total_kilovatio,
+                (SELECT SUM(B.kilovatio)
+                    FROM monitoreo.vmostrardatoselectricidad AS B
+                    WHERE B.idedificacion = <idedificacion>
+                    AND DATE(B.fecha_creacion) = g.fecha) AS total_kilovatio_edificio
+            FROM agrupados g
+            ORDER BY g.fecha ASC;
+            
+            Dada esta petición del usuario:
+            "{adicional}"
+            
+            Extrae los valores de los identificadores y las fechas, reemplázalos en la plantilla y genera solamente el SQL resultante, sin explicaciones.
         """
     elif rol == 'recordar':
         prompt = f"""
-            Eres un asistente experto en generar una sola línea de consulta energética, combinando únicamente información que el usuario haya mencionado a lo largo de toda la conversación.
+            Eres un asistente experto en generar prompts con el siguiente **formato obligatorio y exacto:**
 
-            Formato obligatorio:
-            Dame el consumo energetico del edificio <nombre_edificio>, piso <nombre_piso>, ambiente <nombre_ambiente> | <fechas>
+            **Formato:**
 
-            Reglas:
-            1. Usa solo los datos que el usuario haya mencionado. No completes, infieras ni inventes nada.
-            2. Si la información está incompleta, responde con una cadena incompleta, manteniendo el formato.
-            3. Convierte a números romanos solo los números en el nombre del edificio (ej: Central 2 → Central II).
-            4. No encierres los nombres en comillas.
-            5. Respeta exactamente la puntuación: comas entre secciones y línea vertical `|` antes de la fecha.
-            6. Si no hay fechas, deja la línea vertical y el espacio en blanco después. Ejemplo: `|`
-            7. No agregues ningún comentario ni explicación. Solo responde con la cadena en el formato solicitado.
-            8. No agregues numeros romanos si no se especifica en los edificios.
+            Dame el consumo energetico del edificio <nombre_edificio>, piso <nombre_piso>, ambiente <nombre_ambiente> | inicio: <YYYY-MM-DD>, fin: <YYYY-MM-DD>
 
-            Ejemplos:
-            - Solo ambiente: Dame el consumo energetico del ambiente Centro de Datos |
-            - Ambiente + piso: Dame el consumo energetico del piso Planta baja, ambiente Centro de Datos |
-            - Completo con fechas: Dame el consumo energetico del edificio Humanistica, piso Planta baja, ambiente Centro de Datos | 1 al 5 de junio del 2025
+            ⸻
+
+            **Instrucciones estrictas:**
+            1. **Debes respetar al 100% este formato.** No omitas comas ni la línea vertical | antes del bloque de fechas.
+            2. Si no se menciona ninguna fecha, **deja el prompt sin fechas, pero la línea vertical debe mantenerse.**
+            3. Si solo se menciona una fecha (inicio o fin), **usa esa misma fecha para ambos campos: inicio y fin.**
+            4. No agregues ningún texto adicional, justificación ni explicación. Solo responde con el prompt en el formato exacto.
+            5. No encierres en comillas los nombres de edificio, piso ni ambiente.
+            6. Si el nombre del edificio incluye un número, **solo convierte ese número a romano.** Si no hay número, no agregues nada.
+            7. **Verifica cuidadosamente** que la respuesta tenga comas, la línea vertical y el orden correcto, exactamente como el formato lo requiere.
+            8. **Las fechas deben estar en formato ISO** (YYYY-MM-DD) y no deben modificarse si el usuario ya las dice así.
+            9. Genera únicamente la respuesta solicitada. No agregues saludos ni comentarios.
+
+            ⸻
+
+            **Ejemplos**:
+
+            Usuario: Quiero saber el consumo del edificio Central 2, piso 3, ambiente Auditorio entre el 2025-07-01 y el 2025-07-07.  
+            Asistente: Dame el consumo energetico del edificio Central II, piso 3, ambiente Auditorio | inicio: 2025-07-01, fin: 2025-07-07
+
+            Usuario: Quiero saber el consumo del edificio Norte, piso 2, ambiente Laboratorio el 2025-06-10  
+            Asistente: Dame el consumo energetico del edificio Norte, piso 2, ambiente Laboratorio | inicio: 2025-06-10, fin: 2025-06-10
+
+            Usuario: Dame el consumo del edificio Sur 3, piso 1, ambiente Sala de máquinas  
+            Asistente: Dame el consumo energetico del edificio Sur III, piso 1, ambiente Sala de máquinas |
         """
     elif rol == 'solicita_datos_consumo':
         datosConsumoStr = "\n".join([f"{dc['fecha']} | {adicional['params']['idAmbiente']} | {dc['kilovatio']}" for dc in adicional['datos']['datos']]) ## Cambiar el ambiente por el que se necesite

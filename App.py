@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 import requests
 import random
 import string
+import subprocess
 
 load_dotenv(os.path.join(os.getcwd(), '.env'))
 
@@ -259,7 +260,9 @@ def getRespuesta():
     )
 
     #encoded = response1['datos']['voice_encoded']
-    encoded = response1.json()['datos']['voice_encoded']
+    respuesta_voz = response1.json()
+    
+    encoded = respuesta_voz['datos']['voice_encoded']
     resultado['datos']['audio'] = encoded
 
     return jsonify(resultado)
@@ -278,6 +281,9 @@ def getRespuestaGPT():
     return jsonify(resultado)
 
 def procesamientoConversacion(texto):
+    comando = ["export", "OLLAMA_NUM_GPU=100"]
+    subprocess.run(comando, capture_output=True, text=True)
+    
     session['contenido'] = []
     funciones = {
         'solicita_recomendaciones': controladorEdificios.getRecomendaciones,
@@ -288,18 +294,24 @@ def procesamientoConversacion(texto):
     resultado = detectar_intencion(texto, etiquetas)
     intencion =  'pregunta_respuesta_general' if resultado['intencion'] not in etiquetas else resultado['intencion']
 
+    mensajeAsistente = {"role": "user", "content": texto}
+    mensajesAsis = [mensajeAsistente]
+    
     if intencion != 'pregunta_respuesta_general':
         funcionIA = funciones[intencion]
         respuesta = funcionIA(texto)
         if respuesta['info']:
             session['contenido'].append({"nombre": intencion, "valor": respuesta['info']})
+        else:
+            intencion = 'pregunta_respuesta_general'
+            mensajesAsis.append({"role": "user", "content": respuesta['reason']})
     #    return {"role": "user", "content": respuesta['reason']}
     #else:
     #    return None
     
-    mensajeAsistente = {"role": "user", "content": texto}
-    mensajesAsis = [mensajeAsistente]
+    
     #if datos: mensajesAsis.append(datos)
+
     
     respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajesAsis, intencion)
     return respuesta
@@ -463,9 +475,18 @@ def getEdificiosAmbientes():
 
 @app.post('/api/prediccion_datos')
 def getPrediccion():
+    #datos = request.get_json()
+    
+    """
+    edificio = request.args.get('idEdificacion')
+    piso = request.args.get('idPiso')
+    ambiente = request.args.get('idAmbiente')
+    fechaInicio = request.args.get('fechaInicio')
+    fechaFin = request.args.get('fechaFin')
+    """
+    #datos = controladorEdificios.consumoSemana(edificio, piso, ambiente, fechaInicio, fechaFin)
     datos = request.get_json()
-    #controlador = ConsumoControlador()
-    #return jsonify(controlador.getConsumoFuturo(datos))
+
     respuesta = {
         'observacion': None,
         'ok': True,
@@ -513,5 +534,5 @@ def validarParametros():
     return jsonify({'res': res, 'edificio': d_edificio['ID'], 'ambiente': d_ambiente['Codigo']})
 
 if __name__ == '__main__':
-    app.run(port=3002, debug=True, host='0.0.0.0', ssl_context=(os.environ.get("RUTA_CERT"), os.environ.get("RUTA_CERT_KEY")))
+    app.run(port=3002, debug=False, use_reloader=False, host='0.0.0.0', ssl_context=(os.environ.get("RUTA_CERT"), os.environ.get("RUTA_CERT_KEY")))
 #    app.run(port=3002, debug=True, host='0.0.0.0')

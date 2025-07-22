@@ -14,7 +14,8 @@ class AsistenteModelo():
         # )
         self.cliente = Client(
             host=os.environ.get("RUTA_IA"),
-            headers={'x-some-header': 'some-value'}
+            headers={'x-some-header': 'some-value'},
+            timeout=300
         )
         #self.funciones = getFuncionesAsistente()
         #self.vector_store = self.getVectorDeArchivo('Catalogo edificios pisos y ambientes', ['objeto.json'])

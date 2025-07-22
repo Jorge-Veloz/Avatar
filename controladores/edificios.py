@@ -9,6 +9,7 @@ import re
 from datetime import date
 from ollama import Client
 import os
+import time
 
 class EdificiosControlador:
     def __init__(self, app):
@@ -17,14 +18,17 @@ class EdificiosControlador:
         self.data = self.leerJSONEdificios()
         self.cliente = Client(
             host=os.environ.get("RUTA_IA"),
-            headers={'x-some-header': 'some-value'}
+            headers={'x-some-header': 'some-value'},
+            timeout=300
         )
         self.asistente = os.environ.get("MODELO_IA")
 
         self.regexpr = (
             re.compile(r"edificio\s+(de\s+)*(?P<edificio>[\wáéíóúñ ]+)", re.IGNORECASE),
             re.compile(r"piso\s+(?P<piso>[\wáéíóúñ\d ]+)",       re.IGNORECASE),
-            re.compile(r"ambiente\s+(?P<ambiente>[\wáéíóúñ\-\d ]+)", re.IGNORECASE)
+            re.compile(r"ambiente\s+(?P<ambiente>[\wáéíóúñ\-\d ]+)", re.IGNORECASE),
+            re.compile(r"inicio:?\s+(?P<fechainicio>[\wáéíóúñ\-\d ]+)", re.IGNORECASE),
+            re.compile(r"fin:?\s+(?P<fechafin>[\wáéíóúñ\-\d ]+)", re.IGNORECASE)
         )
 
     
@@ -58,7 +62,7 @@ class EdificiosControlador:
 
     def extract_components(self, query: str):
         comps = {}
-        re_edificio, re_piso, re_ambiente = self.regexpr
+        re_edificio, re_piso, re_ambiente, re_fechainicio, re_fechafin = self.regexpr
 
         m = re_edificio.search(query)
         if m: comps['edificio'] = norm(m.group('edificio'))
@@ -66,6 +70,10 @@ class EdificiosControlador:
         if m: comps['piso']      = norm(m.group('piso'))
         m = re_ambiente.search(query)
         if m: comps['ambiente']  = norm(m.group('ambiente'))
+        m = re_fechainicio.search(query)
+        if m: comps['fechainicio']  = norm(m.group('fechainicio'))
+        m = re_fechafin.search(query)
+        if m: comps['fechafin']  = norm(m.group('fechafin'))
         return comps
     
     def getInfoLugar(self, query):
@@ -80,8 +88,15 @@ class EdificiosControlador:
         if not comps:
             #return {"ok": False, "datos": "No pude extraer edificio, piso ni ambiente de la consulta."}
             return {"ok": False, "datos": "No pudiste reconocer el edificio, piso ni ambiente de la peticion del usuario."}
-
+        
         # Validaciones de contexto
+        #  - Si no menciona fechas → error
+        if 'fechainicio' not in comps and 'fechafin' not in comps:
+            return {
+                "ok": False,
+                "datos": "No se especificaron las fechas para consultar. Dile al usuario que te mencione las fechas que desea consultar."
+            }
+
         #  - Si pide solo piso sin edificio → error
         if 'piso' in comps and 'edificio' not in comps:
             return {
@@ -136,8 +151,8 @@ class EdificiosControlador:
                         "edificio":     {"id": b['id'],   "nombre": b['nombre']},
                         "piso":         {"id": p['id'],   "nombre": p['nombre']},
                         "ambiente":     {"id": a['id'],   "nombre": a['nombre']},
-                        # "fecha_inicio": fecha_inicio.isoformat(),
-                        # "fecha_fin":    fecha_fin.isoformat()
+                        "fecha_inicio": comps['fechainicio'] if 'fechainicio' in comps else None,
+                        "fecha_fin":    comps['fechafin'] if 'fechafin' in comps else None
                     })
             if not results:
                 return {"ok": False, "datos": f"El ambiente '{comps['ambiente']}' solicitado no fue encontrado en el piso solicitado."}
@@ -148,25 +163,40 @@ class EdificiosControlador:
                 results.append({
                     "edificio":     {"id": b['id'],   "nombre": b['nombre']},
                     "piso":         {"id": p['id'],   "nombre": p['nombre']},
-                    # "fecha_inicio": fecha_inicio.isoformat(),
-                    # "fecha_fin":    fecha_fin.isoformat(),
+                    "fecha_inicio": comps['fechainicio'] if 'fechainicio' in comps else None,
+                    "fecha_fin":    comps['fechafin'] if 'fechafin' in comps else None
                 })
 
         return {"ok": True, "datos": results}
     
-    def preguntarAsistente(self, asistente, mensajes):
-        #nuevoquery = ""
-        response = self.cliente.chat(
-            model = asistente, #self.asistente,
-            messages = mensajes,
-            stream = False
-        )
-        #print(response)
+    def preguntarAsistente(self, asistente, mensajes, tipo='chat'):
+        nuevoquery = ""
+        if tipo == 'chat':
+            #nuevoquery = ""
+            response = self.cliente.chat(
+                model = asistente, #self.asistente,
+                messages = mensajes,
+                stream = False
+            )
+            #print(response)
 
-        #if ("message" in response) and ("content" in response.message):
-        nuevoquery = response.message.content
+            #if ("message" in response) and ("content" in response.message):
+            nuevoquery = response.message.content
+        elif tipo == 'generar':
+            #nuevoquery = ""
+            response = self.cliente.generate(
+                model = asistente, #self.asistente,
+                prompt = mensajes,
+                stream = False
+            )
+            #print(response)
 
+            nuevoquery = response.response
         return nuevoquery
+    
+    def consumoSemana(self, edificio=None, piso=None, ambiente=None, fechaInicio=None, fechaFin=None):
+        datos = self.modelo.consumoSemana(edificio, piso, ambiente, fechaInicio, fechaFin)
+        return datos
     
     def consultarConsumo(self, query):
         # Almacenar query al historial de consulta de nuevo prompt para consulta consumo
@@ -174,26 +204,37 @@ class EdificiosControlador:
         self.controladorChats.enviarMensaje(session.get('hilo'), [mensaje], 'consumo')
         #mensajes = [{"role":"system", "content": "Eres un asistente capaz de generar prompts que incluya entidades claves de nombre de edificio, piso y ambiente, ademas del rango de fechas en base a lo que haya mencionado el usuario a lo largo de todo el historial de conversacion. Formato del prompt: 'Dame el consumo energetico del edificio de <nombre_edificio>, piso <nombre_piso>, ambiente <nombre_ambiente>'. Al final de la cadena iran agregadas las fechas mencionadas por el usuario (puede haber fecha de inicio y fecha fin, como solo puede haber una de las dos o ninguna). Dependiendo si no se ha mencionado alguno de estos parametros, no se incluiran dentro del prompt, mas el formato debe mantenerse. En el caso de que no se mencionen las fechas a lo largo del historial, no se añadira nada referente al prompt. No menciones nada mas adicional a esto"}]
         # Recuperacion del historial de consulta para nuevo prompt
-        #mensajes = []
+        mensajes = []
         #hmensajes = self.controladorChats.getHistorialMensajesConsumo(session.get('hilo'))
-        mensajes = self.controladorChats.getHistorialMensajesConsumo(session.get('hilo'))
+        #mensajes = self.controladorChats.getHistorialMensajesConsumo(session.get('hilo'))
         print("Mensajes asistente:")
+        
         """
-        mensajes.append(hmensajes[0])  # El primer mensaje es el del usuario
-        mensajes.append(hmensajes[-1]) # El ultimo mensaje es el del asistente
+        limite = 10
+        if len(hmensajes) > limite:
+            mensajes.append(hmensajes[0])  # El primer mensaje es el del usuario
+            mensajes.append(hmensajes[-limite:]) # El ultimo mensaje es el del asistente
+        else:
+            mensajes = list(hmensajes)
         
-        
+        """
         mensajes = [
             {'role': 'system', 'content': getPromptAsistentes('recordar')},
             mensaje
         ]
-        """
+        
         print(mensajes)
         # append a mensajes con nuevos mensajes
         nuevoquery = self.preguntarAsistente(self.asistente, mensajes)
         print("Nuevo query: ", nuevoquery)
 
+        tiempo_inicio = time.time()
         info = self.getInfoLugar(nuevoquery)
+        tiempo_fin = time.time()
+
+        print(f"Tiempo de ejecución extracción de entidades (Fuzzy Lookup): {tiempo_fin - tiempo_inicio:.2f} segundos")
+        print(f"Resultado de la extracción: {info['datos']}")
+
         print("Info obtenida:")
         print(info)
         datos = None
@@ -206,24 +247,29 @@ class EdificiosControlador:
             print("Respuesta de traducción:")
             print(respuestaTraduccion)
 
-            prompt_sql = getPromptAsistentes('codigo_sql')
-            mensajeSQL = [{'role': 'system', 'content': prompt_sql}, {'role': 'user', 'content': respuestaTraduccion}]
-            respuestaSQL = self.preguntarAsistente(self.asistente, mensajeSQL) #pensabamos usar codellama, pero mistral da mejores resultados
+            prompt_sql = getPromptAsistentes('codigo_sql', respuestaTraduccion)
+            #mensajeSQL = [{'role': 'system', 'content': prompt_sql}, {'role': 'user', 'content': respuestaTraduccion}]
+            respuestaSQL = self.preguntarAsistente(self.asistente, prompt_sql, 'generar') #pensabamos usar codellama, pero mistral da mejores resultados
 
             #datos = self.modelo.getConsumoEdificiosAsis(params['edificio']['id'], params['piso']['id'], params['ambiente']['id'], '2025-04-01', '2025-04-30')
             print("Consulta SQL generada:")
             print(respuestaSQL)
             respuestaSQL = respuestaSQL.replace('```', '').replace('\n',' ').strip()
 
+            tiempo_inicio_sql = time.time()
             datos = self.modelo.getConsumoEdificiosAsisSQL(respuestaSQL)
+            tiempo_fin_sql = time.time()
+            print(f"Consulta SQL: {respuestaSQL}")
+            print(f"Tiempo de ejecución SQL: {tiempo_fin_sql - tiempo_inicio_sql:.2f} segundos")
+
             if datos['res']:
                 print("\nDatos de consulta:")
                 print(datos)
-                datos['data']['params'] = {'idEdificio': params['edificio']['nombre'], 'idPiso': params['piso']['nombre'], 'idAmbiente': params['ambiente']['nombre'], 'fechaInicio': '2025-04-01', 'fechaFin': '2025-04-30'}
+                datos['data']['params'] = {'idEdificio': params['edificio']['nombre'], 'idPiso': params['piso']['nombre'], 'idAmbiente': params['ambiente']['nombre'], 'fechaInicio': params['fecha_inicio'], 'fechaFin': params['fecha_fin']}
                 #session['memoria']['consumo'] = datos['data']['params']
                 return { "success": True, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Es importante que no menciones los identificadores al usuario. Dile al usuario que necesitas saber si habra algun evento especial la siguiente semana, ya que requieres saber ese dato para poder realizar una predicción del consumo energético de la siguiente semana.", "info": datos['data']}
             else:
-                return { "success": True, "reason": "No hay datos de consumo energetico asociados a los parametros especificados.", "info": None}
+                return { "success": False, "reason": "No hay datos de consumo energetico asociados a los parametros especificados.", "info": None}
         else:
             return {"success": False, "reason": info['datos'], "info": None}
 

@@ -6,8 +6,33 @@ from statsmodels.tsa.arima.model import ARIMA
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
 #import json
 #import re
+import time
 from unidecode import unidecode
 from rapidfuzz import process, fuzz
+
+def getPrediccionConsumoAnt1(datos):
+    ## Convertir los datos a un DataFrame
+    df = pd.DataFrame(datos)
+    df = df.rename(columns={'x': 'fecha', 'y': 'kilovatio'}) #Revisar si llegan asi los valores
+    df['fecha'] = pd.to_datetime(df['fecha'])
+    df = df.set_index('fecha')
+    df = df.sort_index()
+    nombres_exogvars = ['totalKilovatioEdificio']
+
+    ## Limpieza de los datos
+    fillnavals = {}
+    for col in df:
+        column = df[col]
+        if col in nombres_exogvars:
+            moda = column.mode()[0]
+            fillnavals[col] = moda
+        else:
+            media = column.mean()
+            fillnavals[col] = media
+            
+    df = df.fillna(fillnavals)
+
+
 
 def getPrediccionConsumo(datos):
     df = pd.DataFrame(datos)
@@ -40,7 +65,7 @@ def getPrediccionConsumo(datos):
     model_fit1 = model1.fit()
 
     # Realizar la predicción para el día siguiente
-    forecast_steps = 30
+    forecast_steps = 7
     forecast = model_fit.forecast(steps=forecast_steps)
     forecast1 = model_fit1.forecast(steps=forecast_steps)
 
@@ -114,16 +139,18 @@ def getPrediccionConsumoAnt(datos):
     # Y que te pregunte si habra un evento especial en la semana
 
 def detectar_intencion(consulta, etiquetas):
+    tiempo_inicio = time.time()
     model_name = "Recognai/bert-base-spanish-wwm-cased-xnli"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
     classifier = pipeline("zero-shot-classification", model=model, tokenizer=tokenizer)
 
     resultado = classifier(consulta, etiquetas, hypothesis_template="Que accion desea realizar el usuario con esta consulta: {}.")
-
+    tiempo_fin = time.time()
+    print(f"Tiempo de ejecución de la intención (BERT): {tiempo_fin - tiempo_inicio:.2f} segundos")
     # Tomamos la etiqueta con mayor score
     mejor_intencion = resultado["labels"][0]
-    print(mejor_intencion)
+    print(f"Resultado de la intención: {mejor_intencion}")
     return {
         "intencion": mejor_intencion,
         "confianza": round(resultado["scores"][0], 3)
