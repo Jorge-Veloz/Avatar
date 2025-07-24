@@ -19,7 +19,6 @@ from dotenv import load_dotenv
 import requests
 import random
 import string
-import subprocess
 
 load_dotenv(os.path.join(os.getcwd(), '.env'))
 
@@ -281,9 +280,6 @@ def getRespuestaGPT():
     return jsonify(resultado)
 
 def procesamientoConversacion(texto):
-    comando = ["export", "OLLAMA_NUM_GPU=100"]
-    subprocess.run(comando, capture_output=True, text=True)
-    
     session['contenido'] = []
     funciones = {
         'solicita_recomendaciones': controladorEdificios.getRecomendaciones,
