@@ -6,6 +6,11 @@ import os
 import random
 import string
 
+from typing import Generator
+import httpx
+import json
+
+
 class AsistenteModelo():
     def __init__(self):
         self.client = None
@@ -20,6 +25,11 @@ class AsistenteModelo():
         #self.funciones = getFuncionesAsistente()
         #self.vector_store = self.getVectorDeArchivo('Catalogo edificios pisos y ambientes', ['objeto.json'])
         self.asistente = os.environ.get("MODELO_IA")
+        
+        self.model_name = self.asistente
+        base = os.environ.get('RUTA_IA', '').rstrip('/')
+        self.api_url = f"{base}/api/generate"
+
         #self.hilo = []
         self.run = None
         #self.valorPrueba = 1
@@ -111,9 +121,13 @@ class AsistenteModelo():
             respuesta = response.message.content
         else:
             parametros = [item for item in session.get('contenido') if item["nombre"] == intencion]
+            var_adicional = None
+            if parametros and len(parametros) > 0:
+                var_adicional = parametros[-1]['valor']
+                
             print("Parametros de contenido en sesion:")
             print(parametros)
-            prompt = getPromptAsistentes(intencion, parametros[-1]['valor'])
+            prompt = getPromptAsistentes(intencion, var_adicional)
             print("Prompt enviado:")
             print(prompt)
             response = self.cliente.generate(
@@ -169,3 +183,31 @@ class AsistenteModelo():
             'respuesta_msg': respuesta.content,
             'asis_funciones': respuesta.tool_calls
         }
+    
+    def stream_llm(self, prompt_text: str) -> Generator[str, None, None]:
+        """
+        Envía el prompt_text al endpoint LLM en streaming y yield-ea tokens.
+        """
+        headers = {'Content-Type': 'application/json'}
+        payload = {'model': self.model_name, 'prompt': prompt_text, 'stream': True}
+
+        with httpx.Client(timeout=None) as client:
+            with client.stream('POST', self.api_url, headers=headers, json=payload) as resp:
+                
+                resp.raise_for_status()
+                
+                for raw in resp.iter_lines():
+                    # Puede venir como bytes o str
+                    if isinstance(raw, (bytes, bytearray)):
+                        text = raw.decode('utf-8', errors='ignore').strip()
+                    else:
+                        text = raw.strip()
+                    if not text:
+                        continue
+                    try:
+                        pkt = json.loads(text)
+                    except json.JSONDecodeError:
+                        continue
+                    token = pkt.get('token') or pkt.get('response', '')
+                    if token:
+                        yield token

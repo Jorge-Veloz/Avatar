@@ -28,6 +28,12 @@ class ChatsControlador():
         #hmensajes = [m['datos'] for m in mensajes]
         #return hmensajes
     
+    def getPrompoMensajeBienvenida(self, idHilo):
+        mensajes = self.modelo.getPrompoMensajeBienvenida(idHilo)
+        #return json.load(mensajes)
+        hmensajes = [m['datos'] for m in mensajes]
+        return hmensajes
+    
     def getHistorialMensajes(self, idHilo):
         mensajes = self.modelo.getHistorialMensajes(idHilo)
         #return json.load(mensajes)

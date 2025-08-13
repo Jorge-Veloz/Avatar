@@ -1,24 +1,30 @@
-from flask import Flask, render_template, url_for, request, session, jsonify, send_from_directory
+from flask import Flask, Response, render_template, url_for, request, session, jsonify, send_from_directory
 from flask_jwt_extended import JWTManager
 from controladores.asistente import AsistenteControlador
 from controladores.edificios import EdificiosControlador
 from controladores.ambientes import AmbientesControlador
 from controladores.chats import ChatsControlador
 from controladores.consumo import ConsumoControlador
+from controladores.algoritmo_ml import AlgoritmoMLControlador
 #from controladores.tts import TTSControlador
 #from controladores.modelosia import IAControlador
 #from controladores.speech import SpeechController
 from funciones.asistente import getMensajeSistema
-from funciones.algoritmos import getPrediccionConsumo, detectar_intencion
+from funciones.algoritmos import getPrediccionConsumo, detectar_intencion, getPrediccionConsumoAnt
+from funciones.funciones import determinarSemanaActual, getRandomDF
+import pandas as pd
 #from config import Config
 #from flask_sqlalchemy import SQLAlchemy
 #from sqlalchemy.sql import text
 import json
 import os
+import re
 from dotenv import load_dotenv
 import requests
 import random
 import string
+from io import BytesIO
+import time
 
 load_dotenv(os.path.join(os.getcwd(), '.env'))
 
@@ -40,6 +46,7 @@ controladorChats = ChatsControlador(app)
 #print(controladorChats.enviarMensaje(1, {"role":"user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}))
 controladorAsistente = AsistenteControlador(app)
 controladorEdificios = EdificiosControlador(app)
+controladorAlgoritmoML = AlgoritmoMLControlador()
 #controladorTTS = TTSControlador()
 #controladorIA = IAControlador()
 
@@ -182,7 +189,7 @@ def inicializarAsistente():
     
     session['hilo'] = hilo
     mensajeInicial = {"role":"user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}
-    respuesta = controladorAsistente.getRespuesta(session.get('hilo'), [mensajeInicial]) #enviar el identificador para obtener historial
+    respuesta = controladorAsistente.getRespuesta(session.get('hilo'), [mensajeInicial], "inicializar") #enviar el identificador para obtener historial
     session['contenido'] = []
     #resultado = procesamientoConversacion(respuesta['datos'])
 
@@ -208,63 +215,166 @@ def inicializarAsistente():
     
     return jsonify(resultado)
 
+@app.post('/inicializar_real_time')
+def inicializarAsistenteRealTime():
+
+    if 'hilo' in session: session.pop('hilo')
+    if 'contenido' in session: session.pop('contenido')
+    if 'memoria' in session: session.pop('memoria')
+    
+    hilo = controladorAsistente.crearHilo()
+    
+    session['hilo'] = hilo
+    session['contenido'] = []
+    
+    # Genera el primer mensaje de bienvenida
+    mensajes = [{"role": "user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}]
+
+    def event_stream():
+        buffer = ''
+        for token in controladorAsistente.stream_tokens(hilo, "inicializar", mensajes):
+        # for token in llm_service.stream_tokens(prompt, model):
+            # Enviar token
+            yield f"{json.dumps({'type':'token','token':token})}\n\n"
+            buffer += token
+            # Detectar oraciones completas
+            parts = re.split(r'(?<=[.!?])\s+', buffer)
+            if len(parts) > 1:
+                for sent in parts[:-1]:
+                    sent = sent.strip()
+                    if sent:
+                        audio = controladorAsistente.text_to_speech(sent)
+                        yield f"{json.dumps({'type':'audio','format':'wav','data':audio})}\n\n"
+                buffer = parts[-1]
+        # Última parte
+        if buffer.strip():
+            audio = controladorAsistente.text_to_speech(buffer)
+            yield f"{json.dumps({'type':'audio','format':'wav','data':audio})}\n\n"
+        yield "{\"type\":\"end\"}\n\n"
+
+    return Response(event_stream(), mimetype='text/event-stream')
+
+
+@app.get('/api/prediccion')
+def getPrediccion2():
+    edificio = request.args.get('edificio')
+    piso = request.args.get('piso')
+    ambiente = request.args.get('ambiente')
+    fecha = request.args.get('fecha')
+
+    #Determinar las fechas de las semanas
+    lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva = determinarSemanaActual(fecha)
+
+    # Se consulta el consumo completo del ambiente seleccionado toda la fecha agrupada por dia
+    ruta_json = 'data_completa.json' #Cambiar por data de base de datos
+
+    #Se consulta la prediccion de la ultima semana del consumo del ambiente seleccionado
+    data_semana_consumo = getRandomDF(lunes_semana_actual, inicio_semana_nueva) #Cambiar por base de datos
+
+    # Se genera la data de variables exogenas para la prediccion
+    # Cambiar por la respuesta del LLM
+    textoLLM = "DÍA: Lunes | TIPO: feriado\nDÍA: Martes | TIPO: normal\nDÍA: Miércoles | TIPO: normal\nDÍA: Jueves | TIPO: especial\nDÍA: Viernes | TIPO: especial\nDÍA: Sábado | TIPO: normal\nDÍA: Domingo | TIPO: normal"
+    
+    data_generada = controladorAlgoritmoML.generarDF(textoLLM, inicio_semana_nueva)
+
+    data_nueva = pd.concat([data_semana_consumo, data_generada], axis=0)
+
+    fechas_prediccion = (lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva)
+    datos_prediccion = controladorAlgoritmoML.predecirConsumo(ruta_json,data_nueva,fechas_prediccion)
+
+    datos_ultima_semana = datos_prediccion[-7:]
+
+    return jsonify({'ok': True, 'observacion': None, 'datos': datos_ultima_semana})
+
 @app.post('/conversar')
 def getRespuesta():
-    #mensaje = request.form['mensaje']
     
-    #print(session['hilo'])
     if 'hilo' not in session:
-        hilo = controladorAsistente.crearHilo()
-        session['hilo'] = hilo
+        session['hilo'] = controladorAsistente.crearHilo()
+    if 'intencion' not in session:
+        session['intencion'] = 'estatico'
 
-    codigo = session.get('hilo')
-    ruta = f'{rutaGrabacion}/input-{codigo}.mp3'
-    request.files['voice'].save(ruta)
-    #voz = request.files['voice']
-    response = requests.post(
-        url=os.environ.get("RUTA_VOZ")+'/voz_texto',
-        files={'voice': ('voice.mp3', open(ruta, 'rb'))},
-        data={'id': session.get('hilo')},
-        verify=False
-    )
-    #response = controladorTTS.SpeechToText(voz, codigo)
+    codigo = session['hilo']
+    voz = request.files.get('voice')
 
+    print("Paso #1: Conversión de voz a texto.")
+    tiempo_inicio = time.time()
+    sttRespuesta = controladorAsistente.speech_to_text(voz, codigo)
+    tiempo_fin = time.time()
+    print(f"Tiempo de ejecución Conversión de voz a texto: {tiempo_fin - tiempo_inicio:.2f} segundos")
     
-    #text = response['datos']
-    text = response.json()['datos']
-    if not text.strip():
-        text = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
-    print(text)
-
-    #mensajeAsistente = {"role":"user", "content": text}
-    respuesta = procesamientoConversacion(text)
-
-    # mensajesAsis = []
-    # mensajesAsis.append(mensajeAsistente)
-    # if datos: mensajesAsis.append(datos)
     
-    #respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajesAsis)
+    if sttRespuesta['ok']:
+        textStt = sttRespuesta['datos']
+    else:
+        textStt = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
     
-    resultado = {
-        'ok': True,
-        'observacion': None,
-        'datos': {"respuesta": respuesta['datos'], "info": session.get('contenido')}
-    }
-
-    #response1 = controladorTTS.TextToSpeech(respuesta['datos'], codigo)
-    response1 = requests.post(
-        url=os.environ.get("RUTA_VOZ")+'/texto_voz',
-        data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')},
-        verify=False
-    )
-
-    #encoded = response1['datos']['voice_encoded']
-    respuesta_voz = response1.json()
+    respuesta = procesamientoConversacion(textStt)
     
-    encoded = respuesta_voz['datos']['voice_encoded']
-    resultado['datos']['audio'] = encoded
+    print("Paso #1:")
+    print("-----315------")
+    print(respuesta)
+    print("-----315------")
+    #return session.get('contenido')
+    print("-----319------")
+    print(session.get('contenido'))
+    print("-----319------")
+    
+    # PREPARACIÓN DE LOS DATOS PARA GRAFICOS
+    print("-----324------")
+    contenido = session.get('contenido', [])
+    print(contenido)
+    print("-----324------")
+    
+    def event_stream():
+        
+        buffer = ''
+        
+        if contenido:  # solo si hay datos
+            yield f"{json.dumps({'type':'grafico','data': json.dumps(contenido, default=str)})}\n\n"
+        
+        for token in controladorAsistente.stream_tokens(codigo, "conversar", respuesta):
+            # Enviar token
+            yield f"{json.dumps({'type':'token','token':token})}\n\n"
+            buffer += token
+            # Detectar oraciones completas
+            parts = re.split(r'(?<=[.!?])\s+', buffer)
+            if len(parts) > 1:
+                for sent in parts[:-1]:
+                    sent = sent.strip()
+                    if sent:
+                        audio = controladorAsistente.text_to_speech(sent)
+                        yield f"{json.dumps({'type':'audio','format':'wav','data':audio})}\n\n"
+                buffer = parts[-1]
+        # Última parte
+        if buffer.strip():
+            audio = controladorAsistente.text_to_speech(buffer)
+            yield f"{json.dumps({'type':'audio','format':'wav','data':audio})}\n\n"
+        yield "{\"type\":\"end\"}\n\n"
 
-    return jsonify(resultado)
+    return Response(event_stream(), mimetype='text/event-stream')
+    
+
+    # resultado = {
+    #     'ok': True,
+    #     'observacion': None,
+    #     'datos': {"respuesta": respuesta['datos'], "info": session.get('contenido')}
+    # }
+
+    # #response1 = controladorTTS.TextToSpeech(respuesta['datos'], codigo)
+    # response1 = requests.post(
+    #     url=os.environ.get("RUTA_VOZ")+'/texto_voz',
+    #     data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')},
+    #     verify=False
+    # )
+
+    # #encoded = response1['datos']['voice_encoded']
+    # respuesta_voz = response1.json()
+    
+    # encoded = respuesta_voz['datos']['voice_encoded']
+    # resultado['datos']['audio'] = encoded
+
+    # return jsonify(resultado)
 
 @app.post('/conversarGPT')
 def getRespuestaGPT():
@@ -283,12 +393,14 @@ def procesamientoConversacion(texto):
     session['contenido'] = []
     funciones = {
         'solicita_recomendaciones': controladorEdificios.getRecomendaciones,
-        'solicita_datos_consumo': controladorEdificios.consultarConsumo
+        'solicita_datos_consumo': controladorEdificios.consultarConsumo,
+        'solicita_prediccion': controladorEdificios.getPrediccion
     }
     etiquetas = list(funciones.keys())
     etiquetas.append('pregunta_respuesta_general')
     resultado = detectar_intencion(texto, etiquetas)
     intencion =  'pregunta_respuesta_general' if resultado['intencion'] not in etiquetas else resultado['intencion']
+    session['intencion'] = str(intencion)
 
     mensajeAsistente = {"role": "user", "content": texto}
     mensajesAsis = [mensajeAsistente]
@@ -308,10 +420,7 @@ def procesamientoConversacion(texto):
     
     #if datos: mensajesAsis.append(datos)
 
-    
-    respuesta = controladorAsistente.getRespuesta(session.get('hilo'), mensajesAsis, intencion)
-    return respuesta
-        
+    return mensajesAsis        
 
 def procesamientoConversacionModelo(respuesta):
     print("Salida de la respuesta:")
@@ -530,5 +639,5 @@ def validarParametros():
     return jsonify({'res': res, 'edificio': d_edificio['ID'], 'ambiente': d_ambiente['Codigo']})
 
 if __name__ == '__main__':
-    app.run(port=3005, debug=False, use_reloader=False, host='0.0.0.0', ssl_context=(os.environ.get("RUTA_CERT"), os.environ.get("RUTA_CERT_KEY")))
+    app.run(port=3005, debug=True, use_reloader=True, host='0.0.0.0', ssl_context=(os.environ.get("RUTA_CERT"), os.environ.get("RUTA_CERT_KEY")))
 #    app.run(port=3002, debug=True, host='0.0.0.0')

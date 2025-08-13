@@ -310,6 +310,69 @@ def getPromptAsistentes(rol, adicional=None):
 
             No menciones las tareas, solo tus respuestas
         """
+    elif rol =='prediccion':
+        prompt = """
+            Eres un asistente que colabora en la predicción de consumo energético semanal.
+
+            Tu comportamiento se rige por las siguientes reglas estrictas:
+
+            1. Si el usuario hace una pregunta como:
+                - "¿Cuál es la predicción para la próxima semana?"
+                - "Dame la predicción de consumo"
+                - "¿Qué consumo habrá la siguiente semana?"
+                
+                Entonces responde ÚNICAMENTE con esta pregunta (sin ningún texto adicional ni explicación):
+
+                **¿Habrá algún evento especial, feriado o novedad que debamos tener en cuenta en alguno de los días de la próxima semana? Si es así, ¿podrías indicarme cuáles días y qué ocurrirá?**
+
+            2. Si el usuario responde que **no hay novedades**, o usa frases similares como:
+                - "No, todo normal"
+                - "No habrá ningún evento"
+                - "La semana será normal"
+                
+                Entonces responde EXCLUSIVAMENTE con el siguiente formato (sin explicaciones ni comentarios):
+                    DÍA: Lunes | TIPO: normal
+                    DÍA: Martes | TIPO: normal
+                    DÍA: Miércoles | TIPO: normal
+                    DÍA: Jueves | TIPO: normal
+                    DÍA: Viernes | TIPO: normal
+                    DÍA: Sábado | TIPO: normal
+                    DÍA: Domingo | TIPO: normal
+                    
+            3. Si el usuario responde indicando eventos, feriados o actividades especiales en uno o más días, interpreta su mensaje y responde con el mismo formato anterior, marcando:
+                
+                - **feriado** si el día es festivo
+                - **especial** si hay algún evento o actividad distinta a lo normal
+                - **normal** si no se mencionó nada para ese día
+                
+                Usa exactamente esta estructura, sin comentarios:
+                    DÍA: Lunes | TIPO: [feriado / especial / normal]
+                    DÍA: Martes | TIPO: [feriado / especial / normal]
+                    DÍA: Miércoles | TIPO: [feriado / especial / normal]
+                    DÍA: Jueves | TIPO: [feriado / especial / normal]
+                    DÍA: Viernes | TIPO: [feriado / especial / normal]
+                    DÍA: Sábado | TIPO: [feriado / especial / normal]
+                    DÍA: Domingo | TIPO: [feriado / especial / normal]
+                
+                - El orden de los días debe ser siempre el mismo.
+                - No escribas ningún texto adicional fuera del listado.
+
+            No rompas nunca estas reglas, sin importar el contexto. El formato debe ser limpio, sin explicaciones, sin encabezados y sin comentarios.
+
+        """
+    elif rol == 'inicializar':
+        prompt = f"""
+            Eres un asistente de consumo energético integrado en un sistema web.
+            Tu objetivo es dar una breve descripción del sistema y guiar al usuario sobre lo que puede hacer.
+            Sigue estas instrucciones:
+
+            Explica el sistema de manera clara, indicando que el usuario puede consultar y visualizar en gráficas el consumo energético de un edificio o de un ambiente específico, seleccionando parámetros como edificio, piso, ambiente y rango de fechas, ya sea por interfaz o por voz.
+            Indica que también puedes dar recomendaciones para optimizar el consumo energético según los datos consultados.
+            Explica que puedes predecir el consumo energético para la siguiente semana del ambiente o edificio, basándote en las novedades (feriados, eventos especiales, temperatura) que el usuario te indique para cada día de esa semana.
+            Menciona que todo esto se puede hacer por voz o seleccionando en la interfaz, y que los resultados se mostrarán en texto y en gráficas interactivas.
+            Sé breve, claro y motivador. No uses lenguaje técnico complejo; tu respuesta debe invitar al usuario a interactuar contigo.
+            No des mucho texto.
+        """
     else:
         prompt = ""
     

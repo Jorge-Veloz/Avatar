@@ -5,11 +5,12 @@ from funciones.asistente import getPromptAsistentes
 from flask import session
 import json
 import re
-#from unidecode import unidecode
-from datetime import date
+from datetime import date, datetime, timedelta
 from ollama import Client
 import os
 import time
+import numpy as np
+import pandas as pd
 
 class EdificiosControlador:
     def __init__(self, app):
@@ -197,6 +198,89 @@ class EdificiosControlador:
     def consumoSemana(self, edificio=None, piso=None, ambiente=None, fechaInicio=None, fechaFin=None):
         datos = self.modelo.consumoSemana(edificio, piso, ambiente, fechaInicio, fechaFin)
         return datos
+
+    def completarDias(dias_res):
+        # === Diccionario con orden base ===
+        traduccion_dias = {
+            'monday': 'lunes', 'tuesday': 'martes', 'wednesday': 'miercoles', 'thursday': 'jueves', 'friday': 'viernes', 'saturday': 'sabado', 'sunday': 'domingo'
+        }
+        orden_dias = list(traduccion_dias.values()) #['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo']
+        orden_indices = {dia: i for i, dia in enumerate(orden_dias)}
+        
+        # === Detectar día actual ===
+        hoy = datetime.today()
+        dia_actual = traduccion_dias[hoy.strftime('%A').lower()]
+        
+        # Normalizar nombre si tiene tilde
+        dia_actual = dia_actual.replace('miércoles', 'miercoles').replace('sábado', 'sabado')
+        
+        # === Construir orden rotado desde el siguiente día ===
+        indice_hoy = orden_indices[dia_actual]
+        orden_rotado = orden_dias[indice_hoy + 1:] + orden_dias[:indice_hoy + 1]
+        
+        # === Crear diccionario desde entrada parcial ===
+        dias_dict = {dia.lower(): tipo for dia, tipo in dias_res}
+        
+        # === Completar días faltantes con 'Normal' ===
+        for dia in orden_rotado:
+            if dia not in dias_dict:
+                dias_dict[dia] = 'Normal'
+        
+        # === Construir lista ordenada completa ===
+        dias_llm_ordenada = [(dia.capitalize(), dias_dict[dia]) for dia in orden_rotado]
+        
+        # === Calcular fechas desde mañana ===
+        fecha_inicio = hoy + timedelta(days=1)
+
+        return dias_llm_ordenada, fecha_inicio
+    
+    def generarDF(respuesta_llm):
+        patron = r'DÍA:\s*(\w+)\s*\|\s*TIPO:\s*(\w+)'
+        resultados = re.findall(patron, respuesta_llm)
+        dias_llm_ordenada, fecha_inicio = completarDias(resultados)
+
+        # === Construir el DataFrame ===
+        data = []
+
+        for i, (dia, tipo) in enumerate(dias_llm_ordenada):
+            fecha = fecha_inicio + timedelta(days=i)
+            data.append({
+                'fecha': fecha,
+                'feriado': 1 if tipo.lower() == 'feriado' else 0,
+                'evento_especial': 1 if tipo.lower() == 'especial' else 0
+            })
+        
+        fechas = pd.date_range(start=data[0]['fecha'], end=data[-1]['fecha'], freq="D")
+        col_temp = np.random.uniform(np.float64(19.42430644731337), np.float64(30.47436405875521), len(fechas)).astype(np.float64)
+        df = pd.DataFrame({
+            'feriado': [item['feriado'] for item in data],
+            'evento_especial': [item['evento_especial'] for item in data],
+            'temperatura': col_temp
+        }, index=fechas)
+        #df = pd.DataFrame(data)
+        #df['fecha'] = pd.to_datetime(df['fecha'])
+        # Establecer como índice y asegurar frecuencia diaria
+        #df.set_index('fecha', inplace=True)
+        
+        return df
+
+    def getPrediccion(self, query):
+        if 'mensajesAsis' not in session:
+            session['mensajesAsis'] = [
+                {'role': 'system', 'content': getPromptAsistentes('prediccion')},
+            ]
+        # Almacenar query al historial de consulta de prediccion de consumo.
+        mensaje = {"role": "user", "content": str(query)}
+        #self.controladorChats.enviarMensaje(session.get('hilo'), [mensaje], 'prediccion')
+        session['mensajesAsis'].append(mensaje)
+
+        res_prediccion = self.preguntarAsistente(self.asistente, mensaje)
+        print("Respuesta asistente prediccion: ", res_prediccion)
+        if "|" in res_prediccion:
+            df = self.generarDF(res_prediccion)
+            return df
+        else:
+            return res_prediccion
     
     def consultarConsumo(self, query):
         # Almacenar query al historial de consulta de nuevo prompt para consulta consumo

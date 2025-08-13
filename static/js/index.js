@@ -178,6 +178,7 @@ const Index = (function () {
     $('#btnIniciarRecorrido').on('click', await iniciarRecorrido);
     $('#combo_edificio').on('change', onEdificioChange);
     $('#combo_pisos').on('change', onPisoChange);
+    $('#botonPrediccion').on('click', predecirConsumo());
     $('#btnConsultarDatos').on('click', function() {
       const idEdificio = $('#combo_edificio option:selected').val();
       const idPiso = $('#combo_pisos option:selected').val();
@@ -330,34 +331,113 @@ const Index = (function () {
     const formData = new FormData();
     formData.append('voice', audioBlob, 'voice.webm');
 
+    let reader;
+    let textoAcumulado = '';
+    let buffer = '';
+    const decoder = new TextDecoder('utf-8');
+
     try {
-      // Le pasamos el signal al fetch para poder abortarlo
       const res = await fetch('/conversar', {
         method: 'POST',
         body: formData,
-        signal
+        signal,
+        headers: { 'Accept': 'application/x-ndjson' } // Indicamos que esperamos NDJSON
       });
-      const result = await res.json();
-      const respuesta = result.datos;
 
-      if (respuesta.info && respuesta.info.length > 0) {
-        console.log("Información adicional");
-        ejecutarFuncion(respuesta.info);
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      if (respuesta.respuesta) {
-        hablar(respuesta);
+      reader = res.body.getReader();
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // deja la última línea incompleta en buffer
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+
+          let msg;
+          try {
+            msg = JSON.parse(trimmed);
+          } catch (e) {
+            console.warn('Error al procesar la línea NDJSON:', trimmed);
+            continue;
+          }
+
+          // console.debug(msg)
+          // Manejo de mensajes dependiendo del tipo
+          switch (msg.type) {
+            case 'token':
+              // Concatenar el token para mostrar texto en tiempo real
+              textoAcumulado += msg.token || '';
+              // console.log('Texto acumulado:', textoAcumulado);
+              break;
+            case 'audio':
+              // Aquí puedes manejar los datos de audio (por ejemplo, para reproducir)
+              // console.log('Audio recibido', msg.data);
+              audioQueue.push(msg.data); // agrega a la cola para reproducción
+              playNext(); // función que maneja la reproducción
+              break;
+            case 'info':
+              // Información adicional enviada por el backend
+              if (msg.data) {
+                // console.log("Información adicional recibida:", msg.data);
+                ejecutarFuncion(msg.data); // Ejecuta alguna función con los datos
+              }
+              break;
+            case 'grafico':
+              // Información adicional enviada por el backend
+              if (msg.data) {
+                // console.log("Datos de gráficos recibidos:");
+                // console.log(msg.data)
+                // console.log(JSON.parse(msg.data))
+                ejecutarFuncion(JSON.parse(msg.data)); // Ejecuta alguna función con los datos
+              }
+              break;
+            case 'final':
+              // Si el stream terminó o hay una respuesta final
+              const respuesta = msg.datos || {};
+              if (respuesta.info?.length) {
+                ejecutarFuncion(respuesta.info);
+              }
+              if (respuesta.respuesta) {
+                hablar(respuesta); // Aquí manejas la respuesta final (TTS, etc.)
+              }
+              break;
+            case 'end':
+              console.log('Stream completo');
+              break;
+            default:
+              console.log('Tipo de mensaje no reconocido:', msg);
+          }
+        }
       }
     } catch (error) {
       if (error.name === 'AbortError') {
-        // Esta excepción es la esperada cuando abortamos la petición
-        console.log('Petición anterior cancelada.');
+        console.log('Petición abortada.');
       } else {
-        console.error('Hubo un problema con la petición:', error);
+        console.error('Hubo un error con la petición:', error);
+      }
+    } finally {
+      if (reader) {
+        try { reader.releaseLock(); } catch (e) { console.error(e); }
       }
     }
   }
 
+
+
+  // AudioContext para decodificar
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Cola de fragmentos Base64
+  const audioQueue = [];
+  let isPlaying = false;
 
   // ============================== Funciones de Voz (Reconocimiento y Síntesis) ==============================
   async function iniciarRecorrido() {
@@ -368,38 +448,104 @@ const Index = (function () {
     document.querySelector('.spinner-iniciar-recorrido').classList.remove('d-none');
     document.querySelector('.spinner-iniciar-recorrido').classList.add('d-flex');
 
-    await fetch('/inicializar', { method: 'GET' })
-    .then(response => response.json())
-    .then(result => {
+    const output = document.getElementById("recomendaciones");
+    output.textContent = "";
+    
+    try {
 
+      const res = await fetch("/inicializar_real_time", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stream: true })
+      });
+
+      // if (!res.ok) throw new Error(res.statusText);
+      
       document.querySelector('#btnIniciarRecorrido').classList.remove('disabled');
       document.querySelector('.spinner-iniciar-recorrido').classList.remove('d-flex');
       document.querySelector('.spinner-iniciar-recorrido').classList.add('d-none');
+      
+      if (!$('#contenedor-typing').hasClass('ct-appear')) {
+        $('#contenedor-typing').addClass('ct-appear');
+      }
 
-      // asistenteFinalizo = false;
-      if (result.ok) {
-        
-        const respuesta = result.datos;
-        
-        if (!$('#contenedor-typing').hasClass('ct-appear')) {
-          $('#contenedor-typing').addClass('ct-appear');
-        }
-        
-        if(respuesta.info && respuesta.info.length > 0){
-          console.log("Informacion adicional");
-          ejecutarFuncion(respuesta.info)
-        }
-        
-        if (respuesta.respuesta) {
-          hablar(respuesta);
+      /*if(respuesta.info && respuesta.info.length > 0){
+        console.log("Informacion adicional");
+        ejecutarFuncion(respuesta.info)
+      }
+      
+      if (respuesta.respuesta) {
+        hablar(respuesta);
+      }*/
+      
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          console.log(JSON.parse(line))
+          const msg = JSON.parse(line);
+
+          if (msg.type === "token") {
+            output.textContent += msg.token;
+            output.scrollTop = output.scrollHeight;
+          }
+          else if (msg.type === "audio") {
+            // En lugar de reproducir al vuelo, lo añadimos a la cola
+            audioQueue.push(msg.data);
+            playNext();
+          }
+          else if (msg.type === "end") {
+            console.log("Stream completo");
+          }
         }
       }
-    }).catch(error => {
+      
+    } catch (error) {
       console.error('Error:', error);
       document.querySelector('#btnIniciarRecorrido').classList.remove('disabled');
       document.querySelector('.spinner-iniciar-recorrido').classList.remove('d-flex');
       document.querySelector('.spinner-iniciar-recorrido').classList.add('d-none');
-    });
+    
+    }
+
+  }
+
+  // Función para reproducir el siguiente de la cola
+  async function playNext() {
+    if (isPlaying || audioQueue.length === 0) return;
+    isPlaying = true;
+    const base64 = audioQueue.shift();
+
+    // Decodificar Base64 → ArrayBuffer
+    const raw = atob(base64);
+    const buf = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) buf[i] = raw.charCodeAt(i);
+
+    try {
+      const audioBuffer = await audioCtx.decodeAudioData(buf.buffer);
+      const source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioCtx.destination);
+      source.onended = () => {
+        isPlaying = false;
+        playNext();  // en cuanto termine, lanzamos el siguiente
+      };
+      source.start();
+    } catch (err) {
+      console.error("Error al decodificar/reproducir audio:", err);
+      isPlaying = false;
+      playNext();
+    }
   }
 
   async function hablar(data) {
@@ -520,7 +666,42 @@ const Index = (function () {
     }
   }
 
-  function predecirConsumo(datos) {
+  function predecirConsumo() {
+    const idEdificio = $('#combo_edificio option:selected').val();
+    const idPiso = $('#combo_pisos option:selected').val();
+    const idAmbiente = $('#combo_ambientes option:selected').val();
+    const fecha = new Date().toISOString().split('T')[0]
+
+    fetch(`/api/prediccion?edificio=${idEdificio}&piso=${idPiso}&ambiente=${idAmbiente}&fecha=${fecha}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (result.ok) {
+        const resultConsumoFuturoAmbiente = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_predicho.toFixed(2)) }));
+        //const resultConsumoFuturoEdificio = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_total.toFixed(2)) }));
+        const consumoFuturoAmbiente = resultConsumoFuturoAmbiente.reduce((acc, item) => acc + item.y, 0);
+        //const consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acc, item) => acc + item.y, 0);
+        $('.consumo-futuro-ambiente').html(consumoFuturoAmbiente.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        //$('.consumo-futuro-edificio').html(consumoFuturoEdificio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        const options = {
+          series: [{
+            name: 'Consumo futuro del ambiente',
+            data: resultConsumoFuturoAmbiente
+          }/*, {
+            name: 'Consumo futuro del edificio',
+            data: resultConsumoFuturoEdificio
+          }*/]
+        };
+        chart2.updateOptions(options);
+      } else {
+        Swal.fire('Ocurrió un error al consultar la información.', '', 'error');
+      }
+    });
+  }
+  
+  function predecirConsumo2(datos) {
     const idEdificio = $('#combo_edificio option:selected').val();
     const idPiso = $('#combo_pisos option:selected').val();
     const idAmbiente = $('#combo_ambientes option:selected').val();

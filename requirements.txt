@@ -12,3 +12,6 @@ Flask-SQLAlchemy
 transformers
 unidecode
 rapidfuzz
+scikit-learn
+skforecast
+skforecast[plotting]

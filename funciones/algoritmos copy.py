@@ -1,10 +1,18 @@
 import pandas as pd
+#import numpy as np
+#import matplotlib.pyplot as plt
 from statsmodels.tsa.arima.model import ARIMA
+#from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
+#import json
+#import re
 import time
 from unidecode import unidecode
 from rapidfuzz import process, fuzz
 
+
+# Libraries
+# ==============================================================================
 import matplotlib.pyplot as plt
 from sklearn.metrics import mean_absolute_error
 from skforecast.datasets import fetch_dataset
@@ -17,8 +25,118 @@ import warnings
 warnings.filterwarnings('ignore')
 import joblib
 import re
-from datetime import date, datetime, timedelta
-import numpy as np
+
+def crearModeloARIMA(): #Se ejecutara una sola vez
+    ruta = "./consumo_estacional_semanal.csv"
+    df_full = pd.read_csv(ruta, parse_dates=['fecha'], index_col=['fecha'])
+    df_full.index.name = 'datetime'
+
+    # Hacer un estudio para obtener order y seasonal_order iniciales
+    order = (1, 1, 2)
+    seasonal_order = (1, 1, 1, 14)
+
+    # Fechas de inicio y fin del conjunto de evaluación | antes conjunto entrenamiento | después conjunto test
+    fecha_fin = df_full.index.max() - pd.Timedelta(days=6)
+    fecha_inicio = fecha_fin - pd.Timedelta(days=20)
+    print(f"Eval fecha inicio: {fecha_inicio} ----> fecha fin: {fecha_fin}")
+
+    # Crear conjuntos de entrenamiento y test
+    df_full = df_full.copy()
+    df_full.index = pd.date_range(start=df_full.index.min(), end=df_full.index.max(), freq='D') #Linea maldita
+
+    y_comp = df_full.loc[:fecha_inicio].copy()
+    test_comp = df_full.loc[fecha_inicio:fecha_fin].copy()
+
+    y = y_comp[['consumo_energetico']].copy()
+    exog = y_comp[['temperatura', 'evento_especial']].copy()
+    test = test_comp[['consumo_energetico']].copy()
+    exog_test = test_comp[['temperatura', 'evento_especial']].copy()
+
+    # Proceso para encontrar los mejores hiperparámetros
+    # ==============================================================================
+    forecaster = ForecasterSarimax(
+        regressor=Sarimax(order=order, seasonal_order=seasonal_order, maxiter=200)
+    )
+
+    param_grid = {
+        'order': [(1, 1, 1), (1, 1, 2), (2, 1, 2)],
+        'seasonal_order': [(1, 1, 1, 14), (1, 1, 0, 14), (0, 1, 1, 14)],
+        'trend': [None, 'c']
+    }
+
+    cv = TimeSeriesFold(
+        steps              = 14,
+        initial_train_size = len(df_full.loc[:fecha_inicio, 'consumo_energetico']),
+        refit              = False
+    )
+
+    results_grid = grid_search_sarimax(
+        forecaster            = forecaster,
+        y                     = df_full.loc[:, 'consumo_energetico'],
+        exog                  = df_full.loc[:, ['temperatura', 'evento_especial']],
+        param_grid            = param_grid,
+        cv                    = cv,
+        metric                = 'mean_absolute_error',
+        return_best           = True,
+        n_jobs                = 'auto',
+        suppress_warnings_fit = True,
+        verbose               = False,
+        show_progress         = True
+    )
+
+    # ==============================================================================
+    new_order = results_grid.iloc[0]['order']
+    new_seasonal_order = results_grid.iloc[0]['seasonal_order']
+    
+    forecaster = ForecasterSarimax(
+        regressor=Sarimax(order=new_order, seasonal_order=new_seasonal_order, maxiter=200)
+    )
+
+    forecaster.fit(y=df_full.loc[:fecha_fin-pd.Timedelta(days=2), 'consumo_energetico'],exog = df_full.loc[:fecha_fin-pd.Timedelta(days=2), ['temperatura', 'evento_especial']], suppress_warnings=True)
+
+    prediccion = forecaster.regressor.sarimax_res.fittedvalues
+
+    # Guardar el modelo
+    joblib.dump(forecaster, 'modelo_sarimax_ambiente.pkl')
+
+def entrenarModeloARIMA(nuevo_data_test): #Se ejecutara cada siete dias
+    # Cargar el modelo
+    forecaster = joblib.load('modelo_sarimax_ambiente.pkl')
+
+    #forecaster.fit(y=df_full.loc[:fecha_fin-pd.Timedelta(days=2), 'consumo_energetico'],exog = df_full.loc[:fecha_fin-pd.Timedelta(days=2), ['temperatura', 'evento_especial']], suppress_warnings=True)
+
+    prediccion = forecaster.regressor.sarimax_res.fittedvalues
+
+    fechas_inicio_lw = prediccion.index.max() + pd.Timedelta(days=1)
+    fechas_fin_lw = fechas_inicio_lw + pd.Timedelta(days=6)
+    
+    predictions = forecaster.predict(
+        steps            = 14,
+        exog             = nuevo_data_test[['temperatura', 'evento_especial']],
+        last_window      = df_full.loc[fechas_inicio_lw:fechas_fin_lw, 'consumo_energetico'],
+        last_window_exog = df_full.loc[fechas_inicio_lw:fechas_fin_lw, ['temperatura', 'evento_especial']]
+    )
+
+    # Guardar el modelo
+    joblib.dump(forecaster, 'modelo_sarimax_ambiente.pkl')
+
+def getPrediccionConsumoAnt1(nuevo_data_test): #Se ejecutara cada que el usuario solicite la prediccion
+    # Cargar el modelo
+    forecaster = joblib.load('modelo_sarimax_ambiente.pkl')
+
+    fechas_inicio_lw = prediccion.index.max() + pd.Timedelta(days=1)
+    fechas_fin_lw = fechas_inicio_lw + pd.Timedelta(days=6)
+    
+    predictions = forecaster.predict(
+        steps            = 14,
+        exog             = nuevo_data_test[['temperatura', 'evento_especial']],
+        last_window      = df_full.loc[fechas_inicio_lw:fechas_fin_lw, 'consumo_energetico'],
+        last_window_exog = df_full.loc[fechas_inicio_lw:fechas_fin_lw, ['temperatura', 'evento_especial']]
+    )
+
+    return predictions
+
+*/
 
 def getPrediccionConsumo(datos):
     df = pd.DataFrame(datos)

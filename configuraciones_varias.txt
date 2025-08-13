@@ -233,12 +233,7 @@ Luego correr pm2 start ecosystem.config.js
 Actualizar paquetes de linux con: sudo apt update
 Instalar ffmpeg con: sudo apt install ffmpeg
 
-Para usar XTTS en la API de voz, se necesita modificar un archivo del paquete:
-Ruta del archivo: /usr/local/lib/python3.10/dist-packages/TTS/utils/io.py
-Modificar en la linea 54, dentro de los parametros de return torch.load() agregar el parametro weights_only=False.
-
-Debe quedar:
-return torch.load(f, map_location=map_location, weights_only=False, **kwargs)
+Instalar dependencias del python con pip install -r dependencias.txt
 
 ----------------------------------------------------------------------------------------------------------------------------------
 ---------------------------------------------CONFIGURACIÓN PARA LA API DE VOZ:----------------------------------------------------

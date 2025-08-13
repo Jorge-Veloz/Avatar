@@ -24,6 +24,13 @@ class ChatsModelo:
         mensajes = self.db.consultarDatos(sql)
         return mensajes
     
+    def getPrompoMensajeBienvenida(self, idHilo):
+        # Aqui se obtendra el historial de mensajes de la bd
+        sql = f"SELECT datos FROM asistentes.vmostrarhistorialinteracciones_ia WHERE idusuario = {idHilo} AND (reaccion IS NULL OR reaccion = 1) AND id NOT IN (SELECT id FROM asistentes.vmostrarhistorialinteracciones_ia WHERE datos->>'role' = 'system' AND categoria = 'consumo' ORDER BY id ASC) ORDER BY id ASC LIMIT 1"
+        #resultado = self.db.llamarFuncion('SELECT * FROM asistentes.vmostrarhistorialiteracciones_ia (%s, %s, %s)', (accion, mensaje, idHilo))
+        mensajes = self.db.consultarDatos(sql)
+        return mensajes
+    
     def getHistorialMensajes(self, idHilo):
         # Aqui se obtendra el historial de mensajes de la bd
         sql = f"SELECT datos FROM asistentes.vmostrarhistorialinteracciones_ia WHERE idusuario = {idHilo} AND (reaccion IS NULL OR reaccion = 1) AND id NOT IN (SELECT id FROM asistentes.vmostrarhistorialinteracciones_ia WHERE datos->>'role' = 'system' AND categoria = 'consumo' ORDER BY id ASC) ORDER BY id ASC"

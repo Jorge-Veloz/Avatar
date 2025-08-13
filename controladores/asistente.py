@@ -1,8 +1,17 @@
+# controlador_asistente.py
+#from modelos.modelo_llm import stream_llm_tokens
+from typing import Generator, List, Dict, Union
+
 from modelos.asistente import AsistenteModelo
 from controladores.chats import ChatsControlador
-#from flask import session
+from flask import session
 import json
 import re
+import os
+from dotenv import load_dotenv
+from decimal import Decimal
+
+import requests
 
 class AsistenteControlador():
     def __init__(self, app):
@@ -10,6 +19,11 @@ class AsistenteControlador():
         self.controladorChats = ChatsControlador(app)
         print("Asistente Controlador inicializado")
 
+        self.model_name = "mistral:latest"
+        # Base URL de la API LLM, p.ej. 'http://172.16.188.33:3003/api'
+        self.base_url = os.environ.get('RUTA_IA', '').rstrip('/')
+
+    
     def crearHilo(self):
         #Podria funcionar para crear el hilo con caracteres aleatorios
         #idHilo = self.modelo.crearHilo()
@@ -37,6 +51,7 @@ class AsistenteControlador():
         return self.controladorChats.getListaMensajes(hilo)
     
     def getRespuesta(self, hilo, mensaje, intencion="pregunta_respuesta_general"):
+        #intencion = session.get('intencion')
         res = self.controladorChats.enviarMensaje(hilo, mensaje)
         if res['ok']:
             historialMsgs = self.controladorChats.getHistorialMensajes(hilo)
@@ -92,8 +107,6 @@ class AsistenteControlador():
                 "datos": None
             }
 
-        
-        
     def getRespuestaGPT(self, threadId, mensaje):
         [run, messages] = self.modelo.getRespuestaGPT(threadId, mensaje)
         obj_funciones = []
@@ -313,3 +326,96 @@ class AsistenteControlador():
                 "respuesta_msg": respuesta_msg,
                 "asis_funciones": None
             }
+        
+    def stream_tokens(
+        self,
+        hilo: str,
+        tipo: str,
+        mensajes: Union[str, List[Dict[str, str]]]
+    ) -> Generator[str, None, None]:
+        
+        res = self.controladorChats.enviarMensaje(hilo, mensajes)
+        
+        if res['ok']:
+
+            if tipo == "inicializar":
+                historialMsgs = self.controladorChats.getPrompoMensajeBienvenida(hilo)
+            else:
+                historialMsgs = self.controladorChats.getHistorialMensajes(hilo)
+            
+            # Construir prompt como texto si recibimos lista de mensajes
+            if isinstance(historialMsgs, list):
+                prompt_text = "\n".join(
+                    f"{m['role']}: {m['content']}" for m in historialMsgs
+                )
+            else:
+                prompt_text = historialMsgs
+            
+            # Delegar streaming de tokens al modelo
+            yield from self.modelo.stream_llm(prompt_text)
+
+        else:
+            print("Error al hablar con el asistente.")
+            return {
+                "ok": False,
+                "observacion": "Error al guardar el mensaje.",
+                "datos": None
+            }
+
+    def text_to_speech(self, text: str) -> str:
+        
+        payload = {'texto': text}
+        
+        #if hilo_id is not None:
+        #    payload['id'] = hilo_id
+
+        try:
+            resp = requests.post(
+                url=os.environ.get("RUTA_VOZ")+'/texto_voz_real_time',
+                data=payload,
+                verify=False,
+                timeout=10
+            )
+            resp.raise_for_status()
+            result = resp.json().get('datos', {})
+            return result.get('voice_encoded', '') or ''
+        except Exception as e:
+            # En caso de error, loguear y retornar cadena vacía
+            print(f"[TTS ERROR] Llamada API fallida: {e}")
+            return ''
+        
+    def speech_to_text(self, voice_file, codigo):
+        
+        """
+        Envía el audio crudo al servicio de STT sin escribir a disco.
+        voice_file: request.files['voice']
+        codigo: identificador de hilo/sesión
+        Retorna: dict con la respuesta del servicio STT (esperado: {'ok', 'datos', 'observacion'})
+        """
+
+        if voice_file is None:
+            return {'ok': False, 'datos': None, 'observacion': 'No se recibió archivo de audio.'}
+
+        # Leemos todo el contenido en memoria
+        audio_bytes = voice_file.read()
+        if not audio_bytes:
+            return {'ok': False, 'datos': None, 'observacion': 'El archivo de audio está vacío.'}
+
+        # Lo enviamos sin grabar a disco:
+        try:
+            resp = requests.post(
+                url=f"{os.environ['RUTA_VOZ']}/voz_texto",
+                params={'id': codigo},
+                data=audio_bytes,
+                headers={
+                    'Content-Type': getattr(voice_file, 'mimetype', 'application/octet-stream'),
+                    'X-Request-ID': str(codigo)
+                },
+                # timeout=30,
+                verify=False
+            )
+            resp.raise_for_status()
+            return resp.json()
+        except requests.RequestException as e:
+            return {'ok': False, 'datos': None, 'observacion': f'Error al llamar STT: {e}'}
+    
