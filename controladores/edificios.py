@@ -1,7 +1,9 @@
 from modelos.edificios import EdificiosModelo
 from controladores.chats import ChatsControlador
+from controladores.algoritmo_ml import AlgoritmoMLControlador
 from funciones.algoritmos import fuzzy_lookup, norm
 from funciones.asistente import getPromptAsistentes
+from funciones.funciones import determinarSemanaActual, getRandomDF
 from flask import session
 import json
 import re
@@ -16,6 +18,7 @@ class EdificiosControlador:
     def __init__(self, app):
         self.modelo = EdificiosModelo(app)
         self.controladorChats = ChatsControlador(app)
+        self.controladorAlgoritmoML = AlgoritmoMLControlador()
         self.data = self.leerJSONEdificios()
         self.cliente = Client(
             host=os.environ.get("RUTA_IA"),
@@ -265,22 +268,44 @@ class EdificiosControlador:
         return df
 
     def getPrediccion(self, query):
-        if 'mensajesAsis' not in session:
-            session['mensajesAsis'] = [
-                {'role': 'system', 'content': getPromptAsistentes('prediccion')},
-            ]
-        # Almacenar query al historial de consulta de prediccion de consumo.
-        mensaje = {"role": "user", "content": str(query)}
-        #self.controladorChats.enviarMensaje(session.get('hilo'), [mensaje], 'prediccion')
-        session['mensajesAsis'].append(mensaje)
+        session['intenciones']['siguiente'] = "ninguna"
+        textoLLM = ""
+        prompt_system = getPromptAsistentes('prediccion')
 
-        res_prediccion = self.preguntarAsistente(self.asistente, mensaje)
-        print("Respuesta asistente prediccion: ", res_prediccion)
-        if "|" in res_prediccion:
-            df = self.generarDF(res_prediccion)
-            return df
+        if 'prediccion' in session and 'msgs' in session['prediccion'] and len(session['prediccion']['msgs']) > 0:
+            msgsAsistente = [{'role': 'system', 'content': prompt_system}] + session['prediccion']['msgs'] + [{'role': 'user', 'content': query}]
+            textoLLM = self.preguntarAsistente(self.asistente, msgsAsistente, 'chat')
+            session['prediccion']['msgs'] = []
         else:
-            return res_prediccion
+            session['intenciones']['siguiente'] = "solicita_prediccion"
+            #msgsAsistente = [{'role': 'system', 'content': prompt_system}] + [{'role': 'user', 'content': query}]
+            #textoLLM = self.preguntarAsistente(self.asistente, msgsAsistente, 'chat')
+            return {"success": True, "reason": query, "info": None}
+
+        fecha = date.today()
+        #Determinar las fechas de las semanas
+        lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva = determinarSemanaActual(fecha)
+
+        # Se consulta el consumo completo del ambiente seleccionado toda la fecha agrupada por dia
+        ruta_json = 'data_completa.json' #Cambiar por data de base de datos
+
+        #Se consulta la prediccion de la ultima semana del consumo del ambiente seleccionado
+        data_semana_consumo = getRandomDF(lunes_semana_actual, inicio_semana_nueva) #Cambiar por base de datos
+
+        # Se genera la data de variables exogenas para la prediccion
+        # Cambiar por la respuesta del LLM
+        #textoLLM = "DÍA: Lunes | TIPO: feriado\nDÍA: Martes | TIPO: normal\nDÍA: Miércoles | TIPO: normal\nDÍA: Jueves | TIPO: especial\nDÍA: Viernes | TIPO: especial\nDÍA: Sábado | TIPO: normal\nDÍA: Domingo | TIPO: normal"
+        
+        data_generada = self.controladorAlgoritmoML.generarDF(textoLLM, inicio_semana_nueva)
+
+        data_nueva = pd.concat([data_semana_consumo, data_generada], axis=0)
+
+        fechas_prediccion = (lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva)
+        datos_prediccion = self.controladorAlgoritmoML.predecirConsumo(ruta_json,data_nueva,fechas_prediccion)
+
+        datos_ultima_semana = datos_prediccion[-7:]
+
+        return {"success": True, "reason": "Pudiste presentar los datos de prediccion de la siguiente semana.", "info": datos_ultima_semana}
     
     def consultarConsumo(self, query):
         # Almacenar query al historial de consulta de nuevo prompt para consulta consumo
@@ -323,6 +348,8 @@ class EdificiosControlador:
         print(info)
         datos = None
 
+        session['intenciones']['siguiente'] = 'ninguna'
+        session['prediccion']['msgs'] = []
         if info['ok']:
             params = info['datos'][0]
             prompt_traduccion = getPromptAsistentes('traduccion_entidades', params)
@@ -345,13 +372,19 @@ class EdificiosControlador:
             tiempo_fin_sql = time.time()
             print(f"Consulta SQL: {respuestaSQL}")
             print(f"Tiempo de ejecución SQL: {tiempo_fin_sql - tiempo_inicio_sql:.2f} segundos")
-
+            
             if datos['res']:
                 print("\nDatos de consulta:")
                 print(datos)
                 datos['data']['params'] = {'idEdificio': params['edificio']['nombre'], 'idPiso': params['piso']['nombre'], 'idAmbiente': params['ambiente']['nombre'], 'fechaInicio': params['fecha_inicio'], 'fechaFin': params['fecha_fin']}
-                #session['memoria']['consumo'] = datos['data']['params']
-                return { "success": True, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Es importante que no menciones los identificadores al usuario. Dile al usuario que necesitas saber si habra algun evento especial la siguiente semana, ya que requieres saber ese dato para poder realizar una predicción del consumo energético de la siguiente semana.", "info": datos['data']}
+                
+                session['intenciones']['siguiente'] = 'solicita_prediccion'
+                session['prediccion']['msgs'] = [
+                    {'role': 'user', 'content': 'Cual seria la prediccion para la siguiente semana?'},
+                    {'role': 'assistant', 'content': '¿Habrá algún evento especial, feriado o novedad que debamos tener en cuenta en alguno de los días de la próxima semana? Si es así, ¿podrían indicarme cuáles días y qué ocurrirá?'}
+                ]
+                #return { "success": True, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Es importante que no menciones los identificadores al usuario. Dile al usuario que necesitas saber si habra algun evento especial la siguiente semana, ya que requieres saber ese dato para poder realizar una predicción del consumo energético de la siguiente semana.", "info": datos['data']}
+                return { "success": True, "reason": "Cual seria la prediccion para la siguiente semana?", "info": datos['data']}
             else:
                 return { "success": False, "reason": "No hay datos de consumo energetico asociados a los parametros especificados.", "info": None}
         else:

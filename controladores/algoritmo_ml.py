@@ -44,7 +44,7 @@ class AlgoritmoMLControlador():
         df = pd.DataFrame({
             'feriado': [item['feriado'] for item in data],
             'evento_especial': [item['evento_especial'] for item in data],
-            'temperatura': col_temp
+            'total_temperatura': col_temp
         }, index=fechas)
         #df = pd.DataFrame(data)
         #df['fecha'] = pd.to_datetime(df['fecha'])
@@ -78,7 +78,7 @@ class AlgoritmoMLControlador():
         results_grid = grid_search_sarimax(
             forecaster            = forecaster,
             y                     = df_full.loc[:, 'total_kilovatio'],
-            exog                  = df_full.loc[:, ['feriado', 'evento_especial', 'temperatura']],
+            exog                  = df_full.loc[:, ['feriado', 'evento_especial', 'total_temperatura']],
             param_grid            = param_grid,
             cv                    = cv,
             metric                = 'mean_absolute_error',
@@ -101,9 +101,20 @@ class AlgoritmoMLControlador():
         df_full.index.name = 'datetime'
         df_full = df_full.sort_index()
 
+        df_full = df_full[['total_kilovatio', 'feriado', 'evento_especial', 'total_temperatura']]
+
         # Se comienza a evaluar desde el 16 de mayo donde empiezan valores veridicos
         fecha_inicio = pd.to_datetime('2025-05-16')
         df_full = df_full.loc[fecha_inicio:]
+
+        # Asegurar que el índice tiene tipo correcto para entrenar
+        df_full = df_full.copy()
+
+        # Quitar duplicados o agregarlos
+        df_full = df_full.groupby(df_full.index).sum()
+
+        fechas_completas = pd.date_range(start=df_full.index.min(), end=df_full.index.max(), freq='D') #Linea maldita
+        df_full = df_full.reindex(fechas_completas, fill_value=0)
 
         # Cortes de fechas lastwindow y evaluacion
         fechas_fin_lw = lunes_semana_actual - pd.Timedelta(days=1)
@@ -113,18 +124,14 @@ class AlgoritmoMLControlador():
         fecha_inicio_eval = fecha_fin_eval - pd.Timedelta(days=13)
         print(f"Eval fecha inicio: {fecha_inicio_eval} ----> fecha fin: {fecha_fin_eval}")
 
-        # Asegurar que el índice tiene tipo correcto para entrenar
-        df_full = df_full.copy()
-        df_full.index = pd.date_range(start=df_full.index.min(), end=df_full.index.max(), freq='D')
-
         # Dividir los datos en entrenamiento y evaluación
         y_comp = df_full.loc[:fecha_inicio_eval].copy()
         test_comp = df_full.loc[fecha_inicio_eval:fecha_fin_eval].copy()
 
         y = y_comp[['total_kilovatio']].copy()
-        exog = y_comp[['feriado', 'evento_especial', 'temperatura']].copy()
+        exog = y_comp[['feriado', 'evento_especial', 'total_temperatura']].copy()
         test = test_comp[['total_kilovatio']].copy()
-        exog_test = test_comp[['feriado', 'evento_especial', 'temperatura']].copy()
+        exog_test = test_comp[['feriado', 'evento_especial', 'total_temperatura']].copy()
 
         # Encontrar en la base de datos
         new_order = (1, 1, 1)
@@ -134,15 +141,15 @@ class AlgoritmoMLControlador():
             regressor=Sarimax(order=new_order, seasonal_order=new_seasonal_order, maxiter=200)
         )
 
-        forecaster.fit(y=df_full.loc[:fecha_fin_eval, 'total_kilovatio'],exog = df_full.loc[:fecha_fin_eval, ['feriado', 'evento_especial', 'temperatura']], suppress_warnings=True)
+        forecaster.fit(y=df_full.loc[:fecha_fin_eval, 'total_kilovatio'],exog = df_full.loc[:fecha_fin_eval, ['feriado', 'evento_especial', 'total_temperatura']], suppress_warnings=True)
 
         prediccion = forecaster.regressor.sarimax_res.fittedvalues
 
         predictions = forecaster.predict(
             steps            = 14,
-            exog             = nuevo_data_test[['feriado', 'evento_especial', 'temperatura']],
+            exog             = nuevo_data_test[['feriado', 'evento_especial', 'total_temperatura']],
             last_window      = df_full.loc[fechas_inicio_lw:fechas_fin_lw, 'total_kilovatio'],
-            last_window_exog = df_full.loc[fechas_inicio_lw:fechas_fin_lw, ['feriado', 'evento_especial', 'temperatura']]
+            last_window_exog = df_full.loc[fechas_inicio_lw:fechas_fin_lw, ['feriado', 'evento_especial', 'total_temperatura']]
         )
 
         # Asegurar que las fechas de predicción están en el índice

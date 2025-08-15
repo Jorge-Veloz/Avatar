@@ -266,7 +266,7 @@ def getPrediccion2():
     lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva = determinarSemanaActual(fecha)
 
     # Se consulta el consumo completo del ambiente seleccionado toda la fecha agrupada por dia
-    ruta_json = 'data_completa.json' #Cambiar por data de base de datos
+    ruta_json = 'consumo_energetico_2025_08_13.json' #Cambiar por data de base de datos
 
     #Se consulta la prediccion de la ultima semana del consumo del ambiente seleccionado
     data_semana_consumo = getRandomDF(lunes_semana_actual, inicio_semana_nueva) #Cambiar por base de datos
@@ -291,10 +291,16 @@ def getRespuesta():
     
     if 'hilo' not in session:
         session['hilo'] = controladorAsistente.crearHilo()
-    if 'intencion' not in session:
-        session['intencion'] = 'estatico'
+
+    if 'prediccion' not in session:
+        session['prediccion'] = {'msgs': []}
+
+    #if 'intenciones' not in session:
+    #    session['intenciones'] = {'actual': 'ninguna', 'siguiente': 'ninguna'}
+    session['intenciones'] = {'actual': 'ninguna', 'siguiente': 'ninguna'}
 
     codigo = session['hilo']
+    intencion = request.form.get('intencion')
     voz = request.files.get('voice')
 
     print("Paso #1: Conversión de voz a texto.")
@@ -309,7 +315,7 @@ def getRespuesta():
     else:
         textStt = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
     
-    respuesta = procesamientoConversacion(textStt)
+    respuesta = procesamientoConversacion(textStt, intencion)
     
     print("Paso #1:")
     print("-----315------")
@@ -324,6 +330,8 @@ def getRespuesta():
     print("-----324------")
     contenido = session.get('contenido', [])
     print(contenido)
+    intenciones = session.get('intenciones', [])
+    print(intenciones)
     print("-----324------")
     
     def event_stream():
@@ -332,6 +340,9 @@ def getRespuesta():
         
         if contenido:  # solo si hay datos
             yield f"{json.dumps({'type':'grafico','data': json.dumps(contenido, default=str)})}\n\n"
+
+        if intenciones:  # solo si hay datos
+            yield f"{json.dumps({'type':'intenciones','data': json.dumps(intenciones, default=str)})}\n\n"
         
         for token in controladorAsistente.stream_tokens(codigo, "conversar", respuesta):
             # Enviar token
@@ -389,7 +400,7 @@ def getRespuestaGPT():
     #salida = controladorAsistente.conversar(respuesta)
     return jsonify(resultado)
 
-def procesamientoConversacion(texto):
+def procesamientoConversacion(texto, intencion='ninguna'):
     session['contenido'] = []
     funciones = {
         'solicita_recomendaciones': controladorEdificios.getRecomendaciones,
@@ -398,21 +409,23 @@ def procesamientoConversacion(texto):
     }
     etiquetas = list(funciones.keys())
     etiquetas.append('pregunta_respuesta_general')
-    resultado = detectar_intencion(texto, etiquetas)
+    resultado = detectar_intencion(texto, etiquetas) if intencion == 'ninguna' else {'intencion': intencion, 'confidence': 1.0}
     intencion =  'pregunta_respuesta_general' if resultado['intencion'] not in etiquetas else resultado['intencion']
-    session['intencion'] = str(intencion)
+    session['intenciones']['actual'] = str(intencion)
 
-    mensajeAsistente = {"role": "user", "content": texto}
+    mensajeAsistente = {"role": "user", "content": texto, "ok": True}
     mensajesAsis = [mensajeAsistente]
     
     if intencion != 'pregunta_respuesta_general':
         funcionIA = funciones[intencion]
         respuesta = funcionIA(texto)
+        mensajesAsis = [{"role": "user", "content": respuesta['reason'], "ok": respuesta['success']}]
+        
         if respuesta['info']:
             session['contenido'].append({"nombre": intencion, "valor": respuesta['info']})
-        else:
-            intencion = 'pregunta_respuesta_general'
-            mensajesAsis.append({"role": "user", "content": respuesta['reason']})
+        """else:
+            #intencion = 'pregunta_respuesta_general'
+            mensajesAsis = [{"role": "user", "content": respuesta['reason']}]"""
     #    return {"role": "user", "content": respuesta['reason']}
     #else:
     #    return None

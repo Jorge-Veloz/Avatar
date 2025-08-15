@@ -5,6 +5,7 @@ const Index = (function () {
   let dataEdificios = [];
   let fechaInicio, fechaFin;
   let chart1 = null, chart2 = null;
+  let intencionConversar = 'ninguna';
 
   let microphoneAviable = true;
   let microphoneOpen = false;
@@ -178,7 +179,6 @@ const Index = (function () {
     $('#btnIniciarRecorrido').on('click', await iniciarRecorrido);
     $('#combo_edificio').on('change', onEdificioChange);
     $('#combo_pisos').on('change', onPisoChange);
-    $('#botonPrediccion').on('click', predecirConsumo());
     $('#btnConsultarDatos').on('click', function() {
       const idEdificio = $('#combo_edificio option:selected').val();
       const idPiso = $('#combo_pisos option:selected').val();
@@ -330,6 +330,7 @@ const Index = (function () {
 
     const formData = new FormData();
     formData.append('voice', audioBlob, 'voice.webm');
+    formData.append('intencion', intencionConversar);
 
     let reader;
     let textoAcumulado = '';
@@ -397,6 +398,15 @@ const Index = (function () {
                 // console.log(msg.data)
                 // console.log(JSON.parse(msg.data))
                 ejecutarFuncion(JSON.parse(msg.data)); // Ejecuta alguna función con los datos
+              }
+              break;
+            case 'intenciones':
+              // Información adicional enviada por el backend
+              if (msg.data) {
+                // console.log("Datos de gráficos recibidos:");
+                // console.log(msg.data)
+                // console.log(JSON.parse(msg.data))
+                intencionConversar = msg.data.siguiente;
               }
               break;
             case 'final':

@@ -1,7 +1,7 @@
 # controlador_asistente.py
 #from modelos.modelo_llm import stream_llm_tokens
 from typing import Generator, List, Dict, Union
-
+from funciones.asistente import getFuncionesAsistente, getPromptAsistentes
 from modelos.asistente import AsistenteModelo
 from controladores.chats import ChatsControlador
 from flask import session
@@ -334,14 +334,29 @@ class AsistenteControlador():
         mensajes: Union[str, List[Dict[str, str]]]
     ) -> Generator[str, None, None]:
         
-        res = self.controladorChats.enviarMensaje(hilo, mensajes)
         
-        if res['ok']:
-
+        successProceso = mensajes.pop("ok")
+        if not successProceso: res = self.controladorChats.enviarMensaje(hilo, mensajes)
+        if True: #res['ok']:
             if tipo == "inicializar":
                 historialMsgs = self.controladorChats.getPrompoMensajeBienvenida(hilo)
             else:
-                historialMsgs = self.controladorChats.getHistorialMensajes(hilo)
+                if successProceso:
+                    if session['intenciones']['actual'] == 'solicita_datos_consumo':
+                        historialMsgs = [
+                            {"role": "system", "content": getPromptAsistentes('prediccion')}
+                        ] + mensajes
+                    elif session['intenciones']['actual'] == 'solicita_prediccion':
+                        parametros = [item for item in session.get('contenido') if item["nombre"] == "solicita_datos_consumo"]
+                        var_adicional = None
+                        if parametros and len(parametros) > 0:
+                            var_adicional = parametros[-1]['valor']
+
+                        historialMsgs = getPromptAsistentes('solicita_datos_consumo', var_adicional)
+                        #historialMsgs = self.controladorChats.getHistorialMensajesConsumo(hilo)
+                else:
+                    #Personalizar con mensaje de error de retroalimentacion
+                    historialMsgs = self.controladorChats.getHistorialMensajes(hilo)
             
             # Construir prompt como texto si recibimos lista de mensajes
             if isinstance(historialMsgs, list):
@@ -349,7 +364,7 @@ class AsistenteControlador():
                     f"{m['role']}: {m['content']}" for m in historialMsgs
                 )
             else:
-                prompt_text = historialMsgs
+                prompt_text = str(historialMsgs)
             
             # Delegar streaming de tokens al modelo
             yield from self.modelo.stream_llm(prompt_text)

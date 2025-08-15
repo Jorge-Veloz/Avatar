@@ -46,7 +46,7 @@ def getRandomDF(lunes_semana_actual, inicio_semana_nueva):
     df_semana_aleatoria = pd.DataFrame({
         'feriado': colferiado,
         'evento_especial': colevento,
-        'temperatura': col_temp
+        'total_temperatura': col_temp
     }, index=fechas)
     return df_semana_aleatoria
 
