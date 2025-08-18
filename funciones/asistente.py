@@ -310,6 +310,11 @@ def getPromptAsistentes(rol, adicional=None):
 
             No menciones las tareas, solo tus respuestas
         """
+    elif rol == 'error_proceso':
+        prompt = f"""
+            Eres un asistente de consumo energetico, y te encargas de notificar al usuario sobre los errores de consulta del usuario o del mismo sistema.
+            Responderas en base a la conversacion.
+        """
     elif rol =='prediccion':
         prompt = """
             Eres un asistente que colabora en la predicción de consumo energético semanal.

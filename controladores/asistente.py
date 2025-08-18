@@ -331,23 +331,30 @@ class AsistenteControlador():
         self,
         hilo: str,
         tipo: str,
-        mensajes: Union[str, List[Dict[str, str]]]
+        mensajes: Union[str, List[Dict[str, str]]],
+        intencion: str = 'ninguna',
+        contenidoInfo = None
     ) -> Generator[str, None, None]:
-        
-        successProceso= ""
-        #successProceso = mensajes[-1].pop("ok")
+        print("Mensajes recibidos antes de la respuesta:")
+        print(mensajes)
+        print("Intencion del mensaje antes de la respuesta:")
+        print(intencion)
+        print("Contenido en sesion:")
+        print(contenidoInfo)
+        successProceso = mensajes[-1].pop("ok")
         #if not successProceso: res = self.controladorChats.enviarMensaje(hilo, mensajes)
         if True: #res['ok']:
             if tipo == "inicializar":
                 historialMsgs = self.controladorChats.getPrompoMensajeBienvenida(hilo)
             else:
                 if successProceso:
-                    if session['intenciones']['actual'] == 'solicita_datos_consumo':
+                    if intencion == 'solicita_datos_consumo':
                         historialMsgs = [
                             {"role": "system", "content": getPromptAsistentes('prediccion')}
                         ] + mensajes
-                    elif session['intenciones']['actual'] == 'solicita_prediccion':
-                        parametros = [item for item in session.get('contenido') if item["nombre"] == "solicita_datos_consumo"]
+                        print(historialMsgs)
+                    elif intencion == 'solicita_prediccion':
+                        parametros = [item for item in contenidoInfo if item["nombre"] == "solicita_datos_consumo"]
                         var_adicional = None
                         if parametros and len(parametros) > 0:
                             var_adicional = parametros[-1]['valor']
@@ -358,7 +365,11 @@ class AsistenteControlador():
                         historialMsgs = self.controladorChats.getHistorialMensajes(hilo)
                 else:
                     #Personalizar con mensaje de error de retroalimentacion
-                    historialMsgs = self.controladorChats.getHistorialMensajes(hilo)
+                    historialMsgs = [
+                        {"role": "system", "content": getPromptAsistentes('error_proceso')}
+                    ] + mensajes
+                    print("Error en el proceso, se notifica al usuario.")
+                    print(historialMsgs)
             
             # Construir prompt como texto si recibimos lista de mensajes
             if isinstance(historialMsgs, list):
@@ -409,7 +420,7 @@ class AsistenteControlador():
         codigo: identificador de hilo/sesión
         Retorna: dict con la respuesta del servicio STT (esperado: {'ok', 'datos', 'observacion'})
         """
-
+        #voice_file.save('./prueba.mp3')
         if voice_file is None:
             return {'ok': False, 'datos': None, 'observacion': 'No se recibió archivo de audio.'}
 
@@ -422,15 +433,21 @@ class AsistenteControlador():
         try:
             resp = requests.post(
                 url=f"{os.environ['RUTA_VOZ']}/voz_texto",
-                params={'id': codigo},
-                data=audio_bytes,
-                headers={
-                    'Content-Type': getattr(voice_file, 'mimetype', 'application/octet-stream'),
-                    'X-Request-ID': str(codigo)
+                files={
+                    'voice': (
+                        getattr(voice_file, 'filename', 'audio.webm'),  # nombre
+                        audio_bytes,                                   # contenido
+                        getattr(voice_file, 'mimetype', 'application/octet-stream')  # mimetype
+                    )
                 },
-                # timeout=30,
+                data={'id': codigo},
+                headers={
+                    'X-Request-ID': str(codigo),
+                    'Accept': 'application/json'
+                },
                 verify=False
             )
+
             resp.raise_for_status()
             return resp.json()
         except requests.RequestException as e:

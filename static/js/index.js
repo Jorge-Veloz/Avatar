@@ -406,7 +406,8 @@ const Index = (function () {
                 // console.log("Datos de gráficos recibidos:");
                 // console.log(msg.data)
                 // console.log(JSON.parse(msg.data))
-                intencionConversar = msg.data.siguiente;
+                let datosIntenciones = JSON.parse(msg.data);
+                intencionConversar = datosIntenciones.siguiente;
               }
               break;
             case 'final':
@@ -568,7 +569,7 @@ const Index = (function () {
   function ejecutarFuncion(aFunciones) {
     const funciones = {
       // 'get_usuario': getDatosUsuario,
-      // 'get_ambiente_edificio': getAmbienteEdificio,
+      'solicita_prediccion': predecirConsumo3,
       'solicita_recomendaciones': getRecomendaciones,
       'solicita_datos_consumo': getInfoLugar,
     };
@@ -672,8 +673,27 @@ const Index = (function () {
     };
     chart1.updateOptions(options);
     if(result.datos.datos.length > 0){
-      predecirConsumo(result.datos.datos);
+      //predecirConsumo(result.datos.datos);
     }
+  }
+
+  function predecirConsumo3(datos) {
+    const resultConsumoFuturoAmbiente = datos.map(e => ({ x: e.fecha, y: Number(e.consumo_predicho.toFixed(2)) }));
+    //const resultConsumoFuturoEdificio = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_total.toFixed(2)) }));
+    const consumoFuturoAmbiente = resultConsumoFuturoAmbiente.reduce((acc, item) => acc + item.y, 0);
+    //const consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acc, item) => acc + item.y, 0);
+    $('.consumo-futuro-ambiente').html(consumoFuturoAmbiente.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    //$('.consumo-futuro-edificio').html(consumoFuturoEdificio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    const options = {
+      series: [{
+        name: 'Consumo futuro del ambiente',
+        data: resultConsumoFuturoAmbiente
+      }/*, {
+        name: 'Consumo futuro del edificio',
+        data: resultConsumoFuturoEdificio
+      }*/]
+    };
+    chart2.updateOptions(options);
   }
 
   function predecirConsumo() {

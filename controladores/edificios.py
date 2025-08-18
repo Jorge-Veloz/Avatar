@@ -23,14 +23,14 @@ class EdificiosControlador:
         self.cliente = Client(
             host=os.environ.get("RUTA_IA"),
             headers={'x-some-header': 'some-value'},
-            timeout=300
+            timeout=500
         )
         self.asistente = os.environ.get("MODELO_IA")
 
         self.regexpr = (
             re.compile(r"edificio\s+(de\s+)*(?P<edificio>[\wáéíóúñ ]+)", re.IGNORECASE),
             re.compile(r"piso\s+(?P<piso>[\wáéíóúñ\d ]+)",       re.IGNORECASE),
-            re.compile(r"ambiente\s+(?P<ambiente>[\wáéíóúñ\-\d ]+)", re.IGNORECASE),
+            re.compile(r"ambiente[s]?\s+(?P<ambiente>[\wáéíóúñ\-\d ]+)", re.IGNORECASE),
             re.compile(r"inicio:?\s+(?P<fechainicio>[\wáéíóúñ\-\d ]+)", re.IGNORECASE),
             re.compile(r"fin:?\s+(?P<fechafin>[\wáéíóúñ\-\d ]+)", re.IGNORECASE)
         )
@@ -287,7 +287,7 @@ class EdificiosControlador:
         lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva = determinarSemanaActual(fecha)
 
         # Se consulta el consumo completo del ambiente seleccionado toda la fecha agrupada por dia
-        ruta_json = 'data_completa.json' #Cambiar por data de base de datos
+        ruta_json = 'consumo_energetico_2025_08_18.json' #Cambiar por data de base de datos
 
         #Se consulta la prediccion de la ultima semana del consumo del ambiente seleccionado
         data_semana_consumo = getRandomDF(lunes_semana_actual, inicio_semana_nueva) #Cambiar por base de datos
@@ -295,7 +295,8 @@ class EdificiosControlador:
         # Se genera la data de variables exogenas para la prediccion
         # Cambiar por la respuesta del LLM
         #textoLLM = "DÍA: Lunes | TIPO: feriado\nDÍA: Martes | TIPO: normal\nDÍA: Miércoles | TIPO: normal\nDÍA: Jueves | TIPO: especial\nDÍA: Viernes | TIPO: especial\nDÍA: Sábado | TIPO: normal\nDÍA: Domingo | TIPO: normal"
-        
+        print("Respuesta del LLM:")
+        print(textoLLM)
         data_generada = self.controladorAlgoritmoML.generarDF(textoLLM, inicio_semana_nueva)
 
         data_nueva = pd.concat([data_semana_consumo, data_generada], axis=0)
@@ -359,6 +360,8 @@ class EdificiosControlador:
             print(respuestaTraduccion)
 
             prompt_sql = getPromptAsistentes('codigo_sql', respuestaTraduccion)
+            print("Prompt SQL:")
+            print(prompt_sql)            
             #mensajeSQL = [{'role': 'system', 'content': prompt_sql}, {'role': 'user', 'content': respuestaTraduccion}]
             respuestaSQL = self.preguntarAsistente(self.asistente, prompt_sql, 'generar') #pensabamos usar codellama, pero mistral da mejores resultados
 

@@ -266,7 +266,7 @@ def getPrediccion2():
     lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva = determinarSemanaActual(fecha)
 
     # Se consulta el consumo completo del ambiente seleccionado toda la fecha agrupada por dia
-    ruta_json = 'consumo_energetico_2025_08_13.json' #Cambiar por data de base de datos
+    ruta_json = 'consumo_energetico_2025_08_18.json' #Cambiar por data de base de datos
 
     #Se consulta la prediccion de la ultima semana del consumo del ambiente seleccionado
     data_semana_consumo = getRandomDF(lunes_semana_actual, inicio_semana_nueva) #Cambiar por base de datos
@@ -301,6 +301,7 @@ def getRespuesta():
 
     codigo = session['hilo']
     intencion = request.form.get('intencion')
+    print(f"Intención recibida: {intencion}")
     voz = request.files.get('voice')
 
     print("Paso #1: Conversión de voz a texto.")
@@ -344,7 +345,7 @@ def getRespuesta():
         if intenciones:  # solo si hay datos
             yield f"{json.dumps({'type':'intenciones','data': json.dumps(intenciones, default=str)})}\n\n"
         
-        for token in controladorAsistente.stream_tokens(codigo, "conversar", respuesta):
+        for token in controladorAsistente.stream_tokens(codigo, "conversar", respuesta, intenciones['actual'], contenido):
             # Enviar token
             yield f"{json.dumps({'type':'token','token':token})}\n\n"
             buffer += token
@@ -401,7 +402,7 @@ def getRespuestaGPT():
     return jsonify(resultado)
 
 def procesamientoConversacion(texto, intencion='ninguna'):
-    session['contenido'] = []
+    if intencion == 'ninguna': session['contenido'] = []
     funciones = {
         'solicita_recomendaciones': controladorEdificios.getRecomendaciones,
         'solicita_datos_consumo': controladorEdificios.consultarConsumo,
@@ -419,10 +420,13 @@ def procesamientoConversacion(texto, intencion='ninguna'):
     if intencion != 'pregunta_respuesta_general':
         funcionIA = funciones[intencion]
         respuesta = funcionIA(texto)
-        mensajesAsis = [{"role": "user", "content": respuesta['reason'], "ok": respuesta['success']}]
+        #mensajesAsis = [{"role": "user", "content": respuesta['reason'], "ok": respuesta['success']}]
         
         if respuesta['info']:
             session['contenido'].append({"nombre": intencion, "valor": respuesta['info']})
+            mensajesAsis.append({"role": "user", "content": respuesta['reason'], "ok": respuesta['success']})
+        else:
+            mensajesAsis = [{"role": "user", "content": respuesta['reason'], "ok": respuesta['success']}]
         """else:
             #intencion = 'pregunta_respuesta_general'
             mensajesAsis = [{"role": "user", "content": respuesta['reason']}]"""
