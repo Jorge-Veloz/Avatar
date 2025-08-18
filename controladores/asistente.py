@@ -334,9 +334,9 @@ class AsistenteControlador():
         mensajes: Union[str, List[Dict[str, str]]]
     ) -> Generator[str, None, None]:
         
-        
-        successProceso = mensajes.pop("ok")
-        if not successProceso: res = self.controladorChats.enviarMensaje(hilo, mensajes)
+        successProceso= ""
+        #successProceso = mensajes[-1].pop("ok")
+        #if not successProceso: res = self.controladorChats.enviarMensaje(hilo, mensajes)
         if True: #res['ok']:
             if tipo == "inicializar":
                 historialMsgs = self.controladorChats.getPrompoMensajeBienvenida(hilo)
@@ -354,6 +354,8 @@ class AsistenteControlador():
 
                         historialMsgs = getPromptAsistentes('solicita_datos_consumo', var_adicional)
                         #historialMsgs = self.controladorChats.getHistorialMensajesConsumo(hilo)
+                    else:
+                        historialMsgs = self.controladorChats.getHistorialMensajes(hilo)
                 else:
                     #Personalizar con mensaje de error de retroalimentacion
                     historialMsgs = self.controladorChats.getHistorialMensajes(hilo)
@@ -386,7 +388,7 @@ class AsistenteControlador():
 
         try:
             resp = requests.post(
-                url=os.environ.get("RUTA_VOZ")+'/texto_voz_real_time',
+                url=os.environ.get("RUTA_VOZ")+'/texto_voz',
                 data=payload,
                 verify=False,
                 timeout=10

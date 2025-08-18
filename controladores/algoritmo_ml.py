@@ -114,7 +114,19 @@ class AlgoritmoMLControlador():
         df_full = df_full.groupby(df_full.index).sum()
 
         fechas_completas = pd.date_range(start=df_full.index.min(), end=df_full.index.max(), freq='D') #Linea maldita
-        df_full = df_full.reindex(fechas_completas, fill_value=0)
+        df_full = df_full.reindex(fechas_completas)
+
+        # Calcular valores para rellenar
+        promedio_kilovatio = df_full["total_kilovatio"].mean()
+        promedio_temperatura = df_full["total_temperatura"].mean()
+        moda_feriado = df_full["feriado"].mode()[0]  # mode() devuelve una Serie
+        moda_evento = df_full["evento_especial"].mode()[0]  # mode() devuelve una Serie
+
+        # Rellenar
+        df_full["total_kilovatio"] = df_full["total_kilovatio"].fillna(promedio_kilovatio)
+        df_full["total_temperatura"] = df_full["total_temperatura"].fillna(promedio_temperatura)
+        df_full["feriado"] = df_full["feriado"].fillna(moda_feriado)
+        df_full["evento_especial"] = df_full["evento_especial"].fillna(moda_evento)
 
         # Cortes de fechas lastwindow y evaluacion
         fechas_fin_lw = lunes_semana_actual - pd.Timedelta(days=1)
