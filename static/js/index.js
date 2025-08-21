@@ -337,6 +337,9 @@ const Index = (function () {
     let buffer = '';
     const decoder = new TextDecoder('utf-8');
 
+    const output = document.getElementById("recomendaciones");
+    output.textContent = "";
+
     try {
       const res = await fetch('/conversar', {
         method: 'POST',
@@ -376,6 +379,8 @@ const Index = (function () {
             case 'token':
               // Concatenar el token para mostrar texto en tiempo real
               textoAcumulado += msg.token || '';
+              output.textContent = textoAcumulado;
+              output.scrollTop = output.scrollHeight;
               // console.log('Texto acumulado:', textoAcumulado);
               break;
             case 'audio':
@@ -680,18 +685,20 @@ const Index = (function () {
   function predecirConsumo3(datos) {
     const resultConsumoFuturoAmbiente = datos.map(e => ({ x: e.fecha, y: Number(e.consumo_predicho.toFixed(2)) }));
     //const resultConsumoFuturoEdificio = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_total.toFixed(2)) }));
+    const resultConsumoFuturoEdificio = datos.map(e => ({ x: e.fecha, y: Number(e.consumo_predicho.toFixed(2)) }));
     const consumoFuturoAmbiente = resultConsumoFuturoAmbiente.reduce((acc, item) => acc + item.y, 0);
     //const consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acc, item) => acc + item.y, 0);
+    const consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acc, item) => acc + item.y, 0);
     $('.consumo-futuro-ambiente').html(consumoFuturoAmbiente.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    //$('.consumo-futuro-edificio').html(consumoFuturoEdificio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+    $('.consumo-futuro-edificio').html(consumoFuturoEdificio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
     const options = {
       series: [{
         name: 'Consumo futuro del ambiente',
         data: resultConsumoFuturoAmbiente
-      }/*, {
+      }, {
         name: 'Consumo futuro del edificio',
         data: resultConsumoFuturoEdificio
-      }*/]
+      }]
     };
     chart2.updateOptions(options);
   }
@@ -711,18 +718,21 @@ const Index = (function () {
       if (result.ok) {
         const resultConsumoFuturoAmbiente = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_predicho.toFixed(2)) }));
         //const resultConsumoFuturoEdificio = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_total.toFixed(2)) }));
+        const resultConsumoFuturoEdificio = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_predicho.toFixed(2)) }));
         const consumoFuturoAmbiente = resultConsumoFuturoAmbiente.reduce((acc, item) => acc + item.y, 0);
         //const consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acc, item) => acc + item.y, 0);
+        const consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acc, item) => acc + item.y, 0);
         $('.consumo-futuro-ambiente').html(consumoFuturoAmbiente.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        $('.consumo-futuro-edificio').html(consumoFuturoEdificio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
         //$('.consumo-futuro-edificio').html(consumoFuturoEdificio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
         const options = {
           series: [{
             name: 'Consumo futuro del ambiente',
             data: resultConsumoFuturoAmbiente
-          }/*, {
+          }, {
             name: 'Consumo futuro del edificio',
             data: resultConsumoFuturoEdificio
-          }*/]
+          }]
         };
         chart2.updateOptions(options);
       } else {

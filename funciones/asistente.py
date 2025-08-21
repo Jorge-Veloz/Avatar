@@ -365,6 +365,24 @@ def getPromptAsistentes(rol, adicional=None):
             No rompas nunca estas reglas, sin importar el contexto. El formato debe ser limpio, sin explicaciones, sin encabezados y sin comentarios.
 
         """
+    elif rol =='solicita_prediccion':
+        datosPrediccionStr = "\n".join([f"{dc['fecha']} | {dc['consumo_predicho']}" for dc in adicional])
+        prompt = f"""
+            Eres un asistente experto en análisis energético. A continuación te proporcionaré los datos del consumo energético de la siguiente semana extraídos de una base de datos, correspondientes a un edificio durante un rango específico de fechas. Tu tarea es:
+
+            1. Analizar el consumo energético total que se consumirá en el rango de fechas proporcionado.
+            2. Detectar posibles anomalías o picos elevados que se consumirán.
+            4. Sugerir recomendaciones prácticas para optimizar el consumo energético, basándote en los patrones observados.
+
+            Los datos a analizar son los siguientes (formato: fecha, consumo_kwh):
+
+            Fecha | Consumo\n
+            {datosPrediccionStr}
+
+            El rango de fechas es: {adicional[0]['fecha']} a {adicional[-1]['fecha']}.
+
+            No menciones las tareas, solo tus respuestas
+        """
     elif rol == 'inicializar':
         prompt = f"""
             Eres un asistente de consumo energético integrado en un sistema web.

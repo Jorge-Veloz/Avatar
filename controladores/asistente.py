@@ -332,37 +332,53 @@ class AsistenteControlador():
         hilo: str,
         tipo: str,
         mensajes: Union[str, List[Dict[str, str]]],
-        intencion: str = 'ninguna',
+        intenciones = None,
         contenidoInfo = None
     ) -> Generator[str, None, None]:
         print("Mensajes recibidos antes de la respuesta:")
         print(mensajes)
-        print("Intencion del mensaje antes de la respuesta:")
-        print(intencion)
+        #intencion, intencion_sig, intencion_ant = '', '', ''
+        #if not intenciones:
+        intencion = intenciones['actual']
+        intencion_sig = intenciones['siguiente']
+        intencion_ant = intenciones['anterior']
+        print("- Intencion anterior: ", intencion_ant)
+        print("- Intencion actual: ", intencion)
+        print("- Intencion siguiente: ", intencion_sig)
+
         print("Contenido en sesion:")
         print(contenidoInfo)
         successProceso = mensajes[-1].pop("ok")
         #if not successProceso: res = self.controladorChats.enviarMensaje(hilo, mensajes)
         if True: #res['ok']:
+            #historialMsgs = []
             if tipo == "inicializar":
                 historialMsgs = self.controladorChats.getPrompoMensajeBienvenida(hilo)
             else:
                 if successProceso:
-                    if intencion == 'solicita_datos_consumo':
+                    historialMsgs = []
+                    if intencion == 'solicita_prediccion' and intencion_sig == 'ninguna':
+                        # Obtener texto final de consumo y prediccion
+                        #if contenidoInfo is not None:
+                        parametros = [item for item in contenidoInfo if item["nombre"] == intencion_ant]
+                        var_adicional = None
+                        if parametros and len(parametros) > 0:
+                            var_adicional = parametros[-1]['valor']
+                        
+                        # Respuestas finales de consumo y prediccion
+                        if intencion_ant == 'solicita_datos_consumo':
+                            historialMsgs = getPromptAsistentes('solicita_datos_consumo', var_adicional)
+                        elif intencion_ant == 'solicita_prediccion':
+                            historialMsgs = getPromptAsistentes('solicita_prediccion', var_adicional)
+                        
+                        #historialMsgs = self.controladorChats.getHistorialMensajesConsumo(hilo)
+                    elif intencion == 'solicita_datos_consumo' or intencion == 'solicita_prediccion':
                         historialMsgs = [
                             {"role": "system", "content": getPromptAsistentes('prediccion')}
                         ] + mensajes
                         print(historialMsgs)
-                    elif intencion == 'solicita_prediccion':
-                        parametros = [item for item in contenidoInfo if item["nombre"] == "solicita_datos_consumo"]
-                        var_adicional = None
-                        if parametros and len(parametros) > 0:
-                            var_adicional = parametros[-1]['valor']
-
-                        historialMsgs = getPromptAsistentes('solicita_datos_consumo', var_adicional)
-                        #historialMsgs = self.controladorChats.getHistorialMensajesConsumo(hilo)
-                    else:
-                        historialMsgs = self.controladorChats.getHistorialMensajes(hilo)
+                    elif intencion == 'pregunta_respuesta_general':
+                        historialMsgs = self.controladorChats.getHistorialMensajes(hilo) #Hacer un prompt que permita contestar preguntas generales
                 else:
                     #Personalizar con mensaje de error de retroalimentacion
                     historialMsgs = [

@@ -268,16 +268,30 @@ class EdificiosControlador:
         return df
 
     def getPrediccion(self, query):
-        session['intenciones']['siguiente'] = "ninguna"
+        #session['intenciones']['siguiente'] = "ninguna"
         textoLLM = ""
         prompt_system = getPromptAsistentes('prediccion')
 
         if 'prediccion' in session and 'msgs' in session['prediccion'] and len(session['prediccion']['msgs']) > 0:
             msgsAsistente = [{'role': 'system', 'content': prompt_system}] + session['prediccion']['msgs'] + [{'role': 'user', 'content': query}]
+            print("Paso #2.1: Formateo de datos con el LLM para la prediccion.")
+            tiempo_inicio_pred = time.time()
             textoLLM = self.preguntarAsistente(self.asistente, msgsAsistente, 'chat')
-            session['prediccion']['msgs'] = []
+            tiempo_fin_pred = time.time()
+            print(f"Formateo datos de prediccion: {tiempo_fin_pred - tiempo_inicio_pred:.2f} segundos")
+            print("Texto formateado para prediccion: \n", textoLLM)
+            #session['prediccion']['msgs'] = []
+            session.pop('prediccion', None)
         else:
             session['intenciones']['siguiente'] = "solicita_prediccion"
+            session['prediccion'] = {
+                'msgs': [
+                    {'role': 'user', 'content': 'Cual seria la prediccion para la siguiente semana?'},
+                    {'role': 'assistant', 'content': '¿Habrá algún evento especial, feriado o novedad que debamos tener en cuenta en alguno de los días de la próxima semana? Si es así, ¿podrían indicarme cuáles días y qué ocurrirá?'},
+                    {'role': 'user', 'content': query}
+                ]
+            }
+            #session['prediccion']['msgs'].append({'role': 'user', 'content': query})
             #msgsAsistente = [{'role': 'system', 'content': prompt_system}] + [{'role': 'user', 'content': query}]
             #textoLLM = self.preguntarAsistente(self.asistente, msgsAsistente, 'chat')
             return {"success": True, "reason": query, "info": None}
@@ -288,7 +302,8 @@ class EdificiosControlador:
 
         # Se consulta el consumo completo del ambiente seleccionado toda la fecha agrupada por dia
         ruta_json = 'consumo_energetico_2025_08_18.json' #Cambiar por data de base de datos
-
+        print("Paso #2.2: Creacion de los dataset de variables exogenas para prediccion.")
+        tiempo_inicio_df = time.time()
         #Se consulta la prediccion de la ultima semana del consumo del ambiente seleccionado
         data_semana_consumo = getRandomDF(lunes_semana_actual, inicio_semana_nueva) #Cambiar por base de datos
 
@@ -301,10 +316,21 @@ class EdificiosControlador:
 
         data_nueva = pd.concat([data_semana_consumo, data_generada], axis=0)
 
-        fechas_prediccion = (lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva)
-        datos_prediccion = self.controladorAlgoritmoML.predecirConsumo(ruta_json,data_nueva,fechas_prediccion)
+        tiempo_fin_df = time.time()
+        print(f"Generacion de dataset exogenas para prediccion: {tiempo_fin_df - tiempo_inicio_df:.2f} segundos")
+        print("Data para prediccion:")
+        print(data_nueva)
 
+        fechas_prediccion = (lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva)
+        
+        print("Paso #2.3: Prediccion del consumo energetico para la siguiente semana.")
+        tiempo_inicio_prediccion = time.time()
+        datos_prediccion = self.controladorAlgoritmoML.predecirConsumo(ruta_json,data_nueva,fechas_prediccion)
+        tiempo_fin_prediccion = time.time()
         datos_ultima_semana = datos_prediccion[-7:]
+        print(f"Tiempo de prediccion del consumo energetico: {tiempo_fin_prediccion - tiempo_inicio_prediccion:.2f} segundos")
+        print("Datos de prediccion:")
+        print(datos_ultima_semana)
 
         return {"success": True, "reason": "Pudiste presentar los datos de prediccion de la siguiente semana.", "info": datos_ultima_semana}
     
@@ -335,13 +361,17 @@ class EdificiosControlador:
         
         print(mensajes)
         # append a mensajes con nuevos mensajes
+        print("Paso #1.1: Refinamiento de la consulta del usuario por el LLM.")
+        tiempo_nq = time.time()
         nuevoquery = self.preguntarAsistente(self.asistente, mensajes)
+        tiempo_finq = time.time()
+        print(f"Tiempo de ejecución Refinamiento de la consulta: {tiempo_finq - tiempo_nq:.2f} segundos")
         print("Nuevo query: ", nuevoquery)
 
+        print("Paso #1.2: Extraccion de entidades de la consulta por el LLM.")
         tiempo_inicio = time.time()
         info = self.getInfoLugar(nuevoquery)
         tiempo_fin = time.time()
-
         print(f"Tiempo de ejecución extracción de entidades (Fuzzy Lookup): {tiempo_fin - tiempo_inicio:.2f} segundos")
         print(f"Resultado de la extracción: {info['datos']}")
 
@@ -349,31 +379,50 @@ class EdificiosControlador:
         print(info)
         datos = None
 
-        session['intenciones']['siguiente'] = 'ninguna'
+        #session['intenciones']['siguiente'] = 'ninguna'
         session['prediccion']['msgs'] = []
         if info['ok']:
             params = info['datos'][0]
+
+            ############################## SE PUEDE OMITIR ESTO ###################################
+            """
             prompt_traduccion = getPromptAsistentes('traduccion_entidades', params)
             mensajeTraduccion = [{'role': 'system', 'content': prompt_traduccion}, {'role': 'user', 'content': nuevoquery}]
+            
+            print("Paso #1.3: Reemplazo de valor por identificadores por el LLM.")
+            tiempo_ini_trad = time.time()
             respuestaTraduccion = self.preguntarAsistente(self.asistente, mensajeTraduccion)
-            print("Respuesta de traducción:")
-            print(respuestaTraduccion)
+            tiempo_fin_trad = time.time()
+            print(f"Tiempo de la extracción: {tiempo_fin_trad - tiempo_ini_trad:.2f} segundos")
+            print(f"Respuesta de traducción: {respuestaTraduccion}")
 
             prompt_sql = getPromptAsistentes('codigo_sql', respuestaTraduccion)
             print("Prompt SQL:")
             print(prompt_sql)            
             #mensajeSQL = [{'role': 'system', 'content': prompt_sql}, {'role': 'user', 'content': respuestaTraduccion}]
+            print("Paso #1.4: Generación de consulta SQL por el LLM.")
+            tiempo_llm_inicio_sql = time.time()
             respuestaSQL = self.preguntarAsistente(self.asistente, prompt_sql, 'generar') #pensabamos usar codellama, pero mistral da mejores resultados
+            tiempo_llm_fin_sql = time.time()
+            print(f"Tiempo de ejecución generación de consulta SQL: {tiempo_llm_fin_sql - tiempo_llm_inicio_sql:.2f} segundos")
 
             #datos = self.modelo.getConsumoEdificiosAsis(params['edificio']['id'], params['piso']['id'], params['ambiente']['id'], '2025-04-01', '2025-04-30')
             print("Consulta SQL generada:")
             print(respuestaSQL)
             respuestaSQL = respuestaSQL.replace('```', '').replace('\n',' ').strip()
+            """
+            ############################## SE PUEDE OMITIR ESTO ###################################
+            # Se ejecuta la consulta SQL
+            
 
+
+            #respuestaSQL = "" # Cambiar a parametros para mandar a funcion SQL.
+            print("Paso #1.5: Ejecución de consulta SQL.")
             tiempo_inicio_sql = time.time()
-            datos = self.modelo.getConsumoEdificiosAsisSQL(respuestaSQL)
+            #datos = self.modelo.getConsumoEdificiosAsisSQL(respuestaSQL)
+            datos = self.modelo.getConsumoEdificios(params['edificio']['id'], params['piso']['id'], params['ambiente']['id'], params['fecha_inicio'], params['fecha_fin'])
             tiempo_fin_sql = time.time()
-            print(f"Consulta SQL: {respuestaSQL}")
+            #print(f"Consulta SQL: {respuestaSQL}")
             print(f"Tiempo de ejecución SQL: {tiempo_fin_sql - tiempo_inicio_sql:.2f} segundos")
             
             if datos['res']:

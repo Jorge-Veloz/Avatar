@@ -70,6 +70,10 @@ def serve_file(filename):
 
 @app.get('/')
 def Index():
+    #if 'intenciones' in session:
+    #    session.pop('intenciones', None)
+    #if 'prediccion' in session:
+    #    session.pop('prediccion', None)
     return render_template('index.html')
 
 @app.get('/assistant')
@@ -183,6 +187,8 @@ def getConsumoEdificios():
 def inicializarAsistente():
     if 'hilo' in session: session.pop('hilo')
     if 'contenido' in session: session.pop('contenido')
+    if 'intenciones' in session: session.pop('intenciones')
+    if 'prediccion' in session: session.pop('prediccion')
     if 'memoria' in session: session.pop('memoria')
     
     hilo = controladorAsistente.crearHilo()
@@ -220,6 +226,8 @@ def inicializarAsistenteRealTime():
 
     if 'hilo' in session: session.pop('hilo')
     if 'contenido' in session: session.pop('contenido')
+    if 'intenciones' in session: session.pop('intenciones')
+    if 'prediccion' in session: session.pop('prediccion')
     if 'memoria' in session: session.pop('memoria')
     
     hilo = controladorAsistente.crearHilo()
@@ -228,15 +236,17 @@ def inicializarAsistenteRealTime():
     session['contenido'] = []
     
     # Genera el primer mensaje de bienvenida
-    mensajes = [{"role": "user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}]
-
+    mensajes = [{"role": "user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida.", "ok": True}]
+    intenciones = {'anterior': 'ninguna', 'actual': 'ninguna', 'siguiente': 'ninguna'}
     def event_stream():
+        txt_completo = ''
         buffer = ''
-        for token in controladorAsistente.stream_tokens(hilo, "inicializar", mensajes):
+        for token in controladorAsistente.stream_tokens(hilo, "inicializar", mensajes, intenciones):
         # for token in llm_service.stream_tokens(prompt, model):
             # Enviar token
             yield f"{json.dumps({'type':'token','token':token})}\n\n"
             buffer += token
+            txt_completo += token
             # Detectar oraciones completas
             parts = re.split(r'(?<=[.!?])\s+', buffer)
             if len(parts) > 1:
@@ -250,6 +260,8 @@ def inicializarAsistenteRealTime():
         if buffer.strip():
             audio = controladorAsistente.text_to_speech(buffer)
             yield f"{json.dumps({'type':'audio','format':'wav','data':audio})}\n\n"
+        print("Guardar en la base de datos el mensaje completo:")
+        controladorChats.enviarMensaje(hilo, [{"role": "assistant", "content": txt_completo}])
         yield "{\"type\":\"end\"}\n\n"
 
     return Response(event_stream(), mimetype='text/event-stream')
@@ -297,7 +309,19 @@ def getRespuesta():
 
     #if 'intenciones' not in session:
     #    session['intenciones'] = {'actual': 'ninguna', 'siguiente': 'ninguna'}
-    session['intenciones'] = {'actual': 'ninguna', 'siguiente': 'ninguna'}
+    if 'intenciones' in session: 
+        print("Intenciones al inicio de la consulta: ")
+        print(session['intenciones'])
+
+    if 'intenciones' in session and 'actual' in session['intenciones']:
+        session['intenciones']['anterior'] = session['intenciones']['actual']
+    else:
+        session['intenciones'] = {}
+        session['intenciones']['anterior'] = 'ninguna'
+
+    #session['intenciones'] = {'actual': 'ninguna', 'siguiente': 'ninguna'}
+    session['intenciones']['actual'] = 'ninguna'
+    session['intenciones']['siguiente'] = 'ninguna'
 
     codigo = session['hilo']
     intencion = request.form.get('intencion')
@@ -315,7 +339,8 @@ def getRespuesta():
         textStt = sttRespuesta['datos']
     else:
         textStt = 'No pude entender lo que dijiste, Podrías repetirlo porfavor?'
-    
+
+    controladorChats.enviarMensaje(codigo, [{"role": "user", "content": textStt}])
     respuesta = procesamientoConversacion(textStt, intencion)
     
     print("Paso #1:")
@@ -332,7 +357,8 @@ def getRespuesta():
     contenido = session.get('contenido', [])
     print(contenido)
     intenciones = session.get('intenciones', [])
-    print(intenciones)
+    print("Intenciones antes de la respuesta:")
+    print(session.get('intenciones', []))
     print("-----324------")
     
     def event_stream():
@@ -345,7 +371,7 @@ def getRespuesta():
         if intenciones:  # solo si hay datos
             yield f"{json.dumps({'type':'intenciones','data': json.dumps(intenciones, default=str)})}\n\n"
         
-        for token in controladorAsistente.stream_tokens(codigo, "conversar", respuesta, intenciones['actual'], contenido):
+        for token in controladorAsistente.stream_tokens(codigo, "conversar", respuesta, intenciones, contenido):
             # Enviar token
             yield f"{json.dumps({'type':'token','token':token})}\n\n"
             buffer += token

@@ -125,15 +125,16 @@ def getPrediccionConsumoAnt(datos):
     # Y que te pregunte si habra un evento especial en la semana
 
 def detectar_intencion(consulta, etiquetas):
-    tiempo_inicio = time.time()
+    print("Paso #2: Detección de la intención de la consulta del usuario.")
+    tiempo_inicio_intencion = time.time()
     model_name = "Recognai/bert-base-spanish-wwm-cased-xnli"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
     classifier = pipeline("zero-shot-classification", model=model, tokenizer=tokenizer)
 
     resultado = classifier(consulta, etiquetas, hypothesis_template="Que accion desea realizar el usuario con esta consulta: {}.")
-    tiempo_fin = time.time()
-    print(f"Tiempo de ejecución de la intención (BERT): {tiempo_fin - tiempo_inicio:.2f} segundos")
+    tiempo_fin_intencion = time.time()
+    print(f"Tiempo de ejecución de la intención (BERT): {tiempo_fin_intencion - tiempo_inicio_intencion:.2f} segundos")
     # Tomamos la etiqueta con mayor score
     mejor_intencion = resultado["labels"][0]
     print(f"Resultado de la intención: {mejor_intencion}")
