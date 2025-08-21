@@ -364,6 +364,7 @@ def getRespuesta():
     def event_stream():
         
         buffer = ''
+        txt_completo = ''
         
         if contenido:  # solo si hay datos
             yield f"{json.dumps({'type':'grafico','data': json.dumps(contenido, default=str)})}\n\n"
@@ -375,6 +376,7 @@ def getRespuesta():
             # Enviar token
             yield f"{json.dumps({'type':'token','token':token})}\n\n"
             buffer += token
+            txt_completo += token
             # Detectar oraciones completas
             parts = re.split(r'(?<=[.!?])\s+', buffer)
             if len(parts) > 1:
@@ -388,8 +390,10 @@ def getRespuesta():
         if buffer.strip():
             audio = controladorAsistente.text_to_speech(buffer)
             yield f"{json.dumps({'type':'audio','format':'wav','data':audio})}\n\n"
-        yield "{\"type\":\"end\"}\n\n"
+        print("Guardar en la base de datos el mensaje completo:")
+        controladorChats.enviarMensaje(codigo, [{"role": "assistant", "content": txt_completo}])
 
+        yield "{\"type\":\"end\"}\n\n"
     return Response(event_stream(), mimetype='text/event-stream')
     
 
