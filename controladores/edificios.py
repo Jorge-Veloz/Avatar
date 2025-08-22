@@ -287,7 +287,7 @@ class EdificiosControlador:
         # Recuperacion del historial de consulta para nuevo prompt
         mensajes = []
         #hmensajes = self.controladorChats.getHistorialMensajesConsumo(session.get('hilo'))
-        #mensajes = self.controladorChats.getHistorialMensajesConsumo(session.get('hilo'))
+        mensajes = self.controladorChats.getHistorialMensajesConsumo(session.get('hilo'))
         print("Mensajes asistente:")
         
         """
@@ -299,11 +299,14 @@ class EdificiosControlador:
             mensajes = list(hmensajes)
         
         """
+
+        """
         mensajes = [
             {'role': 'system', 'content': getPromptAsistentes('recordar')},
             mensaje
         ]
-        
+        """
+
         print(mensajes)
         # append a mensajes con nuevos mensajes
         print("Paso #1.1: Refinamiento de la consulta del usuario por el LLM.")
