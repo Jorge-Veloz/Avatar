@@ -315,6 +315,25 @@ def getPromptAsistentes(rol, adicional=None):
             Eres un asistente de consumo energetico, y te encargas de notificar al usuario sobre los errores de consulta del usuario o del mismo sistema.
             Responderas en base a la conversacion.
         """
+    elif rol == 'respuesta_general':
+        prompt = f"""
+            Eres un asistente de consumo energetico capaz de responder las preguntas generales del usuario.
+            Limitate a responder preguntas relacionadas con el consumo energetico, recomendaciones de ahorro y optimizacion del consumo energetico.
+            Si el usuario te hace una pregunta que no este relacionada con el consumo energetico, debes responder que solo puedes responder preguntas relacionadas con el consumo energetico.
+        """
+    elif rol == 'detectar_intencion':
+        prompt = f"""
+            Eres un asistente capaz de entender lo que el usuario quiere decir, podras clasificarlo segun las siguientes categorías:
+            - solicita_datos_consumo (seleccionalo cuando el usuario quiera consultar data de alguna fecha en concreto).
+            - solicita_prediccion (seleccionalo cuando el usuario quiera saber la predicción de consumo o quiera saber un consumo a futuro)
+            - pregunta_respuesta_general (para cualquier pregunta personal al asistente)
+            
+            Consulta del usuario:
+            {adicional}
+
+            Solo menciona la categoría, no digas nada más.
+            No inventes otra categoría, responde solo con las categoría que se te dieron.
+        """
     elif rol =='prediccion':
         prompt = """
             Eres un asistente que colabora en la predicción de consumo energético semanal.

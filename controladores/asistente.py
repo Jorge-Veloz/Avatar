@@ -378,7 +378,12 @@ class AsistenteControlador():
                         ] + mensajes
                         print(historialMsgs)
                     elif intencion == 'pregunta_respuesta_general':
-                        historialMsgs = self.controladorChats.getHistorialMensajes(hilo) #Hacer un prompt que permita contestar preguntas generales
+                        #historialMsgs = self.controladorChats.getHistorialMensajes(hilo) #Hacer un prompt que permita contestar preguntas generales
+                        historialMsgs = [
+                            {"role": "system", "content": getPromptAsistentes('respuesta_general')}
+                        ] + mensajes
+                        print("Respuestas a las preguntas generales.")
+                        print(historialMsgs)
                 else:
                     #Personalizar con mensaje de error de retroalimentacion
                     historialMsgs = [

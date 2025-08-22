@@ -92,10 +92,10 @@ class AlgoritmoMLControlador():
 
         return forecaster, results_grid
     
-    def predecirConsumo(self, ruta_data, nuevo_data_test, fechas_prediccion):
+    def predecirConsumo(self, df_full, nuevo_data_test, fechas_prediccion):
         lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva = fechas_prediccion
 
-        df_full = pd.read_json(ruta_data) #Cambiar por data de base de datos
+        #df_full = pd.read_json(ruta_data)
         df_full['fecha'] = pd.to_datetime(df_full['fecha'])
         df_full.set_index('fecha', inplace=True)      
         df_full.index.name = 'datetime'

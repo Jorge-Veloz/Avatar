@@ -9,7 +9,7 @@ from controladores.algoritmo_ml import AlgoritmoMLControlador
 #from controladores.tts import TTSControlador
 #from controladores.modelosia import IAControlador
 #from controladores.speech import SpeechController
-from funciones.asistente import getMensajeSistema
+from funciones.asistente import getMensajeSistema, getPromptAsistentes
 from funciones.algoritmos import getPrediccionConsumo, detectar_intencion, getPrediccionConsumoAnt
 from funciones.funciones import determinarSemanaActual, getRandomDF
 import pandas as pd
@@ -434,13 +434,22 @@ def getRespuestaGPT():
 def procesamientoConversacion(texto, intencion='ninguna'):
     if intencion == 'ninguna': session['contenido'] = []
     funciones = {
-        'solicita_recomendaciones': controladorEdificios.getRecomendaciones,
+        #'solicita_recomendaciones': controladorEdificios.getRecomendaciones,
         'solicita_datos_consumo': controladorEdificios.consultarConsumo,
         'solicita_prediccion': controladorEdificios.getPrediccion
     }
     etiquetas = list(funciones.keys())
     etiquetas.append('pregunta_respuesta_general')
-    resultado = detectar_intencion(texto, etiquetas) if intencion == 'ninguna' else {'intencion': intencion, 'confidence': 1.0}
+    resultado = ''
+
+    if intencion == 'ninguna':
+        intencion_asistente = controladorEdificios.preguntarAsistente('mistral:latest', getPromptAsistentes('detectar_intencion', texto), 'generar')
+        resultado = {'intencion': intencion_asistente.replace('-', '').replace('\n', '').strip().lower(), 'confidence': 1.0}
+    else:
+        resultado = {'intencion': intencion, 'confidence': 1.0}
+
+    #intencion_asistente = controladorEdificios.preguntarAsistente('mistral:latest', getPromptAsistentes('detectar_intencion', texto))
+    #resultado = detectar_intencion(texto, etiquetas) if intencion == 'ninguna' else {'intencion': intencion, 'confidence': 1.0}
     intencion =  'pregunta_respuesta_general' if resultado['intencion'] not in etiquetas else resultado['intencion']
     session['intenciones']['actual'] = str(intencion)
 
