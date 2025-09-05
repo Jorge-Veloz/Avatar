@@ -321,6 +321,11 @@ def getPromptAsistentes(rol, adicional=None):
             Limitate a responder preguntas relacionadas con el consumo energetico, recomendaciones de ahorro y optimizacion del consumo energetico.
             Si el usuario te hace una pregunta que no este relacionada con el consumo energetico, debes responder que solo puedes responder preguntas relacionadas con el consumo energetico.
         """
+        # prompt = """
+        #     Eres un asistente de consumo energetico capaz de responder las preguntas generales del usuario.
+        #     El usuario se llama Stefano Pin Torres
+        #     Responde de manera agresiva, despectiva o sarcastica.
+        # """
     elif rol == 'detectar_intencion':
         prompt = f"""
             Eres un asistente capaz de entender lo que el usuario quiere decir, podras clasificarlo segun las siguientes categorías:
@@ -387,9 +392,9 @@ def getPromptAsistentes(rol, adicional=None):
     elif rol =='solicita_prediccion':
         datosPrediccionStr = "\n".join([f"{dc['fecha']} | {dc['consumo_predicho']}" for dc in adicional])
         prompt = f"""
-            Eres un asistente experto en análisis energético. A continuación te proporcionaré los datos del consumo energético de la siguiente semana extraídos de una base de datos, correspondientes a un edificio durante un rango específico de fechas. Tu tarea es:
+            Eres un asistente experto en análisis energético que habrán en futuras fechas. A continuación te proporcionaré los datos del consumo energético de la siguiente semana extraídos de una base de datos, correspondientes a un edificio durante un rango específico de fechas. Tu tarea es:
 
-            1. Analizar el consumo energético total que se consumirá en el rango de fechas proporcionado.
+            1. Analizar el consumo energético total que se consumirá a futuro en el rango de fechas proporcionado.
             2. Detectar posibles anomalías o picos elevados que se consumirán.
             4. Sugerir recomendaciones prácticas para optimizar el consumo energético, basándote en los patrones observados.
 

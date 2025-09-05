@@ -146,8 +146,8 @@ class AlgoritmoMLControlador():
         exog_test = test_comp[['feriado', 'evento_especial', 'total_temperatura']].copy()
 
         # Encontrar en la base de datos
-        new_order = (1, 1, 1)
-        new_seasonal_order = (1, 1, 1, 14)
+        new_order = (2, 1, 1)
+        new_seasonal_order = (0, 1, 1, 14)
 
         forecaster = ForecasterSarimax(
             regressor=Sarimax(order=new_order, seasonal_order=new_seasonal_order, maxiter=200)

@@ -19,112 +19,117 @@
     
     </div>
     <script>
-        // Silence the console
-        let quiet = true;
-        if(quiet){
-          console.log = function () {};
-          console.info = function () {};
-          console.warn = function () {};
-          console.error = function () {};
-        }
+    // -------------------------
+    // Unity bootstrap (igual que antes)
+    // -------------------------
+    var canvas = document.querySelector("#unity-canvas");
+    function unityShowBanner(msg, type) {
+      var warningBanner = document.querySelector("#unity-warning");
+      function updateBannerVisibility() { warningBanner.style.display = warningBanner.children.length ? 'block' : 'none'; }
+      var div = document.createElement('div'); div.innerHTML = msg; warningBanner.appendChild(div);
+      if (type == 'error') div.style = 'background: red; padding: 10px;';
+      else { if (type == 'warning') div.style = 'background: yellow; padding: 10px;'; setTimeout(function(){ warningBanner.removeChild(div); updateBannerVisibility(); }, 5000); }
+      updateBannerVisibility();
+    }
 
-        var unityInstance = null;
-  
-        var container = document.querySelector("#unity-container");
-        var canvas = document.querySelector("#unity-canvas");
-        var loadingBar = document.querySelector("#unity-loading-bar");
-        var progressBarFull = document.querySelector("#unity-progress-bar-full");
-        var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-        var warningBanner = document.querySelector("#unity-warning");
-  
-        // Shows a temporary message banner/ribbon for a few seconds, or
-        // a permanent error message on top of the canvas if type=='error'.
-        // If type=='warning', a yellow highlight color is used.
-        // Modify or remove this function to customize the visually presented
-        // way that non-critical warnings and error messages are presented to the
-        // user.
-        function unityShowBanner(msg, type) {
-          function updateBannerVisibility() {
-            warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-          }
-          var div = document.createElement('div');
-          div.innerHTML = msg;
-          warningBanner.appendChild(div);
-          if (type == 'error') div.style = 'background: red; padding: 10px;';
-          else {
-            if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-            setTimeout(function() {
-              warningBanner.removeChild(div);
-              updateBannerVisibility();
-            }, 5000);
-          }
-          updateBannerVisibility();
-        }
+    var buildUrl = "../../static/resources/avatar/Build";
+    var loaderUrl = buildUrl + "/BuildEstudiantes.loader.js";
+    
+    var config = {
+      arguments: [],
+      dataUrl: buildUrl + "/BuildEstudiantes.data",
+      frameworkUrl: buildUrl + "/BuildEstudiantes.framework.js",
+      codeUrl: buildUrl + "/BuildEstudiantes.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "DefaultCompany",
+      productName: "AsistenteIA",
+      productVersion: "0.1.0",
+      showBanner: unityShowBanner,
+    };
 
-        let nombreArchivo = 'EdificioIng';
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      var meta = document.createElement('meta');
+      meta.name = 'viewport';
+      meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+      document.head.appendChild(meta);
+      document.querySelector("#unity-container").className = "unity-mobile";
+      canvas.className = "unity-mobile";
+    } else {
+      canvas.style.width = "400px";
+      canvas.style.height = "600px";
+    }
 
-        var buildUrl = "../../static/resources/avatar/Build";
-        var loaderUrl = buildUrl + `/${nombreArchivo}.loader.js`;
-        var config = {
-          dataUrl: buildUrl + `/${nombreArchivo}.data`,
-          frameworkUrl: buildUrl + `/${nombreArchivo}.framework.js`,
-          codeUrl: buildUrl + `/${nombreArchivo}.wasm`,
-          streamingAssetsUrl: "StreamingAssets",
-          companyName: "DefaultCompany",
-          productName: "AsistenteIA",
-          productVersion: "0.1.0",
-          showBanner: unityShowBanner,
-        };
-  
-        // By default Unity keeps WebGL canvas render target size matched with
-        // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-        // Set this to false if you want to decouple this synchronization from
-        // happening inside the engine, and you would instead like to size up
-        // the canvas DOM size and WebGL render target sizes yourself.
-        // config.matchWebGLToCanvasSize = false;
-  
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-          // Mobile device style: fill the whole browser client area with the game canvas:
-  
-          var meta = document.createElement('meta');
-          meta.name = 'viewport';
-          meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-          document.getElementsByTagName('head')[0].appendChild(meta);
-          container.className = "unity-mobile";
-          canvas.className = "unity-mobile";
-  
-          // To lower canvas resolution on mobile devices to gain some
-          // performance, uncomment the following line:
-          // config.devicePixelRatio = 1;
-  
-  
+    document.querySelector("#unity-loading-bar").style.display = "block";
+
+    var unityInstance = null;
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = () => {
+      createUnityInstance(canvas, config, (progress) => {
+        document.querySelector("#unity-progress-bar-full").style.width = (100 * progress) + "%";
+      }).then((instance) => {
+        unityInstance = instance;
+        document.querySelector("#unity-loading-bar").style.display = "none";
+        // document.querySelector("#unity-fullscreen-button").onclick = () => unityInstance.SetFullscreen(1);
+      }).catch((message) => { alert(message); });
+    };
+    document.body.appendChild(script);
+
+    // Tu función ya existente:
+    function enviarBase64(base64Opt) {
+      
+      const base64 = (typeof base64Opt === "string" && base64Opt.length) 
+        ? base64Opt 
+        : "";
+
+      if (!base64) {
+        alert("Ingresa un Base64 válido o espera datos del stream");
+        return;
+      }
+
+      if (unityInstance) {
+        
+        const url = base64ToBlobUrl(base64, "audio/wav"); // o "audio/mpeg" si es MP3
+        // console.log(`[enviarBase64] Enviando a Unity WebAudioLoader -> ${url}`);
+        unityInstance.SendMessage("SpeechPlayerServerWebGL", "WebAudioLoader", url);
+      } else {
+        console.warn("[enviarBase64] Unity aún no está listo");
+      }
+
+    }
+
+    function base64ToBlobUrl(base64, mime = "audio/wav") {
+      // Limpia encabezados tipo "data:audio/wav;base64,..."
+      const cleaned = base64.replace(/^data:.*;base64,/, "").replace(/\s/g, "");
+      // console.log(`[base64ToBlobUrl] Longitud base64 limpia = ${cleaned.length} chars`);
+
+      // Decodifica en trozos para no reventar el stack de JS
+      const sliceSize = 1024 * 1024; // 1 MB
+      const byteChars = atob(cleaned);
+      const bytes = new Uint8Array(byteChars.length);
+      for (let offset = 0; offset < byteChars.length; offset += sliceSize) {
+        const end = Math.min(offset + sliceSize, byteChars.length);
+        for (let i = offset; i < end; i++) bytes[i] = byteChars.charCodeAt(i);
+      }
+
+      const blob = new Blob([bytes], { type: mime });
+      const url = URL.createObjectURL(blob);
+      console.log(`[base64ToBlobUrl] Blob creado: tamaño=${blob.size} bytes, url=${url}`);
+      return url;
+    }
+
+    window.addEventListener("message", (event) => {
+      console.log("Mensaje recibido en avatar:", event.data);
+
+      if (event.data?.action === "base64") {
+        if (typeof event.data.data === "string" && event.data.data.length > 0) {
+          enviarBase64(event.data.data);
         } else {
-          // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-  
-          canvas.style.width = "100%";
-          canvas.style.height = "100%";
+          console.warn("Base64 vacío o no es string:", event.data.data);
         }
-  
-        loadingBar.style.display = "block";
-  
-        var script = document.createElement("script");
-        script.src = loaderUrl;
-        script.onload = () => {
-          createUnityInstance(canvas, config, (progress) => {
-            progressBarFull.style.width = 100 * progress + "%";
-                }).then((instance) => {
-                  unityInstance = instance;
-                  loadingBar.style.display = "none";
-                  /*fullscreenButton.onclick = () => {
-                    unityInstance.SetFullscreen(1);
-                  };*/
-                }).catch((message) => {
-                  alert(message);
-                });
-              };
-  
-        document.body.appendChild(script);
-  
-    </script>
+      }
+    });
+
+  </script>
 </body>
 </html>

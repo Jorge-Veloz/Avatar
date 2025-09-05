@@ -17,7 +17,16 @@ const Index = (function () {
   // Declaramos el controlador a nivel de módulo para poder abortar peticiones anteriores
   let currentAbortController = null;
 
-    
+  const iframe = document.querySelector("iframe");
+
+  // Función para mandar datos al iframe
+  function enviarAlIframe(audioBase64) {
+    iframe.contentWindow.postMessage(
+      { action: "base64", data: audioBase64 }, 
+      "*"
+    );
+  }
+
   const audioMotion = new AudioMotionAnalyzer(document.getElementById('audioMotionAnalyzer'), {
     height: 70,
     ansiBands: false,
@@ -386,7 +395,8 @@ const Index = (function () {
             case 'audio':
               // Aquí puedes manejar los datos de audio (por ejemplo, para reproducir)
               // console.log('Audio recibido', msg.data);
-              audioQueue.push(msg.data); // agrega a la cola para reproducción
+              // audioQueue.push(msg.data); // agrega a la cola para reproducción
+              enviarAlIframe(msg.data);
               playNext(); // función que maneja la reproducción
               break;
             case 'info':
@@ -459,11 +469,10 @@ const Index = (function () {
   async function iniciarRecorrido() {
     
     // detenerEscucha();
-    
     document.querySelector('#btnIniciarRecorrido').classList.add('disabled');
     document.querySelector('.spinner-iniciar-recorrido').classList.remove('d-none');
     document.querySelector('.spinner-iniciar-recorrido').classList.add('d-flex');
-
+    
     const output = document.getElementById("recomendaciones");
     output.textContent = "";
     
@@ -508,7 +517,7 @@ const Index = (function () {
 
         for (const line of lines) {
           if (!line.trim()) continue;
-          console.log(JSON.parse(line))
+          // console.log(JSON.parse(line))
           const msg = JSON.parse(line);
 
           if (msg.type === "token") {
@@ -517,7 +526,8 @@ const Index = (function () {
           }
           else if (msg.type === "audio") {
             // En lugar de reproducir al vuelo, lo añadimos a la cola
-            audioQueue.push(msg.data);
+            // audioQueue.push(msg.data);
+            enviarAlIframe(msg.data);
             playNext();
           }
           else if (msg.type === "end") {
@@ -538,6 +548,7 @@ const Index = (function () {
 
   // Función para reproducir el siguiente de la cola
   async function playNext() {
+    return false;
     if (isPlaying || audioQueue.length === 0) return;
     isPlaying = true;
     const base64 = audioQueue.shift();

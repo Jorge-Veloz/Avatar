@@ -236,7 +236,7 @@ class EdificiosControlador:
         lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva = determinarSemanaActual(fecha)
 
         # Se consulta el consumo completo del ambiente seleccionado toda la fecha agrupada por dia
-        ruta_json = 'consumo_energetico_2025_08_18.json' #Cambiar por data de base de datos
+        ruta_json = 'consumo_energetico_2025_08_29.json' #Cambiar por data de base de datos
         print("Paso #2.2: Creacion de los dataset de variables exogenas para prediccion.")
         tiempo_inicio_df = time.time()
         #Se consulta la prediccion de la ultima semana del consumo del ambiente seleccionado

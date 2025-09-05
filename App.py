@@ -1,4 +1,4 @@
-from flask import Flask, Response, render_template, url_for, request, session, jsonify, send_from_directory
+from flask import Flask, Response, render_template, url_for, request, session, jsonify, send_from_directory, stream_with_context
 from flask_jwt_extended import JWTManager
 from controladores.asistente import AsistenteControlador
 from controladores.edificios import EdificiosControlador
@@ -137,6 +137,10 @@ def assistant_talk():
 def modeloAvatar():
     return render_template('avatar.html')
 
+@app.get('/avatar2')
+def modeloAvatar2():
+    return render_template('avatar2.html')
+
 @app.get('/edificios')
 def getEdificios():
     respuesta = controladorEdificios.getEdificios()
@@ -183,44 +187,6 @@ def getConsumoEdificios():
     respuesta = controladorEdificios.getConsumoEdificios(edificio, piso, ambiente, fechaInicio, fechaFin)
     return jsonify(respuesta)
 
-@app.get('/inicializar')
-def inicializarAsistente():
-    if 'hilo' in session: session.pop('hilo')
-    if 'contenido' in session: session.pop('contenido')
-    if 'intenciones' in session: session.pop('intenciones')
-    if 'prediccion' in session: session.pop('prediccion')
-    if 'memoria' in session: session.pop('memoria')
-    
-    hilo = controladorAsistente.crearHilo()
-    
-    session['hilo'] = hilo
-    mensajeInicial = {"role":"user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida."}
-    respuesta = controladorAsistente.getRespuesta(session.get('hilo'), [mensajeInicial], "inicializar") #enviar el identificador para obtener historial
-    session['contenido'] = []
-    #resultado = procesamientoConversacion(respuesta['datos'])
-
-    # With API
-    
-    #response1 = controladorTTS.TextToSpeech(respuesta['datos'], session.get('hilo'))
-
-    resultado = {
-        'ok': True,
-        'observacion': None,
-        'datos': {"respuesta": respuesta['datos'], "info": session.get('contenido')}
-    }
-
-    response1 = requests.post(
-        url=os.environ.get("RUTA_VOZ")+'/texto_voz',
-        data={'texto': resultado['datos']['respuesta'], 'id': session.get('hilo')},
-        verify=False
-    )
-
-    #encoded = response1['datos']['voice_encoded']
-    encoded = response1.json()['datos']['voice_encoded']
-    resultado['datos']['audio'] = encoded
-    
-    return jsonify(resultado)
-
 @app.post('/inicializar_real_time')
 def inicializarAsistenteRealTime():
 
@@ -238,16 +204,17 @@ def inicializarAsistenteRealTime():
     # Genera el primer mensaje de bienvenida
     mensajes = [{"role": "user", "content": "El usuario se ha conectado, preséntate ante el usuario y dale una bienvenida.", "ok": True}]
     intenciones = {'anterior': 'ninguna', 'actual': 'ninguna', 'siguiente': 'ninguna'}
+
     def event_stream():
         txt_completo = ''
         buffer = ''
         for token in controladorAsistente.stream_tokens(hilo, "inicializar", mensajes, intenciones):
-        # for token in llm_service.stream_tokens(prompt, model):
-            # Enviar token
+            # Enviar token al frontend
             yield f"{json.dumps({'type':'token','token':token})}\n\n"
             buffer += token
             txt_completo += token
-            # Detectar oraciones completas
+
+            # Cortar por signos de puntuación
             parts = re.split(r'(?<=[.!?])\s+', buffer)
             if len(parts) > 1:
                 for sent in parts[:-1]:
@@ -256,10 +223,12 @@ def inicializarAsistenteRealTime():
                         audio = controladorAsistente.text_to_speech(sent)
                         yield f"{json.dumps({'type':'audio','format':'wav','data':audio})}\n\n"
                 buffer = parts[-1]
-        # Última parte
+        
+        # Última parte al terminar el stream
         if buffer.strip():
-            audio = controladorAsistente.text_to_speech(buffer)
+            audio = controladorAsistente.text_to_speech(buffer.strip())
             yield f"{json.dumps({'type':'audio','format':'wav','data':audio})}\n\n"
+
         print("Guardar en la base de datos el mensaje completo:")
         controladorChats.enviarMensaje(hilo, [{"role": "assistant", "content": txt_completo}])
         yield "{\"type\":\"end\"}\n\n"
