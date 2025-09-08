@@ -1,0 +1,36 @@
+version: "2.4"
+
+services:
+  asistente-energetico:
+    image: asistente-energetico:latest
+    container_name: asistente-energetico
+    hostname: asistente-energetico
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    # monta tu código, datos y paquetes pip globales
+    volumes:
+      - fci_ia_asistente_energetico_data:/home/asistente-energetico
+      - python_pkgs:/usr/local/lib/python3.10/site-packages
+
+    ports:
+      - "3005:3005"
+      - "2225:22"
+
+    gpus: all
+    
+    networks:
+      fci_ia_net:
+        ipv4_address: 172.18.0.5
+
+volumes:
+  fci_ia_asistente_energetico_data:
+    name: fci_ia_asistente_energetico_data
+  python_pkgs:
+    name: fci_ia_python_pkgs
+
+networks:
+  fci_ia_net:
+    external: true

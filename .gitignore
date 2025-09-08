@@ -20,3 +20,6 @@ key.pem
 Consumo_con_Temperatura_Redondeada.csv
 arima.py
 .App.py.swp
+
+privkey.pem
+cert.pem
