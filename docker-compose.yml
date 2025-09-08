@@ -10,24 +10,26 @@ services:
       context: .
       dockerfile: Dockerfile
 
-    # monta tu código, datos y paquetes pip globales
+    # Persistencia: solo guardamos /storage y los paquetes pip
     volumes:
-      - fci_ia_asistente_energetico_data:/home/asistente-energetico
+      - fci_ia_asistente_energetico_storage:/home/asistente-energetico/storage
       - python_pkgs:/usr/local/lib/python3.10/site-packages
 
     ports:
-      - "3005:3005"
-      - "2225:22"
+      - "3005:3005"   # API
+      - "2225:22"     # SSH
 
     gpus: all
-    
+
     networks:
       fci_ia_net:
         ipv4_address: 172.18.0.5
 
+    restart: always
+
 volumes:
-  fci_ia_asistente_energetico_data:
-    name: fci_ia_asistente_energetico_data
+  fci_ia_asistente_energetico_storage:
+    name: fci_ia_asistente_energetico_storage
   python_pkgs:
     name: fci_ia_python_pkgs
 
