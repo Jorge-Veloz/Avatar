@@ -233,7 +233,7 @@ const Index = (function () {
     document.querySelector('.spinner-ver-chat').classList.remove('d-none');
     document.querySelector('.spinner-ver-chat').classList.add('d-flex');
 
-    await fetch('/pruebaChats', { method: 'GET' })
+    await fetch('/chats', { method: 'GET' })
     .then(response => response.json())
     .then(result => {
       document.querySelector('#btnVerChat').classList.remove('disabled');
@@ -478,7 +478,7 @@ const Index = (function () {
     
     try {
 
-      const res = await fetch("/inicializar_real_time", {
+      const res = await fetch("/inicializar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stream: true })
@@ -752,42 +752,6 @@ const Index = (function () {
     });
   }
   
-  function predecirConsumo2(datos) {
-    const idEdificio = $('#combo_edificio option:selected').val();
-    const idPiso = $('#combo_pisos option:selected').val();
-    const idAmbiente = $('#combo_ambientes option:selected').val();
-
-    //fetch(`/api/prediccion_datos?edificio=${idEdificio}&piso=${idPiso}&ambiente=${idAmbiente}&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`, {
-    fetch('/api/prediccion_datos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(datos)
-    })
-    .then(response => response.json())
-    .then(result => {
-      if (result.ok) {
-        const resultConsumoFuturoAmbiente = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_predicho.toFixed(2)) }));
-        const resultConsumoFuturoEdificio = result.datos.map(e => ({ x: e.fecha, y: Number(e.consumo_total.toFixed(2)) }));
-        const consumoFuturoAmbiente = resultConsumoFuturoAmbiente.reduce((acc, item) => acc + item.y, 0);
-        const consumoFuturoEdificio = resultConsumoFuturoEdificio.reduce((acc, item) => acc + item.y, 0);
-        $('.consumo-futuro-ambiente').html(consumoFuturoAmbiente.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-        $('.consumo-futuro-edificio').html(consumoFuturoEdificio.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-        const options = {
-          series: [{
-            name: 'Consumo futuro del ambiente',
-            data: resultConsumoFuturoAmbiente
-          }, {
-            name: 'Consumo futuro del edificio',
-            data: resultConsumoFuturoEdificio
-          }]
-        };
-        chart2.updateOptions(options);
-      } else {
-        Swal.fire('Ocurrió un error al consultar la información.', '', 'error');
-      }
-    });
-  }
-
   // ------------------------------ Funciones de Inicialización ------------------------------
   function initMicrofono() {
     if (!window.webkitSpeechRecognition) {

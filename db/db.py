@@ -8,16 +8,7 @@ class db():
     def __init__(self):
         rutaActual = os.getcwd()
         load_dotenv(os.path.join(rutaActual, '.env'))
-        config = {
-            'user': os.getenv("MYSQL_USER"),
-            'password': os.getenv("MYSQL_PASSWORD"),
-            'host': os.getenv("MYSQL_HOST"),
-            'port': int(os.getenv("MYSQL_PORT")),
-            'database': os.getenv("MYSQL_DB")
-        }
-        self.mysql = None
-        #self.mysql = mysql.connector.connect(**config)
-    
+        
     def consultarDato(self, sql):
         cursor = self.mysql.cursor(dictionary=True)
 

@@ -7,11 +7,10 @@ from funciones.funciones import determinarSemanaActual, getRandomDF
 from flask import session
 import json
 import re
-from datetime import date, datetime, timedelta
+from datetime import date
 from ollama import Client
 import os
 import time
-import numpy as np
 import pandas as pd
 
 class EdificiosControlador:
@@ -35,24 +34,9 @@ class EdificiosControlador:
             re.compile(r"fin:?\s+(?P<fechafin>[\wáéíóúñ\-\d ]+)", re.IGNORECASE)
         )
 
-    
-    def extraer_fechas_iso(self, query: str):
-        
-        # ——————————————————————————————————————————
-        # Extracción de fechas en formato ISO YYYY-MM-DD
-        # ——————————————————————————————————————————
-        ISO_DATE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})")
-
-        found = ISO_DATE_RE.findall(query)
-
-        if not found:
-            return None, None
-        fi = date.fromisoformat(found[0])
-        ff = date.fromisoformat(found[1]) if len(found) > 1 else fi
-        return fi, ff
         
     def leerJSONEdificios(self):
-        ruta = 'data_edificios2.json'
+        ruta = 'data/data_edificios2.json'
         with open(ruta, 'r', encoding='utf-8') as f:
             return json.load(f)  # data es una lista de dicts
 
@@ -236,7 +220,7 @@ class EdificiosControlador:
         lunes_semana_actual, domingo_semana_siguiente, inicio_semana_nueva = determinarSemanaActual(fecha)
 
         # Se consulta el consumo completo del ambiente seleccionado toda la fecha agrupada por dia
-        ruta_json = 'consumo_energetico_2025_08_29.json' #Cambiar por data de base de datos
+        ruta_json = 'data/consumo_energetico_2025_08_29.json' #Cambiar por data de base de datos
         print("Paso #2.2: Creacion de los dataset de variables exogenas para prediccion.")
         tiempo_inicio_df = time.time()
         #Se consulta la prediccion de la ultima semana del consumo del ambiente seleccionado
@@ -263,6 +247,9 @@ class EdificiosControlador:
         df_full_ambiente = pd.read_json(ruta_json) #Cambiar por data de base de datos
         tiempo_inicio_prediccion = time.time()
         datos_prediccion_ambiente = self.controladorAlgoritmoML.predecirConsumo(df_full_ambiente,data_nueva,fechas_prediccion)
+
+        if not datos_prediccion_ambiente:
+            return {"success": False, "reason": "No tienes actualizada la informacion con los datos de la ultima semana.", "info": None}
         datos_ultima_semana_ambiente = datos_prediccion_ambiente[-7:]
 
         """
@@ -391,112 +378,6 @@ class EdificiosControlador:
             return {"success": False, "reason": info['datos'], "info": None}
 
 
-    def getInfoLugarAnt(self, argumentos):
-        pObl = ['edificio', 'piso', 'ambiente', 'fechaIni', 'fechaFin']
-
-        for p in pObl:
-            if p not in argumentos.keys():
-                return { "success": False, "reason": "No tienes la información completa para consultar el consumo energético", "info": None}    
-        
-        idEdificio = argumentos['edificio']
-        idPiso = argumentos['piso']
-        idAmbiente = argumentos['ambiente']
-        fechaInicio = argumentos['fechaIni']
-        fechaFin = argumentos['fechaFin']
-
-        if idEdificio and idPiso and idAmbiente and fechaInicio and fechaFin:
-            resEdificios = self.getEdificios()
-
-            if resEdificios['ok']:
-                dataEdificios = resEdificios['datos']
-
-                if not len(dataEdificios):
-                    return { "success": False, "reason": "Error de conexión con la base de datos." , "info": None}
-                
-                if not idEdificio or not idPiso or not idAmbiente: return { "success": False, "reason": "No tienes la información completa para consultar el consumo energético" , "info": None}
-
-                # falta revisar funcion de index.js de informacionConsumoAsistente()
-                edificio = next((e for e in dataEdificios if e['id'] == idEdificio), None)
-
-                if edificio == None:
-                    return {"success": False, "reason": "La informacion que te han proporcionado es erronea. Identificador de edificio no corresponde a ninguno de los edificios del archivo.", "info": None}
-                else:
-                    piso = next((p for p in edificio['pisos'] if p['id'] == idPiso), None)
-                    if piso == None:
-                        return {"success": False, "reason": "La informacion que te han proporcionado es erronea. No existe este piso en el edificio mencionado.", "info": None}
-                    else:
-                        ambiente = next((a for a in piso['ambientes'] if a['id'] == idAmbiente), None)
-                        if ambiente == None:
-                            return {"success": False, "reason": "La informacion que te han proporcionado es erronea. No existe este ambiente en el piso mencionado.", "info": None}
-                        
-            else:
-                return {"success": False, "reason": "No tienes los datos ya que no hubo conexion a la base de datos.", "info": None}
-
-        elif idEdificio or idPiso or idAmbiente or fechaInicio or fechaFin:
-            return {"success": False, "reason": "No tienes la información completa para consultar el consumo energético", "info": None}
-        else:
-            return {"success": False, "reason": "Necesitas todos los datos para consultar el consumo energético", "info": None}
-
-        #[idEdificio, idPiso, idAmbiente, fechaInicio, fechaFin] = argumentos.values()
-
-        res = self.modelo.getConsumoEdificiosAsis(idEdificio, idPiso, idAmbiente, fechaInicio, fechaFin)
-
-        if res['res']:
-            res['data']['params'] = {'idEdificio': idEdificio, 'idPiso': idPiso, 'idAmbiente': idAmbiente, 'fechaInicio': fechaInicio, 'fechaFin': fechaFin}
-            return { "success": True, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Además dale unas recomendaciones para optimizar el consumo energetico del edificio y ambientes. Es importante que no menciones los identificadores al usuario.", "info": res['data']}
-    
-    def getInfoLugarGPT(self, argumentos):
-        [idEdificio, idPiso, idAmbiente, fechaInicio, fechaFin] = argumentos.values()
-
-        if idEdificio and idPiso and idAmbiente and fechaInicio and fechaFin:
-            resEdificios = self.getEdificios()
-
-            if resEdificios['ok']:
-                dataEdificios = resEdificios['datos']
-
-                if not len(dataEdificios):
-                    return { "success": False, "reason": "Error de conexión con la base de datos." , "info": None}
-                
-                if not idEdificio or not idPiso or not idAmbiente: return { "success": False, "reason": "No tienes la información completa para consultar el consumo energético" , "info": None}
-
-                # falta revisar funcion de index.js de informacionConsumoAsistente()
-                edificio = next((e for e in dataEdificios if e['id'] == idEdificio), None)
-
-                if edificio == None:
-                    return {"success": False, "reason": "La informacion que te han proporcionado es erronea. Identificador de edificio no corresponde a ninguno de los edificios del archivo.", "info": None}
-                else:
-                    piso = next((p for p in edificio['pisos'] if p['id'] == idPiso), None)
-                    if piso == None:
-                        return {"success": False, "reason": "La informacion que te han proporcionado es erronea. No existe este piso en el edificio mencionado.", "info": None}
-                    else:
-                        ambiente = next((a for a in piso['ambientes'] if a['id'] == idAmbiente), None)
-                        if ambiente == None:
-                            return {"success": False, "reason": "La informacion que te han proporcionado es erronea. No existe este ambiente en el piso mencionado.", "info": None}
-                        
-            else:
-                return {"success": False, "reason": "No tienes los datos ya que no hubo conexion a la base de datos.", "info": None}
-
-        elif idEdificio or idPiso or idAmbiente or fechaInicio or fechaFin:
-            return {"success": False, "reason": "No tienes la información completa para consultar el consumo energético", "info": None}
-        else:
-            return {"success": False, "reason": "Necesitas todos los datos para consultar el consumo energético", "info": None}
-        
-        respuesta = self.modelo.getConsumoEdificios(idEdificio, idPiso, idAmbiente, fechaInicio, fechaFin)
-        #print("Datos obtenidos por medio del asistente")
-        #print(respuesta)
-
-        if respuesta['res']:
-            if respuesta['data']['ok']:
-                respuesta['data']['params'] = {'idEdificio': idEdificio, 'idPiso': idPiso, 'idAmbiente': idAmbiente, 'fechaInicio': fechaInicio, 'fechaFin': fechaFin}
-                if len(respuesta['data']['datos']['datos']) > 0:
-                    return { "success": True, "reason": "Obtuviste los datos del consumo energetico, hazle saber al usuario que seran graficados a continuación. Además dale unas recomendaciones para optimizar el consumo energetico del edificio y ambientes. Es importante que no menciones los identificadores al usuario.", "info": respuesta['data']}
-                else:
-                    return { "success": True, "reason": "Se realizo correctamente la consulta pero no habian datos de consumo de ese ambiente, hazle saber al usuario", "info": respuesta['data']}
-            else:
-                return { "success": False, "reason": "Los datos enviados fueron correctos, mas hubo un error a la consulta en la bd. Se trata del error: " + respuesta['data']['observacion'] , "info": None}
-        else:
-            return { "success": False, "reason": "Hubo un error al consultar la informacion, no se pudo establecer una conexion con la API de consumo energetico.", "info": None}
-        
     def getRecomendaciones(self, query):
         response = self.cliente.generate(
             model = self.asistente, #self.asistente,
@@ -508,16 +389,6 @@ class EdificiosControlador:
         recomendaciones = response['response']
         return { "success": True, "reason": "Diste correctamente las recomendaciones para optimizar el consumo energetico. Ahora mencionaselo al usuario.", "info":recomendaciones }
     
-    def getRecomendacionesAnt(self, argumentos):
-        if "recomendaciones" not in argumentos:
-            return { "success": False, "reason": "No diste las recomendaciones al usuario. Vuelve a generar las recomendaciones.", "info": None}
-        
-        [recomendaciones] = argumentos.values()
-        print("Recomendaciones obtenidas:")
-        print(recomendaciones)
-        #return { "success": True, "reason": "Informale al usuario que se ha porporcionado la informacion sobre las recomendaciones", "info":recomendaciones }
-        return { "success": True, "reason": "Diste correctamente las recomendaciones para optimizar el consumo energetico. Ahora mencionaselo al usuario.", "info":recomendaciones }
-
     def getConsumoEdificios(self, edificio, piso, ambiente, fechaInicio, fechaFin):
         respuesta = self.modelo.getConsumoEdificios(edificio, piso, ambiente, fechaInicio, fechaFin)
 
@@ -525,6 +396,3 @@ class EdificiosControlador:
             return respuesta['data']
         else:
             return {'ok': False, 'observacion': respuesta['data'], 'datos': None}
-
-    def validarEdificio(self, edificio):
-        return self.modelo.validarEdificio(edificio)

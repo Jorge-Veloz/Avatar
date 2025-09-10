@@ -157,13 +157,17 @@ class AlgoritmoMLControlador():
 
         prediccion = forecaster.regressor.sarimax_res.fittedvalues
 
-        predictions = forecaster.predict(
-            steps            = 14,
-            exog             = nuevo_data_test[['feriado', 'evento_especial', 'total_temperatura']],
-            last_window      = df_full.loc[fechas_inicio_lw:fechas_fin_lw, 'total_kilovatio'],
-            last_window_exog = df_full.loc[fechas_inicio_lw:fechas_fin_lw, ['feriado', 'evento_especial', 'total_temperatura']]
-        )
-
+        try:
+            predictions = forecaster.predict(
+                steps            = 14,
+                exog             = nuevo_data_test[['feriado', 'evento_especial', 'total_temperatura']],
+                last_window      = df_full.loc[fechas_inicio_lw:fechas_fin_lw, 'total_kilovatio'],
+                last_window_exog = df_full.loc[fechas_inicio_lw:fechas_fin_lw, ['feriado', 'evento_especial', 'total_temperatura']]
+            )
+        except Exception as e:
+            print("Ocurrio un error al momento de procesar la prediccion: " + e)
+            return None
+        
         # Asegurar que las fechas de predicción están en el índice
         forecast_dates = pd.date_range(start=predictions.index.min(), end=predictions.index.max(), freq='D')
 
